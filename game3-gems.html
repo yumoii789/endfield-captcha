@@ -369,7 +369,7 @@ function solve(L){
 /* ================= 状态 ================= */
 var cur=null,bestSol=[],bestSteps=-1,limit=0,steps=0,started=false,solvedFlag=false,deadFlag=false;
 var curLv=1,lastStars=0,SOLVED_IDS={};
-var busy=false,t0=0,timerId=null,muted=false,verified=false,checking=false,curIdx=0;
+var busy=false,t0=0,timerId=null,muted=false,verified=false,checking=false,curIdx=0,lastSecs=0;
 var toastT=null,hintT=null,bootIdx=-1;
 
 /* ================= 音效 ================= */
@@ -608,7 +608,7 @@ function tap(x,y){
 function onSolved(){
   solvedFlag=true;
   clearInterval(timerId);clearTimeout(hintT);hintT=null;
-  var secs=(performance.now()-t0)/1000;
+  var secs=(performance.now()-t0)/1000;lastSecs=secs;
   $id('grid').classList.add('solved');
   updHud();
   lastStars=starsFor(steps,bestSteps);
@@ -624,6 +624,7 @@ function onSolved(){
 function onDead(why){
   if(solvedFlag||deadFlag)return;
   deadFlag=true;busy=false;
+  try{ if(window.parent&&window.parent!==window)window.parent.postMessage({type:'pz-failed',device:'V-40056',lv:curLv,moves:steps},'*'); }catch(e){}
   clearInterval(timerId);clearTimeout(hintT);hintT=null;
   clearLayer();render();
   var sp=spotAt(cur.px,cur.py);
@@ -650,7 +651,7 @@ function closeAndVerify(){
   $id('loginBtn').disabled=false;
   $id('formNote').textContent='身份已确认，欢迎回来，操作员。';
   toast('验证通过 · HUMAN VERIFIED');
-  try{ if(window.parent&&window.parent!==window)window.parent.postMessage({type:'pz-solved',device:'V-40056',game:'gems',level:cur.id,lv:cur.lv,diff:'V'+cur.lv,stars:lastStars,starsStr:starStr(lastStars),moves:steps,limit:limit,best:bestSteps},'*'); }catch(e){}
+  try{ if(window.parent&&window.parent!==window)window.parent.postMessage({type:'pz-solved',device:'V-40056',game:'gems',level:cur.id,lv:cur.lv,diff:'V'+cur.lv,stars:lastStars,starsStr:starStr(lastStars),moves:steps,secs:Math.round(lastSecs*10)/10,limit:limit,best:bestSteps},'*'); }catch(e){}
 }
 function toast(msg){
   var t=$id('toast');t.textContent=msg;t.hidden=false;

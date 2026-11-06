@@ -541,7 +541,7 @@ function closeAndVerify(){
   toast('验证通过 · HUMAN VERIFIED');
   try{
     if(window.parent && window.parent!==window){
-      window.parent.postMessage({type:'pz-solved', device:'V-40055', stats:solvedStats}, '*');
+      window.parent.postMessage({type:'pz-solved', device:'V-40055', game:'camping', lv:solvedStats.lv, stars:solvedStats.stars, moves:solvedStats.moves, secs:Math.round(solvedStats.secs*10)/10}, '*');
     }
   }catch(e){}
 }

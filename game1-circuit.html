@@ -203,7 +203,7 @@ var seed=parseInt(qs.get('seed')||'',10); if(isNaN(seed)) seed=(Date.now()%10000
 var DEBUG=qs.get('debug')==='1';
 
 /* ---------- 状态 ---------- */
-var pz=null, moves=0, t0=0, timerId=null, solvedFlag=false, verified=false, muted=false, checking=false;
+var pz=null, moves=0, t0=0, timerId=null, solvedFlag=false, verified=false, muted=false, checking=false, lastStars=1, lastSecs=0;
 var ST={leafReject:0,solveReject:0};
 
 /* ---------- 谜题生成：随机 Prim 生成树，保证可解且无环 ---------- */
@@ -389,6 +389,7 @@ function onSolved(){
   $id('grid').classList.add('solved');
   var st=$id('mStatus');st.textContent='校验通过';st.classList.add('pass');
   var stars = moves<=pz.best ? 3 : (moves<=Math.ceil(pz.best*1.5) ? 2 : 1);
+  lastStars=stars;lastSecs=secs;
   var starTxt='★★★'.slice(0,stars)+'☆☆☆'.slice(0,3-stars);
   $id('stampStats').textContent='难度 V'+curLv+' · '+starTxt+' · 旋转 '+moves+'/'+pz.best+' · 用时 '+secs.toFixed(1)+'s · '+QUIPS[Math.floor(Math.random()*QUIPS.length)];
   $id('stamp').hidden=false;
@@ -405,7 +406,7 @@ function closeAndVerify(){
   $id('loginBtn').disabled=false;
   $id('formNote').textContent='身份已确认，欢迎回来，操作员。';
   toast('验证通过 · HUMAN VERIFIED');
-  try{ if(window.parent && window.parent!==window) window.parent.postMessage({type:'pz-solved', device:'V-40053', stats:{moves:moves, secs:Math.round((performance.now()-t0)/100)/10, stars:(moves<=pz.best?3:(moves<=Math.ceil(pz.best*1.5)?2:1)), lv:curLv}}, '*'); }catch(e){}
+  try{ if(window.parent && window.parent!==window) window.parent.postMessage({type:'pz-solved', device:'V-40053', game:'circuit', lv:curLv, stars:lastStars, moves:moves, secs:Math.round(lastSecs*10)/10}, '*'); }catch(e){}
 }
 function toast(msg){
   var t=$id('toast');t.textContent=msg;t.hidden=false;

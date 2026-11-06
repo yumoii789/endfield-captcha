@@ -834,7 +834,7 @@ function onSolved(){
   if(solvedFlag)return;
   solvedFlag=true;
   /* 通关钩子：印章出现前通知宿主页面（无 parent 时静默，不影响页面） */
-  try{ if(window.parent && window.parent!==window) window.parent.postMessage({type:'pz-solved', device:'V-40054', lv:lv, stars:starsFor(illegal), illegal:illegal}, '*'); }catch(e){}
+  try{ if(window.parent && window.parent!==window) window.parent.postMessage({type:'pz-solved', device:'V-40054', game:'blocks', lv:lv, stars:starsFor(illegal), moves:pz.pieces.length, secs:Math.round(secsNow()*10)/10, illegal:illegal}, '*'); }catch(e){}
   clearInterval(timerId);updTime();
   var secs=secsNow();
   $id('grid').classList.add('solved');
