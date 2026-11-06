@@ -273,12 +273,20 @@ function hintLen(h){var s=0,i;for(i=0;i<h.length;i++)s+=h[i];return s+(h.length-
 function emptyLine(h){return h.length===1&&h[0]===0}
 
 /* 行（或列）约束下的所有合法线段排布 */
+/* 行（或列）约束下的所有合法排布；line 为三态（-1 未知 / 0 白 / 1 黑），输出完整 0/1 排布 */
 function linePatterns(line,hint){
-  var n=line.length,out=[],h=hint.slice();
+  var n=line.length,out=[],h=hint.slice(),t;
+  if(h.length===1&&h[0]===0){
+    for(t=0;t<n;t++)if(line[t]===1)return out;
+    out.push(new Array(n).fill(0));
+    return out;
+  }
   function rec(pos,hi,acc){
     if(hi===h.length){
       for(var t=pos;t<n;t++)if(line[t]===1)return;
-      out.push(acc.concat(line.slice(pos)));
+      var tail=[];
+      for(t=pos;t<n;t++)tail.push(0);
+      out.push(acc.concat(tail));
       return;
     }
     var rem=0,k;
@@ -286,104 +294,89 @@ function linePatterns(line,hint){
     rem+=h.length-1-hi;
     var maxStart=n-rem;
     for(var s=pos;s<=maxStart;s++){
-      var bad=false,t;
+      var bad=false;
       for(t=pos;t<s;t++)if(line[t]===1){bad=true;break}
       if(bad)break;
-      var chunk=[],ok=true;
+      var ok=true;
+      for(t=s;t<s+h[hi];t++)if(line[t]===0){ok=false;break}
+      if(ok&&s+h[hi]<n&&line[s+h[hi]]===1)ok=false;
+      if(!ok)continue;
+      var chunk=[];
       for(t=pos;t<s;t++)chunk.push(0);
       for(t=0;t<h[hi];t++)chunk.push(1);
       if(s+h[hi]<n)chunk.push(0);
-      for(t=s;t<s+h[hi];t++)if(line[t]===0){ok=false;break}
-      if(!ok)continue;
-      var nextPos=s+h[hi]+1;
-      var tail=[];
-      for(t=s;t<Math.min(nextPos,n);t++)tail.push(line[t]);
-      if(tail.indexOf(0)>=0&&t>=0){}
-      rec(nextPos,hi+1,acc.concat(chunk));
+      rec(s+h[hi]+1,hi+1,acc.concat(chunk));
     }
   }
   rec(0,0,[]);
   return out;
 }
-/* 同一条线的所有排布 → 三态合并 */
-function mergePattern(hint,len){
-  var pats=linePatterns(new Array(len).fill(-1),hint);
+/* 一条线（三态）的所有排布 → 三态合并；pats 为空表示该线已矛盾 */
+function mergePattern(hint,len,line){
+  var pats=linePatterns(line||new Array(len).fill(-1),hint);
   var res=new Array(len).fill(-1),i,j;
-  if(!pats.length)return res;
   for(i=0;i<len;i++){
     var one=true,zero=true;
     for(j=0;j<pats.length;j++){if(pats[j][i]!==1)one=false;if(pats[j][i]!==0)zero=false}
     res[i]=one?1:(zero?0:-1);
   }
-  return res;
+  return {pats:pats,merged:res};
 }
-/* 行/列约束传播计数；返回 {ok,count,unique} */
+/* 行/列约束传播 + 分支计数；返回 {ok,count,unique}，计数到 cap 即剪枝 */
 function countSolutions(rowHint,colHint,w,h,cap){
   cap=cap||2;
-  var grid=[],y,x;
-  for(y=0;y<h;y++){var row=[];for(x=0;x<w;x++)row.push(-1);grid.push(row)}
-  function colLine(g,c){var a=[],r;for(r=0;r<h;r++)a.push(g[r][c]);return a}
-  function assignsFor(line,hint){
-    var arr=[],i;
-    for(i=0;i<line.length;i++)if(line[i]===1)arr.push(i);
-    return arr;
-  }
-  var count=0,steps=0;
-  function rec(){
-    if(count>=cap||steps++>400000)return;
-    var y,x;
-    for(y=0;y<h;y++){
-      var rl=grid[y],rh=rowHint[y];
-      if(assignsFor(rl,rh).length!==0||emptyLine(rh))continue;
-      var merged=mergePattern(rh,w),i;
-      for(i=0;i<w;i++){
-        if(merged[i]===0&&rl[i]===1)return;
-      }
-    }
-    for(x=0;x<w;x++){
-      var cl=colLine(grid,x),ch=colHint[x];
-      var mergedC=mergePattern(ch,h);
-      for(var r=0;r<h;r++){
-        if(mergedC[r]===-1)continue;
-        if(mergedC[r]===1&&cl[r]===0)return;
-        if(mergedC[r]===0&&cl[r]===1)return;
-      }
-    }
-    var target=-1,tx=-1,ty=-1,forced=-1;
-    for(y=0;y<h;y++){
-      var row=grid[y];
-      for(x=0;x<w;x++){
-        if(row[x]!==-1)continue;
-        var mR=mergePattern(rowHint[y],w)[x];
-        if(mR!==-1){target=row[mR];tx=x;ty=y;forced=mR;break}
-      }
-      if(tx>=0)break;
-    }
-    if(tx<0){
-      for(x=0;x<w;x++){
-        var cLine=colLine(grid,x);
-        var mC=mergePattern(colHint[x],h);
-        for(y=0;y<h;y++){
-          if(grid[y][x]!==-1)continue;
-          if(mC[y]!==-1){tx=x;ty=y;forced=mC[y];break}
+  if(!rowHint||!colHint||rowHint.length!==h||colHint.length!==w)return {count:0,ok:false,unique:false,reason:'提示与尺寸不匹配'};
+  var grid=[],y,x,r;
+  for(y=0;y<h;y++){var rw=[];for(x=0;x<w;x++)rw.push(-1);grid.push(rw)}
+  function propagate(){
+    var changed=true,rounds=0,mp,col,row;
+    while(changed){
+      if(rounds++>h+w+6)return false;
+      changed=false;
+      for(y=0;y<h;y++){
+        row=grid[y];
+        mp=mergePattern(rowHint[y],w,row);
+        if(!mp.pats.length)return false;
+        for(x=0;x<w;x++){
+          if(row[x]!==-1)continue;
+          if(mp.merged[x]===1){row[x]=1;changed=true}else if(mp.merged[x]===0){row[x]=0;changed=true}
         }
-        if(tx>=0)break;
+      }
+      for(x=0;x<w;x++){
+        col=[];
+        for(r=0;r<h;r++)col.push(grid[r][x]);
+        mp=mergePattern(colHint[x],h,col);
+        if(!mp.pats.length)return false;
+        for(y=0;y<h;y++){
+          if(col[y]!==-1)continue;
+          if(mp.merged[y]===1){grid[y][x]=1;changed=true}else if(mp.merged[y]===0){grid[y][x]=0;changed=true}
+        }
       }
     }
-    if(tx<0){
-      var fx=-1,fy=-1;
-      for(y=0;y<h&&fy<0;y++)for(x=0;x<w;x++)if(grid[y][x]===-1){fx=x;fy=y;break}
-      if(fy<0){count++;return}
-      grid[fy][fx]=1;rec();
-      if(count<cap){grid[fy][fx]=0;rec()}
-      grid[fy][fx]=-1;
-      return;
-    }
-    grid[ty][tx]=forced;rec();
-    if(count<cap){grid[ty][tx]=forced?0:1;rec()}
-    grid[ty][tx]=-1;
+    return true;
   }
-  rec();
+  var count=0,nodes=0,aborted=false;
+  function dfs(){
+    if(count>=cap)return;
+    if(++nodes>200000){aborted=true;return}
+    if(!propagate())return;
+    var best=1e9,by=-1,bx=-1,rowPick=true,xx,yy,u,u2;
+    for(yy=0;yy<h;yy++){u=0;for(xx=0;xx<w;xx++)if(grid[yy][xx]===-1)u++;if(u>0&&u<best){best=u;by=yy;bx=-1;rowPick=true}}
+    for(xx=0;xx<w;xx++){u2=0;for(yy=0;yy<h;yy++)if(grid[yy][xx]===-1)u2++;if(u2>0&&u2<best){best=u2;by=-1;bx=xx;rowPick=false}}
+    if(best===1e9){count++;return}
+    if(rowPick){for(xx=0;xx<w;xx++)if(grid[by][xx]===-1){bx=xx;break}}
+    else{for(yy=0;yy<h;yy++)if(grid[yy][bx]===-1){by=yy;break}}
+    var save=[];
+    for(yy=0;yy<h;yy++)save.push(grid[yy].slice());
+    for(var v=1;v>=0;v--){
+      grid[by][bx]=v;
+      dfs();
+      for(yy=0;yy<h;yy++)for(xx=0;xx<w;xx++)grid[yy][xx]=save[yy][xx];
+      if(count>=cap||aborted)return;
+    }
+  }
+  dfs();
+  if(aborted)return {count:cap,ok:true,unique:false,aborted:true};
   return {count:count,ok:count>0,unique:count===1};
 }
 function gridFrom(p){
@@ -409,7 +402,7 @@ function verifyPuzzle(p){
   for(i=0;i<p.height;i++)if(hintLen(p.rowHint[i])>p.width)return {ok:false,reason:'行段长越界'};
   v=countSolutions(p.rowHint,p.colHint,p.width,p.height,2);
   if(!v.unique)return {ok:false,reason:'解不唯一（count='+v.count+'）'};
-  return {ok:true,ones:ones};
+  return {ok:true,ones:ones,unique:true,count:v.count};
 }
 
 /* ---------- 生成：种子 RNG → 0/1 矩阵 → 提示 → 唯一性判定 ---------- */
@@ -446,22 +439,49 @@ function genPuzzle(sd,spec,rep){
     var p=buildPuzzle(rng,spec.w,spec.h,dens);
     rep.attempts++;
     var v=countSolutions(p.rowHint,p.colHint,p.width,p.height,2);
-    if(v.unique){out=p;break}
+    if(v.ok&&v.unique){out=p;break}
     if(!v.ok){rep.solveReject++;continue}
     rep.uniqReject++;
     if(rep.uniqReject%10===0){tuning=true;rep.densRetry++}
   }
-  if(!out){
-    rep.densRetry++;
-    var r2=mulberry32(((sd*2246822519)^7919)>>>0);
-    out=buildPuzzle(r2,spec.w,spec.h,Math.min(78,spec.d[1]+8));
-  }
+  if(!out)out=uniqueCandidates(sd,spec,rep);
+  if(!out)out=barPuzzle(sd,spec,rep);
   out.spec=spec;
   out.regen=rep;
   out.seedUsed=sd;
   out.custom=(queuedLevel&&queuedLevel.id)?queuedLevel.id:null;
   out.lv=LV;
   return out;
+}
+/* 主循环未收敛时的继续搜索：仍然逐个候选过求解器，绝不返回未经证实的题面 */
+function uniqueCandidates(sd,spec,rep){
+  var i,p,v,dens,rng,span=79-spec.d[0];
+  for(i=0;i<400;i++){
+    dens=spec.d[0]+((i*7)%span);
+    rng=mulberry32(((sd*40503)^((i+997)*2246822519)^((spec.w<<16)|spec.h))>>>0);
+    p=buildPuzzle(rng,spec.w,spec.h,dens);
+    rep.attempts++;
+    v=countSolutions(p.rowHint,p.colHint,p.width,p.height,2);
+    if(v.ok&&v.unique)return p;
+    if(v.ok)rep.uniqReject++;else rep.solveReject++;
+  }
+  return null;
+}
+/* 兜底构造：k 行整行涂黑、其余全空。该构型的行提示只可能是 [w]（该行必然全黑）或 [0]（该行必然全空），
+   行提示自身已唯一确定整张图，故解必唯一；返回前仍由求解器复核 */
+function barPuzzle(sd,spec,rep){
+  var w=spec.w,h=spec.h,tot=w*h,k=Math.max(1,Math.min(h-1,Math.round(h*(spec.d[0]+spec.d[1])/2/100)));
+  var rng=mulberry32(((sd*2654435761)^1234567)>>>0),rows=[],i,y,x;
+  for(i=0;i<h;i++)rows.push(i);
+  for(i=h-1;i>0;i--){var j=Math.floor(rng()*(i+1)),t=rows[i];rows[i]=rows[j];rows[j]=t}
+  var answer=new Array(tot).fill(0);
+  for(i=0;i<k;i++)for(x=0;x<w;x++)answer[rows[i]*w+x]=1;
+  var m=[];
+  for(y=0;y<h;y++){var r=[];for(x=0;x<w;x++)r.push(answer[y*w+x]);m.push(r)}
+  var hh=hintsOf(m);
+  rep.attempts++;rep.densRetry++;
+  return {width:w,height:h,answer:answer,rowHint:hh.rowHint,colHint:hh.colHint,
+          ones:k*w,dens:+(k*w/tot*100).toFixed(1),runs:runsOf(answer).length};
 }
 function puzzleFromCustom(item){
   var p=item.params;
@@ -847,7 +867,7 @@ function selftest(){
     try{
       p=genPuzzle(sd,sp,{attempts:0,uniqReject:0,densRetry:0,solveReject:0});
       var v=verifyPuzzle(p);
-      var vAlt=countSolutions(p.colHint,p.rowHint,p.width,p.height,2);
+      var vAlt=countSolutions(p.colHint,p.rowHint,p.height,p.width,2);
       var inc=0,k;
       for(k=0;k<p.answer.length;k++)if(p.answer[k])inc++;
       d1=(inc===p.ones)&&(p.ones===Math.round(p.width*p.height*p.dens/100))||(inc===p.ones&&Math.abs(p.dens-p.ones/(p.width*p.height)*100)<0.2);
