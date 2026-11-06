@@ -149,7 +149,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visibl
     <div class="tgrid" id="tgridWrap"><div class="tcells" id="tcells"></div></div>
     <div class="mfoot">
       <div class="stats mono"><span>误点 <b id="stFails">0/2</b></span><span>已选 <b id="stSel">0</b></span><span>用时 <b id="stTime">0.0s</b></span></div>
-      <div class="mbtns"><button class="ghost" id="giveBtn">放弃</button><button class="primary" id="submitBtn" disabled>提交核验</button></div>
+      <div class="mbtns"><button class="ghost" id="giveBtn">放弃</button><button id="btnMute" class="ghost" type="button" title="声音开关">🔊</button><button class="primary" id="submitBtn" disabled>提交核验</button></div>
     </div>
     <div class="stamp" id="stamp" hidden>
       <div class="stamp-box" id="stampBox">
@@ -299,13 +299,29 @@ function svgFor(cell){
 }
 
 /* ---------- 状态 ---------- */
-var pz=null,sel=new Set(),fails=0,t0=0,timerId=null,solvedFlag=false,verified=false;
+var pz=null,sel=new Set(),fails=0,t0=0,timerId=null,solvedFlag=false,verified=false,muted=false;
 var customLevels=[],queuedLevel=null;
 function ruleText(){
   var parts=pz.rules.map(predText);
   if(parts.length===1)return '点选所有满足条件的信号源：<b>'+parts[0]+'</b>';
   return '点选符合任一条件的信号源：<b>'+parts.join('</b>，或 <b>')+'</b>';
 }
+
+/* ---------- 音效 ---------- */
+var AC=null;
+function tone(f,d,type,g,when){
+  if(muted)return;
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    var t=AC.currentTime+(when||0),o=AC.createOscillator(),ga=AC.createGain();
+    o.type=type||'square';o.frequency.value=f;
+    o.connect(ga);ga.connect(AC.destination);
+    ga.gain.setValueAtTime(g||.04,t);
+    ga.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.start(t);o.stop(t+d+.02);
+  }catch(e){}
+}
+function chime(){tone(523,.14,'triangle',.06,0);tone(659,.14,'triangle',.06,.1);tone(784,.18,'triangle',.06,.2);tone(1046,.3,'triangle',.07,.32)}
 
 /* ---------- 渲染 ---------- */
 function renderDiffBar(){
@@ -343,12 +359,13 @@ function updTime(){if(t0&&!solvedFlag)$id('stTime').textContent=((performance.no
 function onCell(i,el){
   if(solvedFlag)return;
   var cell=pz.cells[i],isT=i<pz.targetCount;
-  if(sel.has(i)){sel.delete(i);el.classList.remove('sel');refresh();return}
-  if(isT){sel.add(i);el.classList.remove('bad');el.classList.add('sel');refresh();
+  if(sel.has(i)){sel.delete(i);el.classList.remove('sel');refresh();tone(200,.09,'square',.045);return}
+  if(isT){sel.add(i);el.classList.remove('bad');el.classList.add('sel');refresh();tone(440,.08,'triangle',.05);
     if(sel.size===pz.targetCount)onSubmit();
     return}
   fails++;
   el.classList.add('bad');
+  tone(120,.12,'sawtooth',.05);
   if(DEBUG)console.log('[GT] 误点 #'+i+' '+JSON.stringify(cell));
   refresh();
   if(fails>=2){onFailed();return}
@@ -383,6 +400,7 @@ function onSolved(){
   $id('stampStats').innerHTML='难度 V'+LV+' · <span class="stars">'+'★'.repeat(stars)+'☆'.repeat(3-stars)+'</span> · 误点 '+fails+' 次 · 用时 '+secs.toFixed(1)+'s · 信号源已归档。';
   $id('stamp').hidden=false;
   $id('retryBtn').hidden=true;
+  chime();
   try{
     if(window.parent&&window.parent!==window){
       window.parent.postMessage({type:'pz-solved',device:'V-40060',game:'targets',lv:LV,stars:stars,moves:fails,secs:Math.round(secs*10)/10},'*');
@@ -435,7 +453,7 @@ function newChallenge(){
   clearInterval(timerId);timerId=setInterval(updTime,100);updTime();
   if(DEBUG){var comp=[];pz.cells.forEach(function(c,i){if(i<pz.targetCount)comp.push(i)});console.log('[GT] '+JSON.stringify({lv:LV,seed:pz.seedUsed,rules:pz.rules.map(predText),targets:pz.targetCount,compliant:comp,cells:pz.cells.map(function(c){return c.shape+'/'+c.color+'/'+c.orient})}));}
 }
-function setLevel(v){LV=clampLv(v);queuedLevel=pickQueuedLevel(LV);renderDiffBar();newChallenge()}
+function setLevel(v){LV=clampLv(v);queuedLevel=pickQueuedLevel(LV);renderDiffBar();tone(480,.08,'triangle',.05);newChallenge()}
 function pickQueuedLevel(lv){
   var arr=[];
   if(customLevels&&customLevels.length){for(var i=0;i<customLevels.length;i++){var it=customLevels[i];if(it&&it.lv===lv&&it.enabled!==false)arr.push(it)}}
@@ -473,7 +491,7 @@ function buildLevelJSON(){
 }
 function doExport(){var lvl=buildLevelJSON();console.log('[EXPORT] '+JSON.stringify(lvl));return lvl}
 function onReady(){
-  console.log('[GT-INIT] {lv:'+LV+',n:'+(pz?p.n:0)+',seed:'+seed+'}');
+  console.log('[GT-INIT] {lv:'+LV+',n:'+(pz?pz.n:0)+',seed:'+seed+'}');
   if(qs.get('export')==='1')doExport();
 }
 
@@ -543,18 +561,23 @@ box.onclick=function(){
   if(verified)return;
   $id('cbIcon').classList.add('spin');
   $id('cbText').textContent='正在接入特征筛查协议…';
+  tone(320,.1,'triangle',.05);
   var reveal=function(){
     $id('cbIcon').classList.remove('spin');
     $id('cbText').textContent='信号检索完成';
+    tone(440,.08,'triangle',.05);
     $id('mask').hidden=false;
   };
   if(FAST)reveal();else setTimeout(reveal,400);
 };
 box.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();box.click()}};
-$id('loginBtn').onclick=function(){ if(verified)toast('身份已确认 · 本次会话有效') };
+$id('loginBtn').onclick=function(){ if(verified)toast('身份已确认 · 本次会话有效'); tone(520,.07,'triangle',.045) };
 $id('submitBtn').onclick=onSubmit;
-$id('giveBtn').onclick=function(){ $id('mask').hidden=true;toast('筛查已放弃',true) };
-$id('retryBtn').onclick=function(){ $id('stamp').hidden=true;newChallenge() };
+$id('giveBtn').onclick=function(){ $id('mask').hidden=true;toast('筛查已放弃',true); tone(200,.09,'square',.045) };
+$id('retryBtn').onclick=function(){ $id('stamp').hidden=true;tone(300,.08,'triangle',.05);newChallenge() };
+$id('btnMute').addEventListener('click',function(){muted=!muted;this.textContent=muted?'🔇':'🔊'});
+/* 预热音频上下文（用户手势后自动恢复） */
+window.addEventListener('pointerdown',function once(){window.removeEventListener('pointerdown',once);try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){}},{once:true});
 </script>
 </body>
 </html>
