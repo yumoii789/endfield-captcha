@@ -116,6 +116,7 @@ form{padding:10px 22px 22px}
 .histrow.hit .hsum{color:var(--ok)}
 .empty{font-size:11.5px;color:var(--dim);padding:8px 2px}
 .mfoot{display:flex;justify-content:space-between;align-items:center;padding:12px 20px 18px;gap:10px;flex-wrap:wrap}
+.mbtns{display:flex;gap:8px}
 .stats{display:flex;gap:14px;font-size:12px;color:var(--dim)}
 .term{font-family:var(--mono);font-size:11.5px;line-height:1.75;color:var(--dim);padding-left:1.2em;text-indent:-1.2em}
 .term::before{content:"> ";color:var(--acc)}
@@ -206,7 +207,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visibl
     </div>
     <footer class="mfoot">
       <div class="mono stats"><span id="stTime">00:00.0</span><span id="stBest">最佳 —</span></div>
-      <div class="mbtns"><button id="btnNew" class="ghost" type="button">换一个 ↻</button></div>
+      <div class="mbtns"><button id="btnNew" class="ghost" type="button">换一个 ↻</button><button id="btnMute" class="ghost" type="button" title="声音开关">🔊</button></div>
     </footer>
     <div class="stamp" id="stamp" hidden>
       <div class="stamp-box" id="stampBox">
@@ -643,6 +644,7 @@ function refreshBest(){
 /* ---------- 音效 ---------- */
 var AC=null,muted=false;
 function tone(fr,d,type,g,when){
+  if(muted)return;
   try{
     AC=AC||new (window.AudioContext||window.webkitAudioContext)();
     var t=AC.currentTime+(when||0),o=AC.createOscillator(),ga=AC.createGain();
@@ -823,6 +825,7 @@ $id('btnUndo').addEventListener('click',undoDigit);
 $id('btnClear').addEventListener('click',clearEntry);
 $id('btnSubmit').addEventListener('click',submitGuess);
 $id('btnNew').addEventListener('click',function(){tone(300,.08,'triangle',.05);newChallenge()});
+$id('btnMute').addEventListener('click',function(){muted=!muted;this.textContent=muted?'🔇':'🔊'});
 $id('diffBar').addEventListener('click',function(e){
   var b=e.target&&e.target.closest?e.target.closest('.diffbtn'):null;
   if(!b)return;
