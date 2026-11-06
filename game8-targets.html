@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>访客协议 VISITOR PROTOCOL · 目标点选</title>
+<style>
+:root{--bg:#0b0e11;--line:#28313b;--line2:#3a4550;--ink:#d9e0e7;--dim:#8a96a2;--acc:#ffb100;--on:#ffcb4a;--ok:#3ddc8f;--bad:#ff5f56;--cy:#39d0e0;--mono:ui-monospace,Consolas,'Courier New',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none !important}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(1000px 520px at 75% -10%,rgba(255,177,0,.07),transparent 60%),var(--bg);color:var(--ink);font-family:'Segoe UI',system-ui,'Microsoft YaHei',sans-serif;overflow-x:hidden;padding:24px 12px}
+.bg{position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);background-size:42px 42px;pointer-events:none;-webkit-mask-image:radial-gradient(ellipse at center,black 25%,transparent 78%);mask-image:radial-gradient(ellipse at center,black 25%,transparent 78%)}
+.mono{font-family:var(--mono)}
+.dim{color:var(--dim)}
+.wrap{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center}
+.frame{position:relative}
+.frame::after{content:"";position:absolute;inset:6px;border:1px dashed rgba(255,177,0,.16);border-radius:10px;pointer-events:none}
+.card{width:min(92vw,420px);background:linear-gradient(180deg,#161c23,#12171d);border:1px solid var(--line);border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.55);overflow:hidden}
+.hazard{height:8px;background:repeating-linear-gradient(45deg,var(--acc) 0 12px,#141414 12px 24px);opacity:.85}
+.brand{display:flex;gap:12px;align-items:center;padding:18px 22px 6px}
+.logo{width:40px;height:40px;border:1px solid var(--acc);border-radius:8px;display:grid;place-items:center;color:var(--acc);font-size:20px;box-shadow:inset 0 0 12px rgba(255,177,0,.25)}
+.brand h1{font-size:17px;letter-spacing:.14em}
+.brand p{font-size:10.5px;margin-top:3px;letter-spacing:.08em}
+form{padding:10px 22px 22px}
+.field{display:block;margin:12px 0}
+.field span{display:block;font-size:12px;color:var(--dim);margin-bottom:6px;letter-spacing:.1em}
+.field input{width:100%;background:#0e1318;border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--ink);font-size:14px;outline:none}
+.captcha-box{margin:16px 0 12px;display:flex;align-items:center;gap:12px;background:#0e1318;border:1px solid var(--line);border-radius:8px;padding:12px;cursor:pointer;user-select:none;transition:border-color .15s}
+.captcha-box:hover{border-color:var(--line2)}
+.captcha-box.ok{border-color:rgba(61,220,143,.55);cursor:default}
+.cb{flex:0 0 auto;width:22px;height:22px;border:2px solid var(--line2);border-radius:4px;display:grid;place-items:center;font-size:14px;color:transparent}
+.captcha-box.ok .cb{border-color:var(--ok);color:var(--ok)}
+.cb.spin{border-radius:50%;border-color:var(--acc) transparent var(--acc) transparent;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loginBtn{width:100%;padding:12px;border:0;border-radius:8px;background:linear-gradient(180deg,#ffc23d,#f5a300);color:#1a1200;font-weight:700;letter-spacing:.3em;font-size:14px;cursor:not-allowed;opacity:.4;transition:all .2s}
+#loginBtn:not(:disabled){cursor:pointer;opacity:1;box-shadow:0 6px 18px rgba(255,177,0,.22)}
+.note{font-size:12px;margin-top:10px}
+.mask{position:fixed;inset:0;background:rgba(5,7,9,.72);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:50;animation:fade .2s}
+.modal{width:min(94vw,560px);background:linear-gradient(180deg,#161c23,#10151b);border:1px solid var(--line2);border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.7);overflow:hidden}
+.mhead{display:flex;justify-content:space-between;align-items:flex-start;padding:16px 20px 2px;gap:10px}
+.mhead h2{font-size:16px;letter-spacing:.1em}
+.mhead h2 span{font-size:11px;letter-spacing:.06em}
+.sub{font-size:11px;margin-top:4px}
+.status{flex:0 0 auto;font-size:11px;color:var(--acc);border:1px solid rgba(255,177,0,.4);padding:4px 8px;border-radius:4px}
+.status.pass{color:var(--ok);border-color:rgba(61,220,143,.5)}
+.rulebar{margin:10px 20px 0;padding:10px 14px;background:rgba(255,177,0,.06);border:1px solid rgba(255,177,0,.35);border-left:3px solid var(--acc);border-radius:6px;font-size:13px;line-height:1.7}
+.rulebar b{color:var(--on)}
+.rulebar .rtag{font-family:var(--mono);font-size:10px;color:var(--acc);letter-spacing:.18em;display:block;margin-bottom:2px}
+.diffbar{display:flex;gap:6px;padding:10px 20px 0;align-items:center}
+.diffbar .dlabel{font-size:11px;color:var(--dim);letter-spacing:.08em;margin-right:2px}
+.diffbtn{flex:1 1 0;min-width:0;background:transparent;border:1px solid var(--line2);color:var(--dim);border-radius:6px;padding:5px 0;font-family:var(--mono);font-size:12px;cursor:pointer;transition:all .15s}
+.diffbtn:hover{border-color:var(--acc);color:var(--acc)}
+.diffbtn.on{border-color:var(--acc);color:#1a1200;background:linear-gradient(180deg,#ffc23d,#f5a300);font-weight:700}
+.stars{color:var(--acc);letter-spacing:.16em;font-size:13px}
+.tgrid{padding:14px 20px 4px;display:flex;justify-content:center}
+.tcells{display:grid;gap:6px;width:min(84vw,400px)}
+.cell{position:relative;aspect-ratio:1;background:#0d1217;border:1px solid var(--line);border-radius:8px;display:grid;place-items:center;cursor:crosshair;touch-action:manipulation;transition:border-color .15s,background .15s,box-shadow .15s}
+.cell:hover{border-color:rgba(255,177,0,.5);background:#131a21}
+.cell svg{width:62%;height:62%;display:block}
+.c-red{fill:#ff5f56;stroke:#ff8d86;stroke-width:.6}
+.c-blue{fill:#39d0e0;stroke:#7ee4f2;stroke-width:.6}
+.c-green{fill:#3ddc8f;stroke:#8af0c4;stroke-width:.6}
+.c-yellow{fill:#ffb100;stroke:#ffd166;stroke-width:.6}
+.cell.sel{border-color:rgba(255,203,74,.85);background:#20272f;box-shadow:inset 0 0 14px rgba(255,203,74,.3)}
+.cell.sel::after{content:"▣";position:absolute;top:3px;right:5px;font-size:10px;color:var(--on)}
+.cell.bad{border-color:rgba(255,95,86,.75);background:rgba(255,95,86,.1);animation:shake .32s}
+.cell.dead{opacity:.38;cursor:not-allowed}
+.cell.dead::after{content:"✕";position:absolute;top:3px;right:5px;font-size:10px;color:var(--bad)}
+.tgrid.done .cell{cursor:default}
+.tgrid.done .cell.hit{border-color:rgba(61,220,143,.5);background:rgba(61,220,143,.07)}
+.tgrid.done .cell.miss{border-color:rgba(255,95,86,.4)}
+@keyframes shake{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+.mfoot{display:flex;justify-content:space-between;align-items:center;padding:10px 20px 18px;gap:10px;flex-wrap:wrap}
+.stats{display:flex;gap:14px;font-size:12px;color:var(--dim)}
+#stFails.gt{color:var(--bad)}
+.mbtns{display:flex;gap:8px}
+.ghost{background:transparent;border:1px solid var(--line2);color:var(--ink);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;transition:all .15s}
+.ghost:hover{border-color:var(--acc);color:var(--acc)}
+.primary{background:linear-gradient(180deg,#ffc23d,#f5a300);border:0;color:#1a1200;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
+.primary:disabled{opacity:.35;cursor:not-allowed}
+.primary:not(:disabled):hover{box-shadow:0 6px 18px rgba(255,177,0,.3)}
+.stamp{position:absolute;inset:0;background:rgba(8,11,13,.9);display:flex;align-items:center;justify-content:center;z-index:5;animation:fade .25s}
+.stamp-box{border:3px solid var(--ok);border-radius:12px;padding:20px 32px;text-align:center;transform:rotate(-6deg);color:var(--ok);box-shadow:0 0 30px rgba(61,220,143,.28);animation:stampIn .32s cubic-bezier(.2,1.6,.4,1)}
+.stamp-box.bad{border-color:var(--bad);color:var(--bad);box-shadow:0 0 30px rgba(255,95,86,.28)}
+.stamp-box .tick{font-size:40px;line-height:1}
+.stamp-box h3{margin-top:6px;letter-spacing:.22em;font-size:18px}
+.stamp-box p{margin-top:8px;font-size:11px;color:var(--ink);opacity:.85;line-height:1.6}
+.stamp-box button{margin-top:12px}
+@keyframes stampIn{from{transform:rotate(-6deg) scale(1.6);opacity:0}}
+@keyframes fade{from{opacity:0}}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#161d24;border:1px solid var(--ok);color:var(--ink);padding:10px 18px;border-radius:8px;font-size:13px;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:fade .2s}
+.toast.warn{border-color:var(--bad)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.scanlines{position:fixed;inset:0;pointer-events:none;z-index:99;background-image:linear-gradient(rgba(255,255,255,.016) 1px,transparent 1px);background-size:100% 3px}
+@media (max-width:640px){.mfoot{flex-wrap:wrap;gap:8px}.rulebar{font-size:12px}.stats{font-size:11px;gap:8px}.card{padding:0}}
+.head h1{font-size:clamp(1.4rem,3.5vw,2rem);letter-spacing:.02em}
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+<div class="bg"></div>
+<main class="wrap">
+  <section class="card frame">
+    <div class="hazard"></div>
+    <header class="brand">
+      <div class="logo">◎</div>
+      <div>
+        <h1>目标点选</h1>
+        <p class="mono dim">V-40060 · TARGET SCREENING</p>
+      </div>
+    </header>
+    <form onsubmit="return false">
+      <label class="field"><span>访客编号 / VISITOR ID</span><input id="vid" value="OP-authorized" readonly></label>
+      <div class="captcha-box" id="captchaBox" role="button" tabindex="0" aria-label="点击开始特征筛查验证">
+        <span class="cb" id="cbIcon">✔</span>
+        <span id="cbText">我是访客 · 开始特征筛查</span>
+      </div>
+      <button id="loginBtn" type="button" disabled>确认身份</button>
+      <p class="note dim" id="formNote">按文字规则点选全部合规信号源，误点 2 次即失败。</p>
+    </form>
+  </section>
+</main>
+<div class="mask" id="mask" hidden>
+  <div class="modal">
+    <div class="hazard"></div>
+    <div class="mhead">
+      <div>
+        <h2>特征筛查 <span class="mono dim">V-40060</span></h2>
+        <p class="sub dim" id="mSub">扫描完成，检出若干异常信号源。</p>
+      </div>
+      <span class="status mono" id="mStatus">筛查中</span>
+    </div>
+    <div class="rulebar"><span class="rtag mono">SCREENING RULES // 筛查规则</span><span id="ruleText"></span></div>
+    <div class="diffbar"><span class="dlabel">难度</span><span id="diffBtns" style="display:flex;gap:6px;flex:1"></span><span class="stars" id="diffStars"></span></div>
+    <div class="tgrid" id="tgridWrap"><div class="tcells" id="tcells"></div></div>
+    <div class="mfoot">
+      <div class="stats mono"><span>误点 <b id="stFails">0/2</b></span><span>已选 <b id="stSel">0</b></span><span>用时 <b id="stTime">0.0s</b></span></div>
+      <div class="mbtns"><button class="ghost" id="giveBtn">放弃</button><button class="primary" id="submitBtn" disabled>提交核验</button></div>
+    </div>
+    <div class="stamp" id="stamp" hidden>
+      <div class="stamp-box" id="stampBox">
+        <div class="tick" id="stampTick">✔</div>
+        <h3 id="stampTitle">校验通过</h3>
+        <p id="stampStats"></p>
+        <button class="ghost" id="retryBtn" hidden>重新筛查</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast mono" id="toast" hidden></div>
+<script>
+'use strict';
+function $id(s){return document.getElementById(s)}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+/* ---------- 参数 ---------- */
+var qs=new URLSearchParams(location.search);
+var LV_TABLE={
+  1:{n:3,rules:1,targets:3,name:'简单'},
+  2:{n:4,rules:1,targets:4,name:'容易'},
+  3:{n:4,rules:2,targets:5,name:'中等'},
+  4:{n:5,rules:2,targets:6,name:'较难'},
+  5:{n:5,rules:3,targets:7,name:'困难'}
+};
+var LEVELS_META=[1,2,3,4,5].map(function(k){return {game:'targets',lv:k,n:LV_TABLE[k].n,rules:LV_TABLE[k].rules,targets:LV_TABLE[k].targets,name:LV_TABLE[k].name}});
+var CUSTOM_KEY='endland-levels-targets';
+var seed=parseInt(qs.get('seed')||'',10); if(isNaN(seed)) seed=((Date.now()%1000000)|0)+1;
+var DEBUG=qs.get('debug')==='1';
+var FAST=qs.get('fast')==='1';
+function clampLv(v){v=parseInt(v,10);if(isNaN(v))return 1;return Math.max(1,Math.min(5,v))}
+var lvRaw=qs.get('lv');
+var LV=clampLv(lvRaw===null||lvRaw===''?1:lvRaw);
+
+/* ---------- 谓词系统 ---------- */
+var SHAPES=['triangle','circle','square','diamond','hex','cross'];
+var COLORS=['red','blue','green','yellow'];
+var ORIENTS=['up','right','down','left'];
+var SH_ZH={triangle:'三角',circle:'圆形',square:'方形',diamond:'菱形',hex:'六边形',cross:'十字'};
+var CO_ZH={red:'红色',blue:'蓝色',green:'绿色',yellow:'黄色'};
+var OR_ZH={up:'朝上',right:'朝右',down:'朝下',left:'朝左'};
+function allPredicates(){
+  var ps=[];
+  SHAPES.forEach(function(s){ps.push({kind:'shape',shape:s})});
+  COLORS.forEach(function(c){ps.push({kind:'color',color:c})});
+  ORIENTS.forEach(function(o){ps.push({kind:'orient',orient:o})});
+  COLORS.forEach(function(c){ps.push({kind:'tricolor',color:c})});
+  return ps;
+}
+function predText(p){
+  if(p.kind==='shape')return '所有'+SH_ZH[p.shape]+'目标';
+  if(p.kind==='color')return '所有'+CO_ZH[p.color]+'目标';
+  if(p.kind==='orient')return OR_ZH[p.orient]+'的三角目标';
+  if(p.kind==='tricolor')return CO_ZH[p.color]+'的三角目标';
+  return '?';
+}
+function sat(cell,p){
+  if(p.kind==='shape')return cell.shape===p.shape;
+  if(p.kind==='color')return cell.color===p.color;
+  if(p.kind==='orient')return cell.shape==='triangle'&&cell.orient===p.orient;
+  if(p.kind==='tricolor')return cell.shape==='triangle'&&cell.color===p.color;
+  return false;
+}
+function satAny(cell,rules){for(var i=0;i<rules.length;i++){if(sat(cell,rules[i]))return true}return false}
+/* 原型枚举：三角带朝向（16），非三角无朝向（20） */
+function allProtos(){
+  var out=[];
+  SHAPES.forEach(function(s){
+    if(s==='triangle'){COLORS.forEach(function(c){ORIENTS.forEach(function(o){out.push({shape:s,color:c,orient:o})})})}
+    else{COLORS.forEach(function(c){out.push({shape:s,color:c,orient:'up'})})}
+  });
+  return out;
+}
+var PROTOS=allProtos();
+
+/* ---------- 生成 ---------- */
+var ST={genRetry:0};
+function shuffled(arr,rnd){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(rnd()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function protoSatisfies(pr,p){return sat({shape:pr.shape,color:pr.color,orient:pr.orient},p)}
+function genPuzzle(lv,seedIn){
+  var spec=LV_TABLE[lv];
+  var rnd=mulberry32(seedIn>>>0);
+  var pool=allPredicates();
+  var rules=shuffled(pool,rnd).slice(0,spec.rules);
+  /* 每条子规则的原型支持集 */
+  var supports=rules.map(function(p){return PROTOS.filter(function(pr){return protoSatisfies(pr,p)})});
+  for(var i=0;i<supports.length;i++){if(!supports[i].length)return null}
+  var n=spec.n,K=spec.targets,total=n*n;
+  var cells=[];
+  /* 前 K 个格子放合规目标：第 i 个先满足第 i%R 条规则，其余随机满足某条 */
+  var sel=shuffled(PROTOS,rnd);
+  var usedProto=new Set();
+  var targetProtos=[];
+  for(var t=0;t<K;t++){
+    var pi=t%rules.length;
+    var cand=shuffled(supports[pi],rnd).filter(function(pr){return satAny(pr,rules)&&!usedProto.has(protoKey(pr))});
+    if(!cand.length)cand=shuffled(supports[pi],rnd);
+    var pick=cand[0];
+    usedProto.add(protoKey(pick));
+    targetProtos.push(pick);
+  }
+  /* 干扰原型：确定性枚举不满足任何规则的 */
+  var decoyPool=PROTOS.filter(function(pr){return !satAny(pr,rules)&&!usedProto.has(protoKey(pr))});
+  if(decoyPool.length<3)return null;
+  decoyPool=shuffled(decoyPool,rnd);
+  var di=0;
+  for(var c=0;c<total;c++){
+    if(c<K)cells.push(targetProtos[c]);
+    else{cells.push(decoyPool[di%decoyPool.length]);di++}
+  }
+  var p={lv:lv,n:n,rules:rules,cells:cells,targetCount:K,seedUsed:seedIn>>>0};
+  var err=validate(p);
+  if(err){ST.genRetry++;return null}
+  return p;
+}
+function protoKey(pr){return pr.shape+'|'+pr.color+'|'+pr.orient}
+function validate(p){
+  var n=p.n,total=n*n;
+  if(!p.cells||p.cells.length!==total)return 'cells 长度不符';
+  var hits=new Set(),eachRule=new Array(p.rules.length).fill(0);
+  for(var i=0;i<total;i++){
+    var isT=i<p.targetCount;
+    var s=satAny(p.cells[i],p.rules);
+    if(isT&&!s)return 'target #'+i+' 不合规';
+    if(!isT&&s)return 'decoy #'+i+' 误为合规';
+    if(isT){hits.add(protoKey(p.cells[i]));p.rules.forEach(function(r,ri){if(sat(p.cells[i],r))eachRule[ri]++})}
+  }
+  if(total-p.targetCount<3)return '干扰不足 3';
+  for(var r2=0;r2<p.rules.length;r2++){if(!eachRule[r2])return '规则 '+predText(p.rules[r2])+' 无命中目标'}
+  return null;
+}
+
+/* ---------- SVG ---------- */
+function svgFor(cell){
+  var rot={up:0,right:90,down:180,left:270}[cell.orient]||0;
+  var cls='c-'+cell.color;
+  switch(cell.shape){
+    case 'triangle':return '<svg viewBox="0 0 24 24" aria-hidden="true"><g transform="rotate('+rot+' 12 12)"><polygon class="'+cls+'" points="12,4 21,19 3,19"/></g></svg>';
+    case 'circle':return '<svg viewBox="0 0 24 24" aria-hidden="true"><circle class="'+cls+'" cx="12" cy="12" r="8"/></svg>';
+    case 'square':return '<svg viewBox="0 0 24 24" aria-hidden="true"><rect class="'+cls+'" x="5" y="5" width="14" height="14" rx="2"/></svg>';
+    case 'diamond':return '<svg viewBox="0 0 24 24" aria-hidden="true"><polygon class="'+cls+'" points="12,3 21,12 12,21 3,12"/></svg>';
+    case 'hex':return '<svg viewBox="0 0 24 24" aria-hidden="true"><polygon class="'+cls+'" points="12,3 20,7.5 20,16.5 12,21 4,16.5 4,7.5"/></svg>';
+    case 'cross':return '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="'+cls+'" d="M10,3 h4 v7 h7 v4 h-7 v7 h-4 v-7 H3 v-4 h7 z"/></svg>';
+  }
+  return '';
+}
+
+/* ---------- 状态 ---------- */
+var pz=null,sel=new Set(),fails=0,t0=0,timerId=null,solvedFlag=false,verified=false;
+var customLevels=[],queuedLevel=null;
+function ruleText(){
+  var parts=pz.rules.map(predText);
+  if(parts.length===1)return '点选所有满足条件的信号源：<b>'+parts[0]+'</b>';
+  return '点选符合任一条件的信号源：<b>'+parts.join('</b>，或 <b>')+'</b>';
+}
+
+/* ---------- 渲染 ---------- */
+function renderDiffBar(){
+  var html='';
+  for(var v=1;v<=5;v++)html+='<button class="diffbtn'+(v===LV?' on':'')+'" data-lv="'+v+'">V'+v+'</button>';
+  $id('diffBtns').innerHTML=html;
+  $id('diffStars').textContent='目标 '+LV_TABLE[LV].targets;
+  Array.prototype.forEach.call($id('diffBtns').querySelectorAll('.diffbtn'),function(b){
+    b.onclick=function(){setLevel(parseInt(b.dataset.lv,10))};
+  });
+}
+function buildGrid(){
+  var wrap=$id('tcells');
+  wrap.style.gridTemplateColumns='repeat('+pz.n+',1fr)';
+  wrap.innerHTML='';
+  wrap.className='tcells';
+  pz.cells.forEach(function(cell,i){
+    var d=document.createElement('button');
+    d.className='cell';d.dataset.idx=i;d.setAttribute('aria-label','信号源 '+(i+1));
+    d.innerHTML=svgFor(cell);
+    d.onclick=function(){onCell(i,d)};
+    wrap.appendChild(d);
+  });
+}
+function refresh(){
+  $id('stFails').textContent=fails+'/2';
+  $id('stFails').className=fails>0?'gt':'';
+  $id('stSel').textContent=sel.size;
+  $id('submitBtn').disabled=!(sel.size===pz.targetCount)||solvedFlag;
+  $id('ruleText').innerHTML=ruleText();
+}
+function updTime(){if(t0&&!solvedFlag)$id('stTime').textContent=((performance.now()-t0)/1000).toFixed(1)+'s'}
+
+/* ---------- 交互 ---------- */
+function onCell(i,el){
+  if(solvedFlag)return;
+  var cell=pz.cells[i],isT=i<pz.targetCount;
+  if(sel.has(i)){sel.delete(i);el.classList.remove('sel');refresh();return}
+  if(isT){sel.add(i);el.classList.remove('bad');el.classList.add('sel');refresh();
+    if(sel.size===pz.targetCount)onSubmit();
+    return}
+  fails++;
+  el.classList.add('bad');
+  if(DEBUG)console.log('[GT] 误点 #'+i+' '+JSON.stringify(cell));
+  refresh();
+  if(fails>=2){onFailed();return}
+  toast('误点 '+fails+'/2：该信号源不符合筛查规则',true);
+}
+function onSubmit(){
+  if(solvedFlag)return;
+  /* 核对选中集合与合规集合 */
+  var ok=sel.size===pz.targetCount;
+  if(ok){for(var i of sel){if(i>=pz.targetCount){ok=false;break}}}
+  if(!ok){toast('核验未通过：选中集合与合规信号源不一致',true);return}
+  onSolved();
+}
+function markDone(){
+  var wrap=$id('tcells');
+  pz.cells.forEach(function(cell,i){
+    var el=wrap.children[i];if(!el)return;
+    var isT=i<pz.targetCount;
+    el.classList.add('dead',isT?'hit':'miss');
+    if(isT&&sel.has(i))el.classList.add('sel');
+  });
+  $id('tgridWrap').classList.add('done');
+}
+function onSolved(){
+  solvedFlag=true;markDone();
+  var secs=(performance.now()-t0)/1000;
+  var stars=fails===0?3:(fails===1?2:1);
+  var st=$id('mStatus');st.textContent='筛查通过';st.classList.add('pass');
+  $id('stampBox').classList.remove('bad');
+  $id('stampTick').textContent='✔';
+  $id('stampTitle').textContent='校验通过';
+  $id('stampStats').innerHTML='难度 V'+LV+' · <span class="stars">'+'★'.repeat(stars)+'☆'.repeat(3-stars)+'</span> · 误点 '+fails+' 次 · 用时 '+secs.toFixed(1)+'s · 信号源已归档。';
+  $id('stamp').hidden=false;
+  $id('retryBtn').hidden=true;
+  try{
+    if(window.parent&&window.parent!==window){
+      window.parent.postMessage({type:'pz-solved',device:'V-40060',game:'targets',lv:LV,stars:stars,moves:fails,secs:Math.round(secs*10)/10},'*');
+    }
+  }catch(e){}
+  if(!DEBUG&&!FAST)setTimeout(closeAndVerify,1600);else closeAndVerify();
+}
+function onFailed(){
+  solvedFlag=true;markDone();
+  var st=$id('mStatus');st.textContent='筛查失败';st.classList.remove('pass');
+  $id('stampBox').classList.add('bad');
+  $id('stampTick').textContent='✕';
+  $id('stampTitle').textContent='筛查未通过';
+  $id('stampStats').innerHTML='难度 V'+LV+' · 误点 2 次 · 目标信号特征比对失败。<br>系统已重新生成信号阵列。';
+  $id('stamp').hidden=false;
+  $id('retryBtn').hidden=false;
+  try{
+    if(window.parent&&window.parent!==window){
+      window.parent.postMessage({type:'pz-failed',device:'V-40060',lv:LV,moves:fails},'*');
+    }
+  }catch(e){}
+}
+function closeAndVerify(){
+  verified=true;
+  $id('mask').hidden=true;
+  var box=$id('captchaBox');
+  box.classList.add('ok');
+  $id('cbIcon').textContent='✔';$id('cbIcon').classList.remove('spin');
+  $id('cbText').textContent='验证成功';
+  $id('loginBtn').disabled=false;
+  $id('formNote').textContent='身份已确认，欢迎回来，操作员。';
+  toast('筛查通过 · HUMAN VERIFIED');
+}
+function toast(msg,warn){
+  var t=$id('toast');t.textContent=msg;t.hidden=false;
+  t.className='toast mono'+(warn?' warn':'');
+  clearTimeout(t._h);t._h=setTimeout(function(){t.hidden=true},2400);
+}
+
+/* ---------- 挑战流程 ---------- */
+function newChallenge(){
+  solvedFlag=false;sel=new Set();fails=0;
+  if(!DEBUG){seed=((seed*1103515245+12345)%1000000007)|0;if(seed<0)seed=-seed;if(!seed)seed=1}
+  pz=genPuzzle(LV,seed);
+  $id('tgridWrap').classList.remove('done');
+  $id('stamp').hidden=true;
+  var st=$id('mStatus');st.textContent='筛查中';st.classList.remove('pass');
+  buildGrid();refresh();
+  t0=performance.now();
+  clearInterval(timerId);timerId=setInterval(updTime,100);updTime();
+  if(DEBUG){var comp=[];pz.cells.forEach(function(c,i){if(i<pz.targetCount)comp.push(i)});console.log('[GT] '+JSON.stringify({lv:LV,seed:pz.seedUsed,rules:pz.rules.map(predText),targets:pz.targetCount,compliant:comp,cells:pz.cells.map(function(c){return c.shape+'/'+c.color+'/'+c.orient})}));}
+}
+function setLevel(v){LV=clampLv(v);queuedLevel=pickQueuedLevel(LV);renderDiffBar();newChallenge()}
+function pickQueuedLevel(lv){
+  var arr=[];
+  if(customLevels&&customLevels.length){for(var i=0;i<customLevels.length;i++){var it=customLevels[i];if(it&&it.lv===lv&&it.enabled!==false)arr.push(it)}}
+  return arr.length?arr[Math.floor(Math.random()*arr.length)]:null;
+}
+function readCustomLevels(){
+  var arr=[],raw=null;
+  try{raw=localStorage.getItem(CUSTOM_KEY)}catch(e){raw=null}
+  if(!raw)return arr;
+  try{
+    var parsed=JSON.parse(raw);
+    if(Object.prototype.toString.call(parsed)==='[object Array]'){for(var i=0;i<parsed.length;i++){var it=parsed[i];if(it&&typeof it==='object'&&it.game==='targets')arr.push(it)}}
+  }catch(e){}
+  return arr;
+}
+
+/* ---------- 导出 ---------- */
+function buildLevelJSON(){
+  var spec=LV_TABLE[LV],p=pz;
+  var shortId='lv'+LV+'-'+((seed*2654435761)>>>0).toString(36).slice(0,6);
+  return {
+    game:'targets',
+    id:'targets-'+LV+'-'+shortId,
+    lv:LV,
+    name:'目标点选 V'+LV+' · '+spec.name,
+    desc:'在 '+spec.n+'×'+spec.n+' 信号阵列中按 '+spec.rules+' 条筛查规则点选全部 '+spec.targets+' 个合规信号源，误点 2 次即失败。',
+    play:'阅读顶部筛查规则；点选符合规则的信号源（再次点击可取消）；全部选对即通过，误点 2 次失败。规则可为形状/颜色/朝向的复合条件。',
+    params:{
+      n:p.n,targetCount:p.targetCount,
+      rules:p.rules.map(function(r){return {kind:r.kind,shape:r.shape||null,color:r.color||null,orient:r.orient||null}}),
+      cells:p.cells.map(function(c){return [c.shape,c.color,c.orient]})
+    },
+    enabled:true
+  };
+}
+function doExport(){var lvl=buildLevelJSON();console.log('[EXPORT] '+JSON.stringify(lvl));return lvl}
+function onReady(){
+  console.log('[GT-INIT] {lv:'+LV+',n:'+(pz?p.n:0)+',seed:'+seed+'}');
+  if(qs.get('export')==='1')doExport();
+}
+
+/* ---------- 自测（同步+微任务） ---------- */
+function starStr(n){return '★★★'.slice(0,n)+'☆☆☆'.slice(0,3-n)}
+function selftest(){
+  var per=3,tot=0,ok=0,fail=0;
+  var samples=[];
+  for(var v=1;v<=5;v++){
+    var vOk=0,vFail=0;
+    for(var si=0;si<per;si++){
+      var pp=genPuzzle(v,si*97+13+v*7919);
+      if(!pp){vFail++;console.log('[G8-TEST-FAIL] lv='+v+' seed='+(si*97+13)+' 生成器返回 null');continue}
+      var err=validate(pp);
+      if(err){vFail++;console.log('[G8-TEST-FAIL] lv='+v+' seed='+pp.seedUsed+' '+err);continue}
+      vOk++;
+      if(si===0)samples.push(pp);
+    }
+    var spec=LV_TABLE[v];
+    console.log('[G8-TEST] lv'+v+' PASS '+(vOk===per));
+    console.log('  V'+v+'（'+spec.n+'×'+spec.n+' · '+spec.rules+' 规则 · 合规目标 '+spec.targets+'）生成 '+per+' 局 · 校验通过 '+vOk+' · 失败 '+vFail);
+    tot+=per;ok+=vOk;fail+=vFail;
+  }
+  console.log('[G8-TEST] 生成重试 '+ST.genRetry+' 次（应为 0）');
+  var passAll=(fail===0);
+  console.log('[G8-TEST] '+(passAll?'5/5 100.0%':'FAIL '+fail+' 项')+' · 共 '+tot+' 局 · 校验通过 '+ok);
+  try{
+    var sl=samples.filter(function(_,i){return [0,2,4].indexOf(i)>=0}).map(function(pp){
+      var spec=LV_TABLE[pp.lv];
+      return {
+        game:'targets',id:'targets-'+pp.lv+'-selftest',lv:pp.lv,
+        name:'目标点选 V'+pp.lv+' · '+spec.name,
+        desc:'在 '+pp.n+'×'+pp.n+' 信号阵列中按规则点选全部 '+pp.targetCount+' 个合规信号源。',
+        play:'阅读筛查规则，点选合规信号源，误点 2 次失败。',
+        params:{n:pp.n,targetCount:pp.targetCount,rules:pp.rules,cells:pp.cells.map(function(c){return [c.shape,c.color,c.orient]})},
+        enabled:true
+      };
+    });
+    localStorage.setItem(CUSTOM_KEY,JSON.stringify(sl));
+    console.log('[G8-TEST] 样例已写入 '+CUSTOM_KEY+'（'+sl.length+' 条）');
+  }catch(e){console.log('[G8-TEST] localStorage 写入失败（隐私模式）:'+e.message)}
+  return passAll;
+}
+
+/* ---------- 启动 ---------- */
+function bootChallenge(){
+  try{customLevels=readCustomLevels()}catch(e){customLevels=[]}
+  queuedLevel=pickQueuedLevel(LV);
+  renderDiffBar();
+  newChallenge();
+  onReady();
+}
+if(qs.get('direct')==='1'){
+  if(FAST)$id('captchaBox').click();else setTimeout(function(){ $id('captchaBox').click() },150);
+}else if(qs.get('selftest')==='1'){
+  var okAll=selftest();
+  console.log(okAll?'[G8-TEST] 自测全部通过':'[G8-TEST] 自测存在失败项');
+}else{
+  bootChallenge();
+}
+/* 直通/自测模式下也预生成一局便于导出与调试 */
+if(qs.get('direct')==='1'||qs.get('selftest')==='1'){
+  try{ if(!pz){customLevels=[];queuedLevel=null;bootChallenge()} }catch(e){}
+}
+var box=$id('captchaBox');
+box.onclick=function(){
+  if(verified)return;
+  $id('cbIcon').classList.add('spin');
+  $id('cbText').textContent='正在接入特征筛查协议…';
+  var reveal=function(){
+    $id('cbIcon').classList.remove('spin');
+    $id('cbText').textContent='信号检索完成';
+    $id('mask').hidden=false;
+  };
+  if(FAST)reveal();else setTimeout(reveal,400);
+};
+box.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();box.click()}};
+$id('loginBtn').onclick=function(){ if(verified)toast('身份已确认 · 本次会话有效') };
+$id('submitBtn').onclick=onSubmit;
+$id('giveBtn').onclick=function(){ $id('mask').hidden=true;toast('筛查已放弃',true) };
+$id('retryBtn').onclick=function(){ $id('stamp').hidden=true;newChallenge() };
+</script>
+</body>
+</html>

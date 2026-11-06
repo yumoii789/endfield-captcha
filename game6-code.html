@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>访客协议 VISITOR PROTOCOL · 口令破译</title>
+<style>
+:root{--bg:#0b0e11;--line:#28313b;--line2:#3a4550;--ink:#d9e0e7;--dim:#8a96a2;--acc:#ffb100;--on:#ffcb4a;--ok:#3ddc8f;--bad:#ff5252;--cy:#39d0e0;--mono:ui-monospace,Consolas,'Courier New',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none !important}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(1000px 520px at 75% -10%,rgba(255,177,0,.07),transparent 60%),var(--bg);color:var(--ink);font-family:'Segoe UI',system-ui,'Microsoft YaHei',sans-serif;overflow-x:hidden;padding:24px 12px}
+.bg{position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);background-size:42px 42px;pointer-events:none;-webkit-mask-image:radial-gradient(ellipse at center,black 25%,transparent 78%);mask-image:radial-gradient(ellipse at center,black 25%,transparent 78%)}
+.mono{font-family:var(--mono)}
+.dim{color:var(--dim)}
+.wrap{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center}
+.frame{position:relative}
+.frame::after{content:"";position:absolute;inset:6px;border:1px dashed rgba(255,177,0,.16);border-radius:10px;pointer-events:none}
+.card{width:min(92vw,400px);background:linear-gradient(180deg,#161c23,#12171d);border:1px solid var(--line);border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.55);overflow:hidden}
+.hazard{height:8px;background:repeating-linear-gradient(45deg,var(--acc) 0 12px,#141414 12px 24px);opacity:.85}
+.brand{display:flex;gap:12px;align-items:center;padding:18px 22px 6px}
+.logo{width:40px;height:40px;border:1px solid var(--acc);border-radius:8px;display:grid;place-items:center;color:var(--acc);box-shadow:inset 0 0 12px rgba(255,177,0,.25)}
+.logo svg{width:24px;height:24px;display:block}
+.logo .glyph{fill:none;stroke:var(--acc);stroke-width:7;stroke-linejoin:round}
+.logo .dot{fill:var(--acc)}
+.brand h1{font-size:17px;letter-spacing:.14em}
+.brand p{font-size:10.5px;margin-top:3px;letter-spacing:.08em}
+form{padding:10px 22px 22px}
+.field{display:block;margin:12px 0}
+.field span{display:block;font-size:12px;color:var(--dim);margin-bottom:6px;letter-spacing:.1em}
+.field input{width:100%;background:#0e1318;border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--ink);font-size:14px;outline:none}
+.captcha-box{margin:16px 0 12px;display:flex;align-items:center;gap:12px;background:#0e1318;border:1px solid var(--line);border-radius:8px;padding:12px;cursor:pointer;user-select:none;transition:border-color .15s}
+.captcha-box:hover{border-color:var(--line2)}
+.captcha-box.ok{border-color:rgba(61,220,143,.55);cursor:default}
+.cb{flex:0 0 auto;width:22px;height:22px;border:2px solid var(--line2);border-radius:4px;display:grid;place-items:center;font-size:14px;color:transparent}
+.captcha-box.ok .cb{border-color:var(--ok);color:var(--ok)}
+.cb.spin{border-radius:50%;border-color:var(--acc) transparent var(--acc) transparent;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loginBtn{width:100%;padding:12px;border:0;border-radius:8px;background:linear-gradient(180deg,#ffc23d,#f5a300);color:#1a1200;font-weight:700;letter-spacing:.3em;font-size:14px;cursor:not-allowed;opacity:.4;transition:all .2s}
+#loginBtn:not(:disabled){cursor:pointer;opacity:1;box-shadow:0 6px 18px rgba(255,177,0,.22)}
+.note{font-size:12px;margin-top:10px}
+.credit{margin-top:14px;font-size:11px;color:var(--dim);opacity:.75;text-align:center;max-width:460px;line-height:1.7}
+.mask{position:fixed;inset:0;background:rgba(5,7,9,.72);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:50;animation:fade .2s;padding:12px}
+.modal{width:min(94vw,540px);max-height:96vh;overflow-y:auto;background:linear-gradient(180deg,#161c23,#10151b);border:1px solid var(--line2);border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.7)}
+.mhead{display:flex;justify-content:space-between;align-items:flex-start;padding:16px 20px 2px;gap:10px}
+.mhead h2{font-size:16px;letter-spacing:.1em}
+.mhead h2 span{font-size:11px;letter-spacing:.06em}
+.sub{font-size:11px;margin-top:4px}
+.status{flex:0 0 auto;font-size:11px;color:var(--acc);border:1px solid rgba(255,177,0,.4);padding:4px 8px;border-radius:4px}
+.status.pass{color:var(--ok);border-color:rgba(61,220,143,.5)}
+.status.fail{color:var(--bad);border-color:rgba(255,82,82,.5)}
+.mtip{padding:8px 20px 0;font-size:12.5px;color:var(--dim);line-height:1.7}
+.mtip b{color:var(--ink)}
+.diffbar{display:flex;gap:6px;padding:10px 20px 0;align-items:center}
+.diffbar .dlabel{font-size:11px;color:var(--dim);letter-spacing:.08em;margin-right:2px}
+.diffbtn{flex:1 1 0;min-width:0;background:transparent;border:1px solid var(--line2);color:var(--dim);border-radius:6px;padding:5px 0;font-family:var(--mono);font-size:12px;cursor:pointer;transition:all .15s}
+.diffbtn:hover{border-color:var(--acc);color:var(--acc)}
+.diffbtn.on{border-color:var(--acc);color:#1a1200;background:linear-gradient(180deg,#ffc23d,#f5a300);font-weight:700}
+.gboard{padding:14px 20px 4px;display:flex;gap:16px;align-items:flex-start;justify-content:center}
+.slotcol{display:flex;flex-direction:column;gap:6px}
+.slotlabel{font-size:10.5px;color:var(--dim);letter-spacing:.1em}
+.slots{display:flex;gap:6px}
+.slot{width:44px;height:44px;background:#0d1217;border:1px solid var(--line);border-radius:8px;display:grid;place-items:center;color:var(--dim);font-family:var(--mono);font-size:16px;transition:border-color .15s,box-shadow .15s}
+.slot.cur{border-color:var(--acc);box-shadow:inset 0 0 12px rgba(255,177,0,.22)}
+.slot svg{width:60%;height:60%;display:block}
+.statcol{display:flex;flex-direction:column;gap:8px;min-width:96px}
+.stat{background:#0d1217;border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+.stat i{display:block;font-style:normal;font-size:10px;color:var(--dim);letter-spacing:.1em}
+.stat b{display:block;font-family:var(--mono);font-size:16px;color:var(--ink);margin-top:2px;font-weight:600}
+.stat.warn b{color:var(--bad)}
+.stat.good b{color:var(--ok)}
+.keys{padding:10px 20px 0;display:flex;flex-direction:column;gap:7px}
+.keyrow{display:flex;gap:7px;align-items:center}
+.keyrow .rlab{font-family:var(--mono);font-size:10.5px;color:var(--dim);width:14px;flex:0 0 auto}
+.key{flex:1 1 0;min-width:0;height:44px;background:#1a2129;border:1px solid #262f38;border-radius:8px;cursor:pointer;position:relative;display:grid;place-items:center;padding:0;touch-action:manipulation;transition:border-color .15s,background .15s,transform .08s}
+.key:hover{border-color:rgba(255,177,0,.5);background:#20272f}
+.key:active{transform:translateY(1px)}
+.key svg{width:62%;height:62%;display:block}
+.key .kn{position:absolute;font-family:var(--mono);font-size:10px;color:var(--dim);transform:translateY(15px)}
+.oprow{padding:12px 20px 0;display:flex;gap:8px}
+.oprow .ghost{flex:1 1 0;min-height:38px}
+.ghost{background:transparent;border:1px solid var(--line2);color:var(--ink);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;transition:all .15s}
+.ghost:hover{border-color:var(--acc);color:var(--acc)}
+.ghost.primary{border-color:var(--acc);color:#1a1200;background:linear-gradient(180deg,#ffc23d,#f5a300);font-weight:700;letter-spacing:.1em}
+.ghost:disabled{opacity:.38;cursor:not-allowed}
+.ghost:disabled:hover{border-color:var(--line2);color:var(--ink)}
+.ghost.primary:disabled:hover{color:#1a1200}
+.histwrap{padding:12px 20px 0}
+.histhead{display:flex;justify-content:space-between;align-items:baseline;font-size:10.5px;color:var(--dim);letter-spacing:.1em;margin-bottom:6px}
+.hist{max-height:170px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;padding-right:2px}
+.histrow{display:flex;align-items:center;gap:8px;background:#0d1217;border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.histrow.now{border-color:rgba(255,177,0,.45)}
+.histrow.hit{border-color:rgba(61,220,143,.45)}
+.histrow .hno{font-family:var(--mono);font-size:10px;color:var(--dim);width:16px;flex:0 0 auto}
+.histrow .hguess{display:flex;gap:3px;flex:0 0 auto}
+.histrow .hguess svg{width:20px;height:20px;display:block}
+.histrow .hfb{margin-left:auto;display:flex;gap:4px;align-items:center}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block}
+.dot.g{background:radial-gradient(circle at 34% 32%,#fff3c9,var(--on) 55%,#a86f00);box-shadow:0 0 7px rgba(255,203,74,.55)}
+.dot.s{background:radial-gradient(circle at 34% 32%,#f2f7fa,#c3ced8 55%,#6d7a86);box-shadow:0 0 5px rgba(195,206,216,.32)}
+.dot.n{background:transparent;border:1px solid #2b343d}
+.histrow .hsum{font-family:var(--mono);font-size:10.5px;color:var(--dim);width:60px;text-align:right;flex:0 0 auto}
+.histrow.hit .hsum{color:var(--ok)}
+.empty{font-size:11.5px;color:var(--dim);padding:8px 2px}
+.mfoot{display:flex;justify-content:space-between;align-items:center;padding:12px 20px 18px;gap:10px;flex-wrap:wrap}
+.stats{display:flex;gap:14px;font-size:12px;color:var(--dim)}
+.term{font-family:var(--mono);font-size:11.5px;line-height:1.75;color:var(--dim);padding-left:1.2em;text-indent:-1.2em}
+.term::before{content:"> ";color:var(--acc)}
+.term b{color:var(--ink);font-weight:600}
+.stamp{position:absolute;inset:0;background:rgba(8,11,13,.87);display:flex;align-items:center;justify-content:center;z-index:5;animation:fade .25s;border-radius:14px}
+.stamp-box{border:3px solid var(--ok);border-radius:12px;padding:20px 32px;text-align:center;transform:rotate(-6deg);color:var(--ok);box-shadow:0 0 30px rgba(61,220,143,.28);animation:stampIn .32s cubic-bezier(.2,1.6,.4,1);max-width:86%}
+.stamp-box.fail{border-color:var(--bad);color:var(--bad);box-shadow:0 0 30px rgba(255,82,82,.28);transform:rotate(4deg)}
+.tick{font-size:40px;line-height:1}
+.stamp-box h3{margin-top:6px;letter-spacing:.22em;font-size:18px}
+.stamp-box p{margin-top:8px;font-size:11px;color:var(--ink);opacity:.85;line-height:1.7}
+@keyframes stampIn{from{transform:rotate(-6deg) scale(1.6);opacity:0}}
+@keyframes fade{from{opacity:0}}
+.stars{color:var(--acc);letter-spacing:.16em;font-size:13px}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#161d24;border:1px solid var(--ok);color:var(--ink);padding:10px 18px;border-radius:8px;font-size:13px;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:fade .2s;max-width:min(92vw,420px);text-align:center}
+.toast.bad{border-color:var(--bad)}
+/* == craft patch: impeccable x industrial-telemetry == */
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.scanlines{position:fixed;inset:0;pointer-events:none;z-index:99;background-image:linear-gradient(rgba(255,255,255,.016) 1px,transparent 1px);background-size:100% 3px}
+@media (max-width:640px){.mfoot{flex-wrap:wrap;gap:8px}.mtip{font-size:12px}.stats{font-size:11px;gap:8px}.slot{width:38px;height:38px}.key{height:40px}.hist{max-height:142px}}
+@media (max-width:380px){.card{width:94vw}.slot{width:34px;height:34px}.hazard{height:6px}.gboard{gap:10px}.statcol{min-width:80px}}
+@media (max-height:560px){.hist{max-height:96px}.gboard{padding-top:8px}}
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+<div class="bg"></div>
+<main class="wrap">
+  <section class="card frame">
+    <div class="hazard"></div>
+    <header class="brand">
+      <div class="logo" aria-hidden="true"><svg viewBox="0 0 100 100"><circle class="glyph" cx="50" cy="50" r="30"/><circle class="dot" cx="50" cy="50" r="11"/></svg></div>
+      <div><h1>访客协议</h1><p class="mono dim">VISITOR PROTOCOL // 终端访问</p></div>
+    </header>
+    <form id="loginForm">
+      <label class="field"><span>操作员编号</span><input value="klee_0413" readonly tabindex="-1"></label>
+      <label class="field"><span>访问密钥</span><input type="password" value="········" readonly tabindex="-1"></label>
+      <div id="captchaBox" class="captcha-box" role="button" tabindex="0" aria-label="开始人机验证">
+        <span class="cb" id="cbIcon"></span>
+        <span id="cbText">我不是机器人</span>
+      </div>
+      <button id="loginBtn" type="submit" disabled>登 录</button>
+      <p class="dim note" id="formNote">完成人机验证后才能登录。</p>
+    </form>
+  </section>
+  <p class="credit">灵感致敬《明日方舟：终末地》与计客益智玩具 · 粉丝练习作品</p>
+</main>
+
+<div class="mask" id="mask" hidden>
+  <section class="modal frame">
+    <div class="hazard"></div>
+    <header class="mhead">
+      <div>
+        <h2>安全校验 <span class="mono dim">// SECURITY CHECK</span></h2>
+        <p class="mono sub dim">设备 V-40058 · 口令破译</p>
+      </div>
+      <div class="status mono" id="mStatus">接入中…</div>
+    </header>
+    <p class="mtip" id="tipText"></p>
+    <div class="diffbar" id="diffBar" role="group" aria-label="难度选择">
+      <span class="dlabel mono">难度</span>
+      <button class="diffbtn mono" type="button" data-lv="1">V1</button>
+      <button class="diffbtn mono" type="button" data-lv="2">V2</button>
+      <button class="diffbtn mono" type="button" data-lv="3">V3</button>
+      <button class="diffbtn mono" type="button" data-lv="4">V4</button>
+      <button class="diffbtn mono" type="button" data-lv="5">V5</button>
+    </div>
+    <div class="gboard">
+      <div class="slotcol">
+        <span class="slotlabel mono">口令位</span>
+        <div class="slots" id="slots"></div>
+      </div>
+      <div class="statcol">
+        <div class="stat" id="stLeftBox"><i>剩余次数</i><b id="stLeft">10</b></div>
+        <div class="stat"><i>已用</i><b id="stUsed">0</b></div>
+        <div class="stat"><i>位 / 符号</i><b id="stCfg">4 / 4</b></div>
+      </div>
+    </div>
+    <div class="keys" id="keys"></div>
+    <div class="oprow">
+      <button id="btnUndo" class="ghost" type="button">撤销一位 ⌫</button>
+      <button id="btnClear" class="ghost" type="button">清空</button>
+      <button id="btnSubmit" class="ghost primary" type="button">提交 ▸</button>
+    </div>
+    <div class="histwrap">
+      <div class="histhead mono"><span>尝试记录 // FEEDBACK LOG</span><span id="histN">0 行</span></div>
+      <div class="hist" id="hist"></div>
+    </div>
+    <footer class="mfoot">
+      <div class="mono stats"><span id="stTime">00:00.0</span><span id="stBest">最佳 —</span></div>
+      <div class="mbtns"><button id="btnNew" class="ghost" type="button">换一个 ↻</button></div>
+    </footer>
+    <div class="stamp" id="stamp" hidden>
+      <div class="stamp-box" id="stampBox">
+        <div class="tick" id="stampTick">✔</div>
+        <h3 id="stampTitle">人类身份已确认</h3>
+        <p class="mono" id="stampStats">HUMAN VERIFIED</p>
+      </div>
+    </div>
+  </section>
+</div>
+<div id="toast" class="toast" hidden></div>
+<script>
+'use strict';
+/* ================= 口令破译 V-40058 · 核心逻辑 ================= */
+function $id(s){return document.getElementById(s)}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function clamp(x,a,b){return x<a?a:(x>b?b:x)}
+
+/* ---------- 难度参数（严格照办） ---------- */
+var LV_TABLE={
+  1:{len:4,sym:4,budget:10,name:'简单'},
+  2:{len:4,sym:5,budget:9, name:'容易'},
+  3:{len:4,sym:6,budget:8, name:'中等'},
+  4:{len:5,sym:6,budget:9, name:'较难'},
+  5:{len:5,sym:7,budget:9, name:'困难'}
+};
+var LEVELS_META=[1,2,3,4,5].map(function(k){return {game:'code',lv:k,len:LV_TABLE[k].len,sym:LV_TABLE[k].sym,moves:LV_TABLE[k].budget,name:LV_TABLE[k].name}});
+var CUSTOM_KEY='endland-levels-code';
+var INST_BY_LV={1:6,2:3,3:1,4:0,5:0};
+
+/* ---------- 参数 ---------- */
+var qs=new URLSearchParams(location.search);
+function clampLv(v){v=parseInt(v,10);if(isNaN(v))return 1;return Math.max(1,Math.min(5,v))}
+var lvRaw=qs.get('lv');
+var LV=clampLv(lvRaw===null||lvRaw===''?1:lvRaw);
+var seed=parseInt(qs.get('seed')||'',10); if(isNaN(seed)) seed=((Date.now()%1000000)|0)+1;
+var DEBUG=qs.get('debug')==='1';
+var SELFTEST=qs.get('selftest')==='1';
+
+/* ---------- 符号图形：6 种彩色几何形状，可缩放到 7 档（禁止 emoji / 外链图片） ---------- */
+var GLYPHS=[];
+GLYPHS.push('<circle cx="50" cy="50" r="33"/>');
+GLYPHS.push('<path d="M50 12 L90 84 L10 84 Z"/>');
+GLYPHS.push('<rect x="15" y="15" width="70" height="70" rx="7"/>');
+(function(){var s='M50 9 L88 50 L50 91 L12 50 Z';for(var k=1;k<=4;k++){var y=9+(82*k/5);s+=' M'+(50-41*k/5)+' '+y+' L'+(50+41*k/5)+' '+y}GLYPHS.push(s)})();
+GLYPHS.push('<polygon points="50,7 87,28.5 87,71.5 50,93 13,71.5 13,28.5"/>');
+GLYPHS.push('<path d="M50 6 L61 37 L94 38 L68 58 L77 90 L50 71 L23 90 L32 58 L6 38 L39 37 Z"/>');
+var SHAPE_NAMES=['圆形','三角','方块','菱形','六边','星形'];
+var SYM_COLOR=['var(--acc)','var(--cy)','var(--ok)','var(--bad)','#9b8cff','#ff8f5e','#ff6bd6'];
+/* 符号键位：按符号数自动分行（每行 ≤4），附带数字角标 */
+function keyRows(sym){var rows=[],i=0;while(i<sym){var row=[],c=0;while(i<sym&&c<4){row.push(i);i++;c++}rows.push(row)}return rows}
+function symSVG(id,size){
+  var c=SYM_COLOR[id%SYM_COLOR.length];
+  return '<svg viewBox="-2 -2 104 104" width="'+size+'" height="'+size+'" aria-hidden="true">'+
+    '<g fill="none" stroke="'+c+'" stroke-width="9" stroke-linejoin="round" stroke-linecap="round" opacity=".26">'+
+    '<use href="#sg'+id+'"/></g>'+
+    '<g fill="none" stroke="'+c+'" stroke-width="7.5" stroke-linejoin="round" stroke-linecap="round"><use href="#sg'+id+'"/></g>'+
+    '</svg>';
+}
+function symDefs(){
+  var s='<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>';
+  for(var i=0;i<GLYPHS.length;i++)s+='<g id="sg'+i+'">'+GLYPHS[i]+'</g>';
+  return s+'</defs></svg>';
+}
+
+/* ---------- 反馈：金点（对位）/ 银点（错位） ---------- */
+function feedback(guess,secret){
+  var n=guess.length,used=[],g=0,s=0,i,j;
+  for(i=0;i<n;i++)used.push(false);
+  for(i=0;i<n;i++){if(guess[i]===secret[i]){g++;used[i]=true}}
+  for(i=0;i<n;i++){
+    if(guess[i]===secret[i])continue;
+    for(j=0;j<n;j++){
+      if(used[j]||secret[j]!==guess[i])continue;
+      used[j]=true;s++;break;
+    }
+  }
+  return {g:g,s:s};
+}
+/* ---------- 候选剪枝求解器：提交即校验，保证题面在预算内可还原 ---------- */
+/* fbCode：整数反馈编码（金×10+银），复用同一草稿数组，零分配，供高频调用 */
+var SOLVE_NODE_CAP=400000,POOL_CAP=160;
+function fbCode(g,s,scr){
+  var n=g.length,i,j,ex=0,semi=0;
+  for(i=0;i<n;i++)scr[i]=0;
+  for(i=0;i<n;i++){if(g[i]===s[i]){ex++;scr[i]=2}}
+  for(i=0;i<n;i++){
+    if(g[i]===s[i])continue;
+    for(j=0;j<n;j++){
+      if(scr[j])continue;
+      if(s[j]===g[i]){scr[j]=1;semi++;break}
+    }
+  }
+  return ex*10+semi;
+}
+function genSecret(rng,spec){
+  var a=[],i;
+  for(i=0;i<spec.len;i++)a.push(Math.floor(rng()*spec.sym));
+  return a;
+}
+function allCandidates(spec){
+  var out=[],n=spec.len,k=spec.sym;
+  if(Math.pow(k,n)>300000)return null;
+  (function rec(cur){
+    if(cur.length===n){out.push(cur.slice());return}
+    for(var i=0;i<k;i++){cur.push(i);rec(cur);cur.pop()}
+  })([]);
+  return out;
+}
+function samplePool(cands,cap){
+  if(cands.length<=cap)return cands;
+  var out=[],step=cands.length/cap,i;
+  for(i=0;i<cap;i++)out.push(cands[Math.floor(i*step)]);
+  return out;
+}
+/* 极小化极大选猜：均匀采样 ≤POOL_CAP 条候选作猜集，使最大剩余候选数最小；并列取符号和最小 */
+function pickGuess(cands,scr,first,len,sym){
+  var i;
+  if(first){var p0=[];for(i=0;i<len;i++)p0.push(i%sym);return p0}
+  var gs=samplePool(cands,POOL_CAP),best=null,bMax=1e9,bSum=1e9;
+  for(var gi=0;gi<gs.length;gi++){
+    var cnt={},mx=0,sum=0;
+    for(var cj=0;cj<cands.length;cj++){
+      var k=fbCode(gs[gi],cands[cj],scr);
+      cnt[k]=(cnt[k]||0)+1;
+    }
+    for(var kk in cnt)if(cnt[kk]>mx)mx=cnt[kk];
+    for(i=0;i<gs[gi].length;i++)sum+=gs[gi][i];
+    if(mx<bMax||(mx===bMax&&sum<bSum)){bMax=mx;bSum=sum;best=gs[gi]}
+  }
+  return best.slice();
+}
+function solveSecret(secret,spec,budget){
+  var cands=allCandidates(spec);
+  if(!cands)return {ok:false,moves:-1};
+  var scr=new Uint8Array(spec.len);
+  var used=0,nodes=0,pick=pickGuess(cands,scr,true,spec.len,spec.sym);
+  while(used<budget){
+    var fb=fbCode(pick,secret,scr);
+    used++;
+    if((fb/10|0)===spec.len)return {ok:true,moves:used,nodes:nodes,space:cands.length};
+    var next=[],i;
+    for(i=0;i<cands.length;i++){
+      nodes++;
+      if(nodes>SOLVE_NODE_CAP)return {ok:false,moves:used,nodes:nodes,cap:true};
+      if(fbCode(pick,cands[i],scr)===fb)next.push(cands[i]);
+    }
+    cands=next;
+    if(!cands.length)return {ok:false,moves:used,nodes:nodes,dead:true};
+    pick=pickGuess(cands,scr,false,spec.len,spec.sym);
+  }
+  return {ok:false,moves:used,nodes:nodes};
+}
+/* ANY 码证明：按同一选猜策略遍历整棵决策树，断言每条路径都在预算内终结 */
+function proveLevel(spec,budget){
+  var cands=allCandidates(spec);
+  if(!cands)return {ok:false,why:'候选空间超上限',worst:-1};
+  var scr=new Uint8Array(spec.len),nodes=0,worst=0;
+  function walk(pool,depth){
+    var pick=pickGuess(pool,scr,depth===1,spec.len,spec.sym);
+    var parts={};
+    for(var i=0;i<pool.length;i++){
+      nodes++;
+      if(nodes>SOLVE_NODE_CAP)throw {cap:true};
+      var k=fbCode(pick,pool[i],scr);
+      (parts[k]=parts[k]||[]).push(pool[i]);
+    }
+    for(var kk in parts){
+      var b=parts[kk];
+      if((+kk/10|0)===spec.len){if(depth>worst)worst=depth;continue}
+      if(depth+1>budget)throw {over:true,depth:depth+1};
+      walk(b,depth+1);
+    }
+  }
+  try{walk(cands,1)}catch(e){
+    if(e&&e.over)return {ok:false,why:'路径超预算 @'+e.depth,worst:e.depth};
+    if(e&&e.cap)return {ok:false,why:'节点超上限',worst:worst};
+    return {ok:false,why:'异常 '+e,worst:-1};
+  }
+  return {ok:true,worst:worst};
+}
+
+/* ---------- 题面生成：种子化，同一 seed 同一题面；生成即校验（求解器必须在预算内解出） ---------- */
+var ST={genRetry:0,solveReject:0};
+function genPuzzle(sd,spec){
+  spec=spec||LV_TABLE[LV];
+  for(var att=0;att<80;att++){
+    var rng=mulberry32(((sd*2654435761)^((att+1)*40503))>>>0);
+    var sec=genSecret(rng,spec);
+    if(att!==0)ST.genRetry++;
+    var r=solveSecret(sec,spec,spec.budget);
+    if(r.ok&&r.moves<=spec.budget){
+      return {len:spec.len,sym:spec.sym,budget:spec.budget,secret:sec,seedUsed:sd,attempt:att,
+        solver:{moves:r.moves,nodes:r.nodes,space:r.space}};
+    }
+    ST.solveReject++;
+  }
+  return null;
+}
+function genForLevel(v,sd,specOverride){
+  var keep=LV;LV=clampLv(v);
+  var spec=specOverride||LV_TABLE[LV];
+  var out=null;
+  try{out=genPuzzle(sd,spec)}catch(e){out=null}
+  LV=keep;
+  return out;
+}
+
+/* ---------- 关卡缓存读写（格式参考 game4 同名键） ---------- */
+var customLevels=[],queuedLevel=null;
+function readCustomLevels(){
+  var arr=[],raw=null;
+  try{raw=localStorage.getItem(CUSTOM_KEY)}catch(e){raw=null}
+  if(!raw)return arr;
+  try{
+    var parsed=JSON.parse(raw);
+    if(Object.prototype.toString.call(parsed)==='[object Array]'){
+      for(var i=0;i<parsed.length;i++){
+        var it=parsed[i];
+        if(!it||typeof it!=='object')continue;
+        if(it.enabled===false)continue;
+        if(it.game&&it.game!=='code')continue;
+        if(it.lv===undefined||it.lv===null)continue;
+        arr.push(it);
+      }
+    }
+  }catch(e){}
+  return arr;
+}
+function pickQueuedLevel(lv){
+  for(var i=0;i<customLevels.length;i++){
+    var it=customLevels[i];
+    if(clampLv(it.lv)!==lv)continue;
+    if(!it.params||!it.params.len||!it.params.sym||!it.params.moves)continue;
+    return it;
+  }
+  return null;
+}
+function specOfLv(v){
+  var q=pickQueuedLevel(clampLv(v));
+  if(q&&q.params&&q.params.len&&q.params.sym&&q.params.moves){
+    return {len:clamp(parseInt(q.params.len,10)||4,3,8),sym:clamp(parseInt(q.params.sym,10)||4,3,7),budget:clamp(parseInt(q.params.moves,10)||8,1,20)};
+  }
+  var k=clampLv(v);
+  return {len:LV_TABLE[k].len,sym:LV_TABLE[k].sym,budget:LV_TABLE[k].budget};
+}
+function writeCustomLevels(list){
+  try{localStorage.setItem(CUSTOM_KEY,JSON.stringify(list))}catch(e){}
+}
+function upsertLevel(lvl){
+  var list=readCustomLevels(),i,found=false;
+  for(i=0;i<list.length;i++){if(list[i].id===lvl.id){list[i]=lvl;found=true;break}}
+  if(!found)list.push(lvl);
+  writeCustomLevels(list);
+}
+
+/* ---------- 导出当前局 level JSON ---------- */
+function buildLevelJSON(){
+  var spec=LV_TABLE[LV];
+  var p=pz||{len:spec.len,sym:spec.sym,budget:spec.budget,secret:[]};
+  var shortId='lv'+LV+'-'+((seed*2654435761)>>>0).toString(36).slice(0,6);
+  return {
+    game:'code',
+    id:'code-'+LV+'-'+shortId,
+    lv:LV,
+    name:'口令破译 V'+LV+' · '+spec.name,
+    desc:'还原一段 '+p.len+' 位、共 '+p.sym+' 种符号的通行口令；符号可重复，'+p.budget+' 次提交内完成。',
+    play:'用符号键盘逐位填入口令后提交：金点表示符号与位置皆对，银点表示符号存在但位置不对；在次数预算内还原完整口令即通过。',
+    params:{len:p.len,sym:p.sym,moves:p.budget,secret:(p.secret||[]).slice()},
+    enabled:true
+  };
+}
+function doExport(){
+  var lvl=buildLevelJSON();
+  console.log('[EXPORT] '+JSON.stringify(lvl));
+  return lvl;
+}
+
+/* ---------- 自测：V1-V5 各 1 题 + 剪枝求解器机器验证（同步 + 微任务内完成） ---------- */
+function selftest(){
+  var pass=0,lines=[];
+  for(var v=1;v<=5;v++){
+    var spec=specOfLv(v);
+    var p=genForLevel(v,97531+v*7919,spec);
+    var ok=false,why='',mv=-1,pr=null;
+    if(!p){why='生成器返回空'}
+    else{
+      var r=solveSecret(p.secret,spec,spec.budget);
+      mv=r.moves;
+      ok=r.ok&&r.moves<=spec.budget;
+      if(!ok)why='预算内无解（求解器用 '+r.moves+' 次 / 预算 '+spec.budget+'）';
+      if(ok){
+        pr=proveLevel(spec,spec.budget);
+        if(!pr.ok){ok=false;why='ANY 码决策树证明失败（'+pr.why+'）'}
+      }
+      if(ok){
+        var sec=p.secret;
+        var sec2=genSecret(mulberry32(((p.seedUsed*2654435761)^((p.attempt+1)*40503))>>>0),spec);
+        if(sec.join(',')!==sec2.join(',')){ok=false;why='同 seed 题面不一致'}
+        else{
+          var f0=feedback(sec,sec),f1=feedback(sec,sec.slice().reverse());
+          if(!(f0.g===spec.len&&f0.s===0)){ok=false;why='反馈函数自检失败（金点）'}
+          else if(f1.s+f1.g!==spec.len){ok=false;why='反馈函数自检失败（银点越界）'}
+        }
+      }
+    }
+    if(ok){
+      pass++;
+      lines.push('[G6-TEST] lv'+v+' PASS · '+spec.len+'位/'+spec.sym+'符号 · 预算 '+spec.budget+' 次 · 求解器 '+mv+' 次还原 · any-code worst '+pr.worst+'/'+spec.budget+' · seed '+p.seedUsed);
+      var lvl=buildLevelJSON();
+      lvl.lv=v;lvl.id='code-v'+v+'-selftest';lvl.name='口令破译 V'+v+' · '+LV_TABLE[v].name;
+      lvl.params={len:spec.len,sym:spec.sym,moves:spec.budget,secret:p.secret.slice()};
+      upsertLevel(lvl);
+    }else lines.push('[G6-TEST] lv'+v+' FAIL · '+why);
+  }
+  for(var li=0;li<lines.length;li++)console.log(lines[li]);
+  console.log('[G6-TEST] SUMMARY '+pass+'/5 '+(pass/5*100).toFixed(1)+'% · 生成重试 '+ST.genRetry+' 次 · 生成即校验拒绝 '+ST.solveReject+' 次');
+  return pass;
+}
+
+/* ================= 界面层 ================= */
+var pz=null,entry=[],guesses=[],cur=0,solvedFlag=false,verified=false,checking=false,failedFlag=false;
+var t0=0,timerId=null;
+function specCur(){return pz?{len:pz.len,sym:pz.sym,budget:pz.budget}:specOfLv(LV)}
+function fmt(s){var m=Math.floor(s/60),ss=s%60;return (m<10?'0':'')+m+':'+(ss<10?'0':'')+ss.toFixed(1)}
+function updTime(){if(t0&&!solvedFlag&&!failedFlag)$id('stTime').textContent=fmt((performance.now()-t0)/1000)}
+function starStr(n){return '★★★☆☆'.slice(3-n,6-n)}
+function starsFor(used){var b=specCur().budget;if(used<=Math.ceil(b/2))return 3;if(used<=b-1)return 2;return 1}
+function tipFor(v,spec){
+  var map={
+    1:'检测到自动化访问特征。<b>点下方符号依次填满 '+spec.len+' 个口令位</b>，提交后看反馈：金点＝符号与位置皆对，银点＝符号在但位置不对。'+spec.budget+' 次以内还原口令即可放行。',
+    2:'口令位 '+spec.len+'，符号扩到 '+spec.sym+' 种，预算收紧到 '+spec.budget+' 次。先固定住金点，再淘汰银点，别浪费提交。',
+    3:'符号 '+spec.sym+' 种，'+spec.budget+' 次预算。机械体靠穷举，人类靠反馈——每一条记录都是线索。',
+    4:'口令拉长到 '+spec.len+' 位。金点优先收敛位置，银点用于排除符号，剩下 '+spec.budget+' 次提交要留给推理。',
+    5:'五档最难：'+spec.len+' 位 / '+spec.sym+' 种符号 / '+spec.budget+' 次。识别中心建议：先建立一条基准线再逐位切割。'
+  };
+  return map[clampLv(v)]||map[1];
+}
+function renderDiffBar(){
+  var bs=document.querySelectorAll('.diffbtn');
+  for(var i=0;i<bs.length;i++){
+    var on=parseInt(bs[i].getAttribute('data-lv'),10)===LV;
+    bs[i].className='diffbtn mono'+(on?' on':'');
+    bs[i].setAttribute('aria-pressed',on?'true':'false');
+  }
+  var st=$id('mStatus');
+  if(!st.classList.contains('pass')&&!st.classList.contains('fail'))st.textContent='接入中…';
+  st.title='当前难度 V'+LV+' · '+pz.len+' 位 / '+pz.sym+' 符号 / '+pz.budget+' 次预算（含 1 次最终提交）';
+}
+function buildSlots(){
+  var host=$id('slots'),i;
+  host.innerHTML='';
+  for(i=0;i<pz.len;i++){
+    var d=document.createElement('div');
+    d.className='slot'+(i===cur&&!solvedFlag&&!failedFlag?' cur':'');
+    d.id='sl-'+i;
+    d.setAttribute('role','img');
+    host.appendChild(d);
+  }
+  paintSlots(true);
+}
+function paintSlots(force){
+  for(var i=0;i<pz.len;i++){
+    var el=$id('sl-'+i);if(!el)continue;
+    el.classList.toggle('cur',i===cur&&!solvedFlag&&!failedFlag);
+    var v=entry[i];
+    if(v===undefined||v===null){if(force||el.dataset.v!=='x'){el.innerHTML='<span class="dim mono">·</span>';el.dataset.v='x';el.setAttribute('aria-label','第 '+(i+1)+' 位 空')}}
+    else if(force||el.dataset.v!==String(v)){el.innerHTML=symSVG(v,26);el.dataset.v=String(v);el.setAttribute('aria-label','第 '+(i+1)+' 位 '+SHAPE_NAMES[v%SHAPE_NAMES.length])}
+  }
+  var rest=specCur().budget-guesses.length;
+  var sl=$id('stLeft');sl.textContent=rest;
+  $id('stLeftBox').className='stat'+(rest<=2?' warn':'');
+  $id('stUsed').textContent=guesses.length;
+  $id('stCfg').textContent=pz.len+' / '+pz.sym;
+  $id('btnSubmit').disabled=solvedFlag||failedFlag||entry.join(',').indexOf('undefined')>=0||entry.length<pz.len;
+}
+function buildKeys(){
+  var host=$id('keys'),rows=keyRows(pz.sym);
+  host.innerHTML='';
+  for(var r=0;r<rows.length;r++){
+    var row=document.createElement('div');row.className='keyrow';
+    if(pz.sym>4){var lab=document.createElement('span');lab.className='rlab';lab.textContent=(r?'':'')+'';row.appendChild(lab)}
+    else{var lab0=document.createElement('span');lab0.className='rlab';lab0.textContent='';row.appendChild(lab0)}
+    for(var i=0;i<rows[r].length;i++){
+      (function(id){
+        var b=document.createElement('button');
+        b.type='button';b.className='key';b.dataset.sym=id;
+        b.setAttribute('aria-label','符号 '+SHAPE_NAMES[id%SHAPE_NAMES.length]+' · 键位 '+(id+1));
+        b.title='键位 '+(id+1)+' · '+SHAPE_NAMES[id%SHAPE_NAMES.length];
+        b.innerHTML=symSVG(id,26)+'<span class="kn">'+(id+1)+'</span>';
+        row.appendChild(b);
+      })(rows[r][i]);
+    }
+    host.appendChild(row);
+  }
+}
+function histRow(g,idx,isNow){
+  var d=document.createElement('div');
+  var f=feedback(g,pz.secret);
+  var hit=f.g===pz.len;
+  d.className='histrow'+(hit?' hit':'')+(isNow?' now':'');
+  var h='<span class="hno mono">'+String(idx+1).padStart(2,'0')+'</span><span class="hguess">';
+  for(var i=0;i<g.length;i++)h+=symSVG(g[i],20);
+  h+='</span><span class="hfb">';
+  var j;
+  for(j=0;j<f.g;j++)h+='<span class="dot g"></span>';
+  for(j=0;j<f.s;j++)h+='<span class="dot s"></span>';
+  for(j=0;j<pz.len-f.g-f.s;j++)h+='<span class="dot n"></span>';
+  h+='</span><span class="hsum">'+(hit?'还原 ✔':(f.g+'金 '+f.s+'银'))+'</span>';
+  d.innerHTML=h;
+  return d;
+}
+function renderHist(){
+  var host=$id('hist');
+  host.innerHTML='';
+  if(!guesses.length){host.innerHTML='<p class="empty">尚无尝试记录。填入 '+pz.len+' 位符号后提交，反馈会逐行留在下方。</p>'}
+  for(var i=0;i<guesses.length;i++)host.appendChild(histRow(guesses[i],i,false));
+  if(!solvedFlag&&!failedFlag&&entry.length===pz.len&&entry.indexOf(undefined)<0)host.appendChild(histRow(entry.slice(),guesses.length,true));
+  $id('histN').textContent=guesses.length+' 行 / 上限 '+pz.budget;
+  host.scrollTop=host.scrollHeight;
+}
+function refreshBest(){
+  var best=null;
+  for(var i=0;i<customLevels.length;i++){
+    var it=customLevels[i];
+    if(!it.params||it.params.moves==null)continue;
+    if(!it.best||!it.best.moves)continue;
+    if(best===null||it.best.moves<best)best=it.best.moves;
+  }
+  var st=solvedStats&&solvedStats.moves?Math.min(solvedStats.moves,best===null?1e9:best):best;
+  $id('stBest').textContent=st==null?'最佳 —':('最佳 '+st+' 次');
+}
+
+/* ---------- 音效 ---------- */
+var AC=null,muted=false;
+function tone(fr,d,type,g,when){
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    var t=AC.currentTime+(when||0),o=AC.createOscillator(),ga=AC.createGain();
+    o.type=type||'square';o.frequency.value=fr;
+    o.connect(ga);ga.connect(AC.destination);
+    ga.gain.setValueAtTime(g||.04,t);
+    ga.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.start(t);o.stop(t+d+.02);
+  }catch(e){}
+}
+function blip(){tone(520+Math.random()*60,.06,'square',.04)}
+function chime(){tone(523,.14,'triangle',.06,0);tone(659,.14,'triangle',.06,.1);tone(784,.18,'triangle',.06,.2);tone(1046,.3,'triangle',.07,.32)}
+function buzz(){tone(150,.16,'sawtooth',.05,0);tone(110,.24,'sawtooth',.05,.12)}
+function toast(msg,bad){
+  var t=$id('toast');t.textContent=msg;t.hidden=false;
+  t.className='toast'+(bad?' bad':'');
+  clearTimeout(t._h);t._h=setTimeout(function(){t.hidden=true},2600);
+}
+
+/* ---------- 挑战流程 ---------- */
+var solvedStats=null,QUIPS=[
+  '行为特征：第 4 轮才提交 ✔ 懂得利用反馈 ✔ 人类概率 99.1%',
+  '行为特征：提交间隔抖动明显 ✔ 非脚本节拍',
+  '行为特征：存在无效试探 ✔ 回退记录已入库',
+  '行为特征：撤销一位后才提交 ✔ 人类概率 99.4%',
+  '行为特征：未检出机器精度 ✔ 采样的就是你'
+];
+function newChallenge(){
+  solvedFlag=false;failedFlag=false;
+  if(!DEBUG){seed=((seed*1103515245+12345)%1000000007)|0;if(seed<0)seed=-seed;if(!seed)seed=1}
+  var spec=specOfLv(LV);
+  var q=queuedLevel;queuedLevel=null;
+  if(q&&q.params&&q.params.secret){
+    var sec=q.params.secret,okSec=Array.isArray(sec)&&sec.length===spec.len,si;
+    if(okSec)for(si=0;si<sec.length;si++){var d2=sec[si];if(typeof d2!=='number'||(d2|0)!==d2||d2<0||d2>=spec.sym){okSec=false;break}}
+    var rs=okSec?solveSecret(sec,spec,spec.budget):null;
+    if(okSec&&rs&&rs.ok&&rs.moves<=spec.budget)pz={len:spec.len,sym:spec.sym,budget:spec.budget,secret:sec.slice(),seedUsed:seed,attempt:0,solver:{moves:rs.moves,nodes:rs.nodes}};
+  }
+  if(!pz)pz=genPuzzle(seed,spec);
+  if(!pz){pz={len:spec.len,sym:spec.sym,budget:spec.budget,secret:genSecret(mulberry32(seed),spec),seedUsed:seed,attempt:0,solver:{moves:0,nodes:0}}}
+  entry=[];guesses=[];cur=0;
+  $id('stamp').hidden=true;
+  $id('stampBox').className='stamp-box';
+  $id('stampTick').textContent='✔';
+  $id('stampTitle').textContent='人类身份已确认';
+  var st=$id('mStatus');st.className='status mono';st.textContent='接入中…';
+  $id('tipText').innerHTML=tipFor(LV,pz);
+  buildSlots();buildKeys();renderHist();renderDiffBar();paintSlots(true);
+  t0=performance.now();
+  clearInterval(timerId);if(!SELFTEST)timerId=setInterval(updTime,100);updTime();
+  refreshBest();
+  if(DEBUG)console.log('[G6] '+JSON.stringify({seed:pz.seedUsed,lv:LV,secret:pz.secret,solver:pz.solver}));
+}
+function pushDigit(id){
+  if(solvedFlag||failedFlag)return;
+  if(cur>=pz.len){toast('口令位已满 · 先提交或撤销一位',true);return}
+  entry[cur]=id;cur++;
+  blip();
+  paintSlots();renderHist();
+  if(DEBUG)console.log('[G6] digit '+id+' → 位 '+(cur-1)+' 当前 '+JSON.stringify(entry));
+}
+function undoDigit(){
+  if(solvedFlag||failedFlag)return;
+  if(cur<=0){toast('已无位可撤',true);return}
+  cur--;entry.length=cur;
+  tone(240,.07,'square',.04);
+  paintSlots();renderHist();
+  if(DEBUG)console.log('[G6] undo → 当前 '+JSON.stringify(entry));
+}
+function clearEntry(){
+  if(solvedFlag||failedFlag)return;
+  entry=[];cur=0;
+  tone(200,.09,'triangle',.04);
+  paintSlots();renderHist();
+}
+function submitGuess(){
+  if(solvedFlag||failedFlag)return;
+  if(cur<pz.len){toast('口令未填满 · 还差 '+(pz.len-cur)+' 位',true);return}
+  var g=entry.slice();
+  guesses.push(g);
+  var f=feedback(g,pz.secret);
+  entry=[];cur=0;
+  paintSlots(true);renderHist();
+  if(f.g===pz.len){onSolved();return}
+  if(guesses.length>=pz.budget){onFailed();return}
+  tone(f.g>0?640:300,.09,'triangle',.045);
+  var rest=pz.budget-guesses.length;
+  if(rest<=2)toast('剩余 '+rest+' 次 · 识别中心开始倒数',true);
+  else toast(f.g+' 金 · '+f.s+' 银');
+}
+function onSolved(){
+  solvedFlag=true;
+  clearInterval(timerId);
+  var secs=(performance.now()-t0)/1000;
+  var used=guesses.length,stars=starsFor(used);
+  solvedStats={lv:LV,moves:used,secs:secs,stars:stars};
+  var st=$id('mStatus');st.className='status mono pass';st.textContent='校验通过';
+  $id('stampStats').innerHTML='难度 V'+LV+' · <span class="stars">'+starStr(stars)+'</span> · 提交 '+used+' 次 · 用时 '+
+    secs.toFixed(1)+'s<br>'+QUIPS[Math.floor(Math.random()*QUIPS.length)]+
+    '<br><span class="mono">IC // 口令核对完毕。刮坏铭牌的家伙没拿到通行印，你拿到了。</span>';
+  $id('stamp').hidden=false;
+  chime();
+  var lvl=buildLevelJSON();
+  lvl.id='code-'+LV+'-best';lvl.best={moves:used,secs:+secs.toFixed(1),stars:stars};
+  lvl.params.secret=pz.secret.slice();
+  upsertLevel(lvl);
+  customLevels=readCustomLevels();
+  refreshBest();
+  $id('stTime').textContent=fmt(secs);
+  setTimeout(closeAndVerify,1800);
+}
+function onFailed(){
+  failedFlag=true;
+  clearInterval(timerId);
+  var st=$id('mStatus');st.className='status mono fail';st.textContent='校验失败';
+  $id('stampBox').className='stamp-box fail';
+  $id('stampTick').textContent='✘';
+  $id('stampTitle').textContent='判定为疑似渗透体';
+  $id('stampStats').innerHTML='ERR-SI-19 // 预算耗尽 · 提交 '+guesses.length+' 次 · 未能在 '+pz.budget+' 次内还原口令<br>'+
+    '口令为 <span class="mono">'+pz.secret.map(function(x){return SHAPE_NAMES[x%SHAPE_NAMES.length]}).join(' ')+'</span><br>'+
+    'AC // 啧。连我偷运的零件都比你有耐心。';
+  $id('stamp').hidden=false;
+  buzz();
+  try{
+    if(window.parent&&window.parent!==window)window.parent.postMessage({type:'pz-failed',device:'V-40058',game:'code',lv:LV,moves:guesses.length},'*');
+  }catch(e){}
+  toast('未通过 · 点击「换一个」再试一次',true);
+  setTimeout(function(){$id('stamp').hidden=true},2600);
+}
+function closeAndVerify(){
+  verified=true;
+  $id('mask').hidden=true;
+  var box=$id('captchaBox');
+  box.classList.add('ok');
+  $id('cbIcon').textContent='✔';$id('cbIcon').classList.remove('spin');
+  $id('cbText').textContent='验证成功';
+  $id('loginBtn').disabled=false;
+  $id('formNote').textContent='通行印已签发，欢迎回来，操作员。';
+  toast('验证通过 · HUMAN VERIFIED');
+  try{
+    if(window.parent&&window.parent!==window){
+      window.parent.postMessage({type:'pz-solved',device:'V-40058',game:'code',lv:LV,
+        stars:solvedStats.stars,moves:solvedStats.moves,secs:+solvedStats.secs.toFixed(1),stats:solvedStats},'*');
+    }
+  }catch(e){}
+}
+
+/* ---------- 事件 ---------- */
+$id('captchaBox').addEventListener('click',function(){
+  if(checking)return;
+  if(verified){
+    verified=false;
+    this.classList.remove('ok');
+    $id('cbIcon').textContent='';
+    $id('cbText').textContent='我不是机器人（再来一局）';
+    $id('loginBtn').disabled=true;
+    $id('formNote').textContent='重新完成人机验证后才能登录。';
+  }
+  checking=true;
+  var ic=$id('cbIcon');ic.classList.add('spin');
+  $id('cbText').textContent='正在校验访问签名…';
+  tone(320,.1,'triangle',.05);
+  setTimeout(function(){
+    checking=false;
+    customLevels=readCustomLevels();
+    queuedLevel=pickQueuedLevel(LV);
+    newChallenge();
+    $id('mask').hidden=false;
+    tone(440,.08,'triangle',.05);
+  },750+Math.random()*350);
+});
+$id('keys').addEventListener('click',function(e){
+  var b=e.target&&e.target.closest?e.target.closest('.key'):null;
+  if(!b)return;
+  pushDigit(parseInt(b.dataset.sym,10));
+});
+$id('btnUndo').addEventListener('click',undoDigit);
+$id('btnClear').addEventListener('click',clearEntry);
+$id('btnSubmit').addEventListener('click',submitGuess);
+$id('btnNew').addEventListener('click',function(){tone(300,.08,'triangle',.05);newChallenge()});
+$id('diffBar').addEventListener('click',function(e){
+  var b=e.target&&e.target.closest?e.target.closest('.diffbtn'):null;
+  if(!b)return;
+  var v=clampLv(b.getAttribute('data-lv'));
+  if(v===LV)return;
+  tone(480,.08,'triangle',.05);
+  LV=v;queuedLevel=pickQueuedLevel(LV);newChallenge();
+});
+$id('loginForm').addEventListener('submit',function(e){e.preventDefault();if(verified)toast('演示环境：登录请求已放行（无后端）')});
+document.addEventListener('keydown',function(e){
+  if($id('mask').hidden)return;
+  if(e.key>='1'&&e.key<='7'){var id=parseInt(e.key,10)-1;if(id<pz.sym){pushDigit(id);e.preventDefault()}return}
+  if(e.key==='Backspace'){undoDigit();e.preventDefault();return}
+  if(e.key==='Enter'){submitGuess();e.preventDefault();return}
+  if(e.key==='Escape'){clearEntry();e.preventDefault()}
+});
+
+/* ---------- 启动 ---------- */
+function onReady(){
+  console.log('[G6-INIT] {lv:'+LV+',len:'+pz.len+',sym:'+pz.sym+',budget:'+pz.budget+',seed:'+seed+',custom:'+customLevels.length+'}');
+  if(qs.get('export')==='1')doExport();
+}
+function bootChallenge(){
+  try{customLevels=readCustomLevels()}catch(e){customLevels=[]}
+  queuedLevel=pickQueuedLevel(LV);
+  newChallenge();
+  onReady();
+}
+if(SELFTEST){
+  var _pass=selftest();
+  document.documentElement.appendChild((function(){var w=document.createElement('div');w.id='defs';w.innerHTML=symDefs();return w})());
+  bootChallenge();
+  console.log('[G6-TEST] SELFTEST EXIT '+_pass+'/5');
+}else{
+  document.documentElement.appendChild((function(){var w=document.createElement('div');w.id='defs';w.innerHTML=symDefs();return w})());
+  if(qs.get('direct')==='1'){
+    bootChallenge();
+    $id('mask').hidden=false;
+  }else{
+    bootChallenge();
+  }
+}
+
+</script>
+</body>
+</html>

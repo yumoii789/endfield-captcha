@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>访客协议 VISITOR PROTOCOL · 露营达人</title>
+<style>
+:root{--bg:#0b0e11;--line:#28313b;--line2:#3a4550;--ink:#d9e0e7;--dim:#8a96a2;--acc:#ffb100;--on:#ffcb4a;--ok:#3ddc8f;--bad:#ff5f56;--mono:ui-monospace,Consolas,'Courier New',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none !important}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(1000px 520px at 75% -10%,rgba(255,177,0,.07),transparent 60%),var(--bg);color:var(--ink);font-family:'Segoe UI',system-ui,'Microsoft YaHei',sans-serif;overflow-x:hidden;padding:24px 12px}
+.bg{position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);background-size:42px 42px;pointer-events:none;-webkit-mask-image:radial-gradient(ellipse at center,black 25%,transparent 78%);mask-image:radial-gradient(ellipse at center,black 25%,transparent 78%)}
+.mono{font-family:var(--mono)}
+.dim{color:var(--dim)}
+.wrap{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center}
+.frame{position:relative}
+.frame::after{content:"";position:absolute;inset:6px;border:1px dashed rgba(255,177,0,.16);border-radius:10px;pointer-events:none}
+.card{width:min(92vw,400px);background:linear-gradient(180deg,#161c23,#12171d);border:1px solid var(--line);border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.55);overflow:hidden}
+.hazard{height:8px;background:repeating-linear-gradient(45deg,var(--acc) 0 12px,#141414 12px 24px);opacity:.85}
+.brand{display:flex;gap:12px;align-items:center;padding:18px 22px 6px}
+.logo{width:40px;height:40px;border:1px solid var(--acc);border-radius:8px;display:grid;place-items:center;color:var(--acc);font-size:20px;box-shadow:inset 0 0 12px rgba(255,177,0,.25)}
+.brand h1{font-size:17px;letter-spacing:.14em}
+.brand p{font-size:10.5px;margin-top:3px;letter-spacing:.08em}
+form{padding:10px 22px 22px}
+.field{display:block;margin:12px 0}
+.field span{display:block;font-size:12px;color:var(--dim);margin-bottom:6px;letter-spacing:.1em}
+.field input{width:100%;background:#0e1318;border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--ink);font-size:14px;outline:none}
+.captcha-box{margin:16px 0 12px;display:flex;align-items:center;gap:12px;background:#0e1318;border:1px solid var(--line);border-radius:8px;padding:12px;cursor:pointer;user-select:none;transition:border-color .15s}
+.captcha-box:hover{border-color:var(--line2)}
+.captcha-box.ok{border-color:rgba(61,220,143,.55);cursor:default}
+.cb{flex:0 0 auto;width:22px;height:22px;border:2px solid var(--line2);border-radius:4px;display:grid;place-items:center;font-size:14px;color:transparent}
+.captcha-box.ok .cb{border-color:var(--ok);color:var(--ok)}
+.cb.spin{border-radius:50%;border-color:var(--acc) transparent var(--acc) transparent;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loginBtn{width:100%;padding:12px;border:0;border-radius:8px;background:linear-gradient(180deg,#ffc23d,#f5a300);color:#1a1200;font-weight:700;letter-spacing:.3em;font-size:14px;cursor:not-allowed;opacity:.4;transition:all .2s}
+#loginBtn:not(:disabled){cursor:pointer;opacity:1;box-shadow:0 6px 18px rgba(255,177,0,.22)}
+.note{font-size:12px;margin-top:10px}
+.credit{margin-top:14px;font-size:11px;color:var(--dim);opacity:.75;text-align:center;max-width:460px;line-height:1.7}
+.mask{position:fixed;inset:0;background:rgba(5,7,9,.72);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:50;animation:fade .2s}
+.modal{width:min(94vw,540px);background:linear-gradient(180deg,#161c23,#10151b);border:1px solid var(--line2);border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.7);overflow:hidden}
+.mhead{display:flex;justify-content:space-between;align-items:flex-start;padding:16px 20px 2px;gap:10px}
+.mhead h2{font-size:16px;letter-spacing:.1em}
+.mhead h2 span{font-size:11px;letter-spacing:.06em}
+.sub{font-size:11px;margin-top:4px}
+.status{flex:0 0 auto;font-size:11px;color:var(--acc);border:1px solid rgba(255,177,0,.4);padding:4px 8px;border-radius:4px}
+.status.pass{color:var(--ok);border-color:rgba(61,220,143,.5)}
+.mtip{padding:8px 20px 0;font-size:12.5px;color:var(--dim);line-height:1.7}
+.mtip b{color:var(--ink)}
+.camp{padding:14px 20px 4px;display:flex;justify-content:center}
+.campgrid{display:grid;grid-auto-flow:row;grid-auto-rows:auto;grid-template-columns:repeat(7,1fr);gap:5px;width:min(84vw,392px)}
+.diffbar{display:flex;gap:6px;padding:10px 20px 0;align-items:center}
+.diffbar .dlabel{font-size:11px;color:var(--dim);letter-spacing:.08em;margin-right:2px}
+.diffbtn{flex:1 1 0;min-width:0;background:transparent;border:1px solid var(--line2);color:var(--dim);border-radius:6px;padding:5px 0;font-family:var(--mono);font-size:12px;cursor:pointer;transition:all .15s}
+.diffbtn:hover{border-color:var(--acc);color:var(--acc)}
+.diffbtn.on{border-color:var(--acc);color:#1a1200;background:linear-gradient(180deg,#ffc23d,#f5a300);font-weight:700}
+.stars{color:var(--acc);letter-spacing:.16em;font-size:13px}
+#stMoves.over{color:var(--bad)}
+.hint{aspect-ratio:1;display:grid;place-items:center;font-family:var(--mono);font-size:15px;font-weight:700;color:#8a96a2;background:#0d1217;border:1px solid var(--line);border-radius:6px;transition:color .18s,border-color .18s,background .18s}
+.hint.zero{opacity:.42}
+.hint.eq{color:var(--ok);border-color:rgba(61,220,143,.55);background:rgba(61,220,143,.08)}
+.hint.gt{color:var(--bad);border-color:rgba(255,95,86,.55);background:rgba(255,95,86,.08)}
+.tile{position:relative;aspect-ratio:1;background:#1a2129;border:1px solid #262f38;border-radius:8px;cursor:crosshair;touch-action:manipulation;transition:border-color .15s,background .15s;overflow:hidden}
+.tile::before,.tile::after{content:"";position:absolute;background:rgba(217,224,231,.11);pointer-events:none}
+.tile::before{left:50%;top:16%;bottom:16%;width:1px;transform:translateX(-50%)}
+.tile::after{top:50%;left:16%;right:16%;height:1px;transform:translateY(-50%)}
+.tile:hover{border-color:rgba(255,177,0,.5);background:#20272f}
+.tile.tree{cursor:not-allowed;background:#151c22;border-color:#232b34}
+.tile.tree:hover{border-color:rgba(255,177,0,.35)}
+.tile .art{position:absolute;inset:7%;display:grid;place-items:center}
+.tile svg{width:100%;height:100%;display:block;overflow:visible}
+.crown{fill:#2f7a4a}
+.crown-dark{fill:#1f5b36}
+.trunk{fill:#6b4a2a}
+.tent-body{fill:#cfd8e0;stroke:#8e9aa6;stroke-width:3;stroke-linejoin:round}
+.tent-door{fill:#1a2129}
+.tent-pole{stroke:#8e9aa6;stroke-width:6;stroke-linecap:round}
+.tile.tent{border-color:rgba(255,203,74,.5);background:#232a33}
+.tile.tent .tent-body{fill:var(--on);stroke:#ffd97a}
+.tile.just-tent .art{animation:tentPop .42s cubic-bezier(.2,1.7,.45,1)}
+.tile.just-out .art{animation:tentOut .28s ease-in}
+.tile.tree.shake{animation:shake .32s}
+.tile.tree.shout{border-color:rgba(255,177,0,.75)}
+.tile.nbr{background:#262f39;border-color:rgba(255,203,74,.7);box-shadow:inset 0 0 14px rgba(255,203,74,.28)}
+.tile.nbr::before,.tile.nbr::after{background:rgba(255,203,74,.45)}
+@keyframes tentPop{0%{transform:scale(.3) translateY(22%)}60%{transform:scale(1.14)}100%{transform:scale(1)}}
+@keyframes tentOut{to{transform:scale(.25) translateY(20%);opacity:0}}
+@keyframes shake{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+.campgrid.solved{animation:gridFlash .65s ease-out}
+.campgrid.solved .tile{border-color:rgba(61,220,143,.4)}
+.campgrid.solved .tent-body{fill:var(--ok);stroke:#9df3c6}
+.mfoot{display:flex;justify-content:space-between;align-items:center;padding:10px 20px 18px;gap:10px;flex-wrap:wrap}
+.stats{display:flex;gap:14px;font-size:12px;color:var(--dim)}
+#stLeft.eq{color:var(--ok)}
+#stLeft.gt{color:var(--bad)}
+.mbtns{display:flex;gap:8px}
+.ghost{background:transparent;border:1px solid var(--line2);color:var(--ink);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;transition:all .15s}
+.ghost:hover{border-color:var(--acc);color:var(--acc)}
+.stamp{position:absolute;inset:0;background:rgba(8,11,13,.87);display:flex;align-items:center;justify-content:center;z-index:5;animation:fade .25s}
+.stamp-box{border:3px solid var(--ok);border-radius:12px;padding:20px 32px;text-align:center;transform:rotate(-6deg);color:var(--ok);box-shadow:0 0 30px rgba(61,220,143,.28);animation:stampIn .32s cubic-bezier(.2,1.6,.4,1)}
+.tick{font-size:40px;line-height:1}
+.stamp-box h3{margin-top:6px;letter-spacing:.22em;font-size:18px}
+.stamp-box p{margin-top:8px;font-size:11px;color:var(--ink);opacity:.85;line-height:1.6}
+@keyframes stampIn{from{transform:rotate(-6deg) scale(1.6);opacity:0}}
+@keyframes fade{from{opacity:0}}
+@keyframes gridFlash{0%{box-shadow:0 0 0 rgba(61,220,143,0)}35%{box-shadow:0 0 46px rgba(61,220,143,.6)}100%{box-shadow:0 0 0 rgba(61,220,143,0)}}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#161d24;border:1px solid var(--ok);color:var(--ink);padding:10px 18px;border-radius:8px;font-size:13px;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:fade .2s}
+/* == craft patch: impeccable x industrial-telemetry == */
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.scanlines{position:fixed;inset:0;pointer-events:none;z-index:99;background-image:linear-gradient(rgba(255,255,255,.016) 1px,transparent 1px);background-size:100% 3px}
+@media (max-width:640px){.mfoot{flex-wrap:wrap;gap:8px}.mtip{font-size:12px}.stats{font-size:11px;gap:8px}.grid{width:92vw}.card{padding:14px}}
+.lvbtns button,.ghost{min-height:34px}
+.head h1{font-size:clamp(1.4rem,3.5vw,2rem);letter-spacing:.02em}
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+<div class="bg"></div>
+<main class="wrap">
+  <section class="card frame">
+    <div class="hazard"></div>
+    <header class="brand">
+      <div class="logo">⛺</div>
+      <div><h1>访客协议</h1><p class="mono dim">VISITOR PROTOCOL // 终端访问</p></div>
+    </header>
+    <form id="loginForm">
+      <label class="field"><span>操作员编号</span><input value="klee_0413" readonly tabindex="-1"></label>
+      <label class="field"><span>访问密钥</span><input type="password" value="········" readonly tabindex="-1"></label>
+      <div id="captchaBox" class="captcha-box" role="button" tabindex="0" aria-label="开始人机验证">
+        <span class="cb" id="cbIcon"></span>
+        <span id="cbText">我不是机器人</span>
+      </div>
+      <button id="loginBtn" type="submit" disabled>登 录</button>
+      <p class="dim note" id="formNote">完成人机验证后才能登录。</p>
+    </form>
+  </section>
+  <p class="credit">灵感致敬《明日方舟：终末地》与计客露营达人 · 粉丝练习作品</p>
+</main>
+
+<div class="mask" id="mask" hidden>
+  <section class="modal frame">
+    <div class="hazard"></div>
+    <header class="mhead">
+      <div>
+        <h2>安全校验 <span class="mono dim">// SECURITY CHECK</span></h2>
+        <p class="mono sub dim">设备 V-40055 · 露营达人</p>
+      </div>
+      <div class="status mono" id="mStatus">接入中…</div>
+    </header>
+    <p class="mtip">检测到自动化访问特征。<b>点击空格搭建帐篷</b>：每顶帐篷必须与<b>恰好一棵树</b>正交相邻，每棵树也<b>恰好吃到一顶帐篷</b>；任意两顶帐篷不得相邻（含斜角）；网格外的黄色数字即该行 / 该列应有的帐篷数，全绿即正确。</p>
+    <div class="diffbar" id="diffBar" role="group" aria-label="难度选择">
+      <span class="dlabel mono">难度</span>
+      <button class="diffbtn mono" type="button" data-lv="1">V1</button>
+      <button class="diffbtn mono" type="button" data-lv="2">V2</button>
+      <button class="diffbtn mono" type="button" data-lv="3">V3</button>
+      <button class="diffbtn mono" type="button" data-lv="4">V4</button>
+      <button class="diffbtn mono" type="button" data-lv="5">V5</button>
+    </div>
+    <div class="camp"><div id="grid" class="campgrid"></div></div>
+    <footer class="mfoot">
+      <div class="mono stats"><span id="stMoves">帐篷 0</span><span id="stLeft">剩余 4 顶</span><span id="stTime">00:00.0</span></div>
+      <div class="mbtns">
+        <button id="btnNew" class="ghost" type="button">换一个 ↻</button>
+        <button id="btnMute" class="ghost" type="button" title="声音开关">🔊</button>
+      </div>
+    </footer>
+    <div class="stamp" id="stamp" hidden>
+      <div class="stamp-box">
+        <div class="tick">✔</div>
+        <h3>人类身份已确认</h3>
+        <p class="mono" id="stampStats">HUMAN VERIFIED</p>
+      </div>
+    </div>
+  </section>
+</div>
+<div id="toast" class="toast" hidden></div>
+<script>
+'use strict';
+/* ---------- 基础工具 ---------- */
+function $id(s){return document.getElementById(s)}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+/* ---------- 参数 ---------- */
+var qs=new URLSearchParams(location.search);
+var LV_TABLE={
+  1:{n:6,tents:[3,4],name:'简单'},
+  2:{n:6,tents:[5,5],name:'容易'},
+  3:{n:7,tents:[5,6],name:'中等'},
+  4:{n:7,tents:[7,7],name:'较难'},
+  5:{n:8,tents:[8,9],name:'困难'}
+};
+var LEVELS_META=[1,2,3,4,5].map(function(k){return {game:'camping',lv:k,n:LV_TABLE[k].n,tents:LV_TABLE[k].tents.slice(),name:LV_TABLE[k].name}});
+var CUSTOM_KEY='endland-levels-camping';
+var seed=parseInt(qs.get('seed')||'',10); if(isNaN(seed)) seed=((Date.now()%1000000)|0)+1;
+var DEBUG=qs.get('debug')==='1';
+var DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
+function clampLv(v){v=parseInt(v,10);if(isNaN(v))return 1;return Math.max(1,Math.min(5,v))}
+var lvRaw=qs.get('lv');
+var LV=clampLv(lvRaw===null||lvRaw===''?1:lvRaw);
+var N=LV_TABLE[LV].n;
+function N_(){return (pz&&pz.n)?pz.n:LV_TABLE[LV].n}
+function treeAt(x,y){if(!pz||!pz.trees)return false;for(var i=0;i<pz.trees.length;i++){if(pz.trees[i].x===x&&pz.trees[i].y===y)return true}return false}
+
+/* ---------- 状态 ---------- */
+var pz=null, tents=null, moves=0, badMoves=0, t0=0, timerId=null, solvedFlag=false, verified=false, muted=false, checking=false;
+var ST={genRetry:0,solveReject:0};
+var customLevels=[],queuedLevel=null,solvedStats=null;
+function readCustomLevels(){
+  var arr=[],raw=null;
+  try{raw=localStorage.getItem(CUSTOM_KEY)}catch(e){raw=null}
+  if(!raw)return arr;
+  try{
+    var parsed=JSON.parse(raw);
+    if(Object.prototype.toString.call(parsed)==='[object Array]'){
+      for(var i=0;i<parsed.length;i++){
+        var it=parsed[i];
+        if(!it||typeof it!=='object')continue;
+        if(it.enabled===false)continue;
+        if(it.game&&it.game!=='camping')continue;
+        if(it.lv===undefined||it.lv===null)continue;
+        arr.push(it);
+      }
+    }
+  }catch(e){}
+  return arr;
+}
+function pickQueuedLevel(lv){
+  for(var i=0;i<customLevels.length;i++){
+    var it=customLevels[i];
+    if(clampLv(it.lv)!==lv)continue;
+    if(!it.params||!it.params.n||!it.params.tents)continue;
+    return it;
+  }
+  return null;
+}
+
+/* ---------- 规则判定：行列计数 + 8 邻域不相邻 + 双向完美配对 ---------- */
+function inB(x,y){var n=N_();return x>=0&&x<n&&y>=0&&y<n}
+function idx(x,y){return y*N_()+x}
+function tentSet(list,n){n=n||N_();var s={};for(var i=0;i<list.length;i++)s[list[i].y*n+list[i].x]=1;return s}
+function adjacencyOK(list){
+  for(var i=0;i<list.length;i++)for(var j=i+1;j<list.length;j++){
+    if(Math.abs(list[i].x-list[j].x)<=1&&Math.abs(list[i].y-list[j].y)<=1)return false;
+  }
+  return true;
+}
+function pairsOK(treePos,tList){
+  if(treePos.length!==tList.length)return false;
+  if(!adjacencyOK(tList))return false;
+  var ts=tentSet(tList),adj=[],i,j,q;
+  for(i=0;i<treePos.length;i++){
+    var a=[];
+    for(j=0;j<4;j++){
+      var nx=treePos[i].x+DIRS[j][0],ny=treePos[i].y+DIRS[j][1];
+      if(inB(nx,ny)&&ts[idx(nx,ny)])a.push(idx(nx,ny));
+    }
+    adj.push(a);
+  }
+  var owner={};
+  function dfs(bi,seen){
+    for(q=0;q<adj[bi].length;q++){
+      var tn=adj[bi][q];
+      if(seen[tn])continue;
+      seen[tn]=1;
+      if(owner[tn]===undefined||dfs(owner[tn],seen)){owner[tn]=bi;return true}
+    }
+    return false;
+  }
+  for(i=0;i<treePos.length;i++){if(!dfs(i,{}))return false}
+  return true;
+}
+function counts(items,n){
+  n=n||N_();var r=[],c=[],i;
+  for(i=0;i<n;i++){r.push(0);c.push(0)}
+  for(i=0;i<items.length;i++){r[items[i].y]++;c[items[i].x]++}
+  return {r:r,c:c};
+}
+function verdict(tList,treePos,rowHint,colHint){
+  var n=rowHint?rowHint.length:N_(),cnt=counts(tList,n),i;
+  for(i=0;i<n;i++){if(cnt.r[i]!==rowHint[i]||cnt.c[i]!==colHint[i])return false}
+  return pairsOK(treePos,tList);
+}
+
+/* ---------- 谜题生成：解即生成态 ---------- */
+function genFixed(rng,target,n){
+  var t=[],guard=0;
+  while(t.length<target&&guard++<900){
+    var x=Math.floor(rng()*n),y=Math.floor(rng()*n);
+    if(!adjacencyOK(t.concat([{x:x,y:y}])))continue;
+    t.push({x:x,y:y});
+  }
+  return t.length===target?t:null;
+}
+function genOne(rng,spec){
+  spec=spec||LV_TABLE[LV];
+  var i,j,n=spec.n;
+  var target=spec.tents[0]+Math.floor(rng()*(spec.tents[1]-spec.tents[0]+1));
+  var t=genFixed(rng,target,n);
+  if(t&&t.length!==target)return null;
+  if(!t){ST.genRetry++;return null}
+  var trees=[],ts=tentSet(t,n);
+  for(i=0;i<t.length;i++){
+    var cand=[],sx=t[i].x,sy=t[i].y;
+    for(j=0;j<4;j++){
+      var nx=sx+DIRS[j][0],ny=sy+DIRS[j][1];
+      if(!inB(nx,ny))continue;
+      if(nx===sx&&ny===sy)continue;
+      if(ts[ny*n+nx])continue;
+      if(treeAt(nx,ny))continue;
+      var bad=false;
+      for(var d=0;d<4;d++){
+        var ax=nx+DIRS[d][0],ay=ny+DIRS[d][1];
+        if(!inB(ax,ay))continue;
+        if(ax===sx&&ay===sy)continue;
+        if(ts[ay*n+ax]){bad=true;break}
+      }
+      if(bad)continue;
+      cand.push({x:nx,y:ny});
+    }
+    if(!cand.length){ST.genRetry++;return null}
+    trees.push(cand[Math.floor(rng()*cand.length)]);
+  }
+  var clash=false;
+  for(i=0;i<trees.length;i++)for(j=i+1;j<trees.length;j++){if(trees[i].x===trees[j].x&&trees[i].y===trees[j].y)clash=true}
+  if(clash){ST.genRetry++;return null}
+  var cnt=counts(t,n);
+  if(!verdict(t,trees,cnt.r,cnt.c)){ST.solveReject++;return null}
+  return {n:n,lv:LV,trees:trees,rowHint:cnt.r,colHint:cnt.c,sol:t,seedUsed:0};
+}
+function genPuzzle(sd){
+  var spec=LV_TABLE[LV],base=pz,custom=false;
+  if(queuedLevel&&queuedLevel.params&&queuedLevel.params.n&&queuedLevel.params.tents){
+    spec={n:Math.max(4,Math.min(12,parseInt(queuedLevel.params.n,10)||6)),
+          tents:[queuedLevel.params.tents[0],queuedLevel.params.tents[1]]};
+    custom=true;
+  }
+  pz={n:spec.n,lv:LV,trees:[],custom:custom?queuedLevel:null};
+  for(var att=0;att<200;att++){
+    var p=genOne(mulberry32(((sd*2654435761)^((att+1)*40503))>>>0),spec);
+    if(p){p.seedUsed=sd;p.custom=custom?(queuedLevel.id||null):null;return p}
+  }
+  pz=base;
+  if(spec.n<12&&spec.tents[0]<=Math.floor(spec.n*spec.n/4))return genPuzzle(sd+1);
+  return genPuzzle(sd+1);
+}
+
+/* ---------- 渲染 ---------- */
+function treeSVG(){
+  return '<svg viewBox="0 0 100 100">'
+    +'<rect class="trunk" x="45.5" y="62" width="9" height="24" rx="3"/>'
+    +'<path class="crown-dark" d="M50 34 L27 68 L73 68 Z"/>'
+    +'<path class="crown" d="M50 16 L29 50 L71 50 Z"/>'
+    +'</svg>';
+}
+function tentSVG(){
+  return '<svg viewBox="0 0 100 100">'
+    +'<path class="tent-body" d="M50 17 L15 79 L85 79 Z"/>'
+    +'<path class="tent-door" d="M50 47 L35 79 L65 79 Z"/>'
+    +'<line class="tent-pole" x1="8" y1="81" x2="92" y2="81"/>'
+    +'</svg>';
+}
+function tileAt(x,y){return $id('t-'+x+'-'+y)}
+function treeCell(x,y){
+  for(var i=0;i<pz.trees.length;i++){if(pz.trees[i].x===x&&pz.trees[i].y===y)return true}
+  return false;
+}
+function tentAt(x,y){
+  for(var i=0;i<tents.length;i++){if(tents[i].x===x&&tents[i].y===y)return true}
+  return false;
+}
+function buildGrid(){
+  var g=$id('grid');g.innerHTML='';
+  var cols=N_()+1;
+  g.style.gridTemplateColumns='repeat('+N_()+',1fr) auto';
+  g.style.gridAutoFlow='row';
+  function at(sel,row,col){var el=document.createElement('div');el.className=sel;el.style.gridRow=row;el.style.gridColumn=col;return el}
+  var x,y,el;
+  for(x=0;x<N_();x++){
+    el=at('hint',1,x+2);
+    el.id='hc-'+x;el.textContent=pz.colHint[x];el.title='第 '+(x+1)+' 列应有帐篷数';
+    if(pz.colHint[x]===0)el.classList.add('zero');
+    g.appendChild(el);
+  }
+  for(y=0;y<N_();y++){
+    for(x=0;x<N_();x++){
+      el=at('tile',y+2,x+2);
+      el.id='t-'+x+'-'+y;
+      el.dataset.x=x;el.dataset.y=y;
+      if(treeCell(x,y)){el.classList.add('tree');el.title='树木（固定）· 点击可高亮它四周的可用位置';el.innerHTML='<span class="art">'+treeSVG()+'</span>'}
+      g.appendChild(el);
+    }
+    el=at('hint',y+2,cols+1);
+    el.id='hr-'+y;el.textContent=pz.rowHint[y];el.title='第 '+(y+1)+' 行应有帐篷数';
+    if(pz.rowHint[y]===0)el.classList.add('zero');
+    g.appendChild(el);
+  }
+  el=at('hint',1,1);
+  el.textContent='⛺';
+  el.style.background='transparent';el.style.border='0';el.style.color='var(--acc)';
+  g.appendChild(el);
+}
+function paintCell(x,y,anim){
+  var el=tileAt(x,y);if(!el)return;
+  var on=tentAt(x,y);
+  el.classList.toggle('tent',on);
+  if(treeCell(x,y))el.innerHTML='<span class="art">'+treeSVG()+'</span>';
+  else el.innerHTML=on?('<span class="art">'+tentSVG()+'</span>'):'';
+  if(anim){
+    el.classList.remove('just-tent','just-out');void el.offsetWidth;
+    el.classList.add(anim==='in'?'just-tent':'just-out');
+    if(anim==='out')setTimeout((function(n){return function(){n.classList.remove('just-out')}})(el),300);
+  }
+}
+function refreshHints(){
+  var cnt=counts(tents),i,r,c,n=N_();
+  for(i=0;i<n;i++){
+    r=$id('hr-'+i);c=$id('hc-'+i);
+    r.textContent=pz.rowHint[i];
+    r.className='hint'+(pz.rowHint[i]===0?' zero':'')+(cnt.r[i]===pz.rowHint[i]?' eq':(cnt.r[i]>pz.rowHint[i]?' gt':''));
+    c.textContent=pz.colHint[i];
+    c.className='hint'+(pz.colHint[i]===0?' zero':'')+(cnt.c[i]===pz.colHint[i]?' eq':(cnt.c[i]>pz.colHint[i]?' gt':''));
+  }
+  var left=pz.sol.length-tents.length,sl=$id('stLeft');
+  sl.textContent=left>0?('剩余 '+left+' 顶'):(left<0?('超出 '+(-left)+' 顶'):'数量已满');
+  sl.className=left===0?'eq':(left<0?'gt':'');
+}
+function readyAt(x,y){
+  var i,hit=0,t;
+  for(i=0;i<pz.trees.length;i++){t=pz.trees[i];if(Math.abs(t.x-x)+Math.abs(t.y-y)===1)hit++}
+  if(hit!==1)return false;
+  for(i=0;i<tents.length;i++){t=tents[i];if(Math.abs(t.x-x)<=1&&Math.abs(t.y-y)<=1)return false}
+  return true;
+}
+function starStr(n){return '★★★☆☆'.slice(3-n,6-n)}
+function refresh(anim,ax,ay){
+  var i,j,n=N_();
+  for(i=0;i<n;i++)for(j=0;j<n;j++)paintCell(i,j,(anim&&ax===i&&ay===j)?anim:null);
+  refreshHints();
+  if(!solvedFlag&&verdict(tents,pz.trees,pz.rowHint,pz.colHint))onSolved();
+}
+
+/* ---------- 音效 ---------- */
+var AC=null;
+function tone(f,d,type,g,when){
+  if(muted)return;
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    var t=AC.currentTime+(when||0),o=AC.createOscillator(),ga=AC.createGain();
+    o.type=type||'square';o.frequency.value=f;
+    o.connect(ga);ga.connect(AC.destination);
+    ga.gain.setValueAtTime(g||.04,t);
+    ga.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.start(t);o.stop(t+d+.02);
+  }catch(e){}
+}
+function chime(){tone(523,.14,'triangle',.06,0);tone(659,.14,'triangle',.06,.1);tone(784,.18,'triangle',.06,.2);tone(1046,.3,'triangle',.07,.32)}
+
+/* ---------- 计时与文案 ---------- */
+function fmt(s){var m=Math.floor(s/60),ss=s%60;return (m<10?'0':'')+m+':'+(ss<10?'0':'')+ss.toFixed(1)}
+function updTime(){if(t0&&!solvedFlag)$id('stTime').textContent=fmt((performance.now()-t0)/1000)}
+var QUIPS=['行为特征：落帐犹豫不均 ✔ 人类概率 99.7%',
+  '行为特征：先数行列再落帐 ✔ 策略性操作',
+  '行为特征：点击间隔抖动明显 ✔ 非脚本节拍',
+  '行为特征：帐篷顺序随机 ✔ 无最优路径特征',
+  '行为特征：误触树木次数合理 ✔ 未见机械扫描'];
+
+/* ---------- 难度界面 ---------- */
+function renderDiffBar(){
+  var bs=document.querySelectorAll('.diffbtn');
+  for(var i=0;i<bs.length;i++){
+    var on=parseInt(bs[i].getAttribute('data-lv'),10)===LV;
+    bs[i].className='diffbtn mono'+(on?' on':'');
+    bs[i].setAttribute('aria-pressed',on?'true':'false');
+  }
+  $id('mStatus').textContent='接入中…';
+  $id('mStatus').classList.remove('pass');
+  $id('mStatus').title='当前难度 V'+LV+' · '+LV_TABLE[LV].n+'×'+LV_TABLE[LV].n+' · 帐篷 '+LV_TABLE[LV].tents[0]+
+    (LV_TABLE[LV].tents[1]>LV_TABLE[LV].tents[0]?('-'+LV_TABLE[LV].tents[1]):'')+' 顶';
+}
+function setLevel(v){
+  LV=clampLv(v);
+  N=LV_TABLE[LV].n;
+  queuedLevel=pickQueuedLevel(LV);
+  renderDiffBar();
+  newChallenge();
+}
+
+/* ---------- 挑战流程 ---------- */
+function newChallenge(){
+  solvedFlag=false;
+  if(!DEBUG){seed=((seed*1103515245+12345)%1000000007)|0;if(seed<0)seed=-seed;if(!seed)seed=1}
+  pz=genPuzzle(seed);
+  tents=[];
+  $id('grid').classList.remove('solved');
+  $id('stamp').hidden=true;
+  $id('mStatus').textContent='接入中…';$id('mStatus').classList.remove('pass');
+  buildGrid();refresh();
+  moves=0;badMoves=0;
+  var mEl=$id('stMoves');mEl.textContent='帐篷 0';mEl.className='';
+  t0=performance.now();
+  clearInterval(timerId);timerId=setInterval(updTime,100);updTime();
+  if(DEBUG)console.log('[GT] '+JSON.stringify({seed:pz.seedUsed,tents:pz.sol}));
+}
+function onSolved(){
+  solvedFlag=true;
+  clearInterval(timerId);
+  var secs=(performance.now()-t0)/1000;
+  $id('grid').classList.add('solved');
+  var st=$id('mStatus');st.textContent='校验通过';st.classList.add('pass');
+  var stars=badMoves===0?3:(badMoves<=2?2:1);
+  solvedStats={moves:moves,secs:secs,stars:stars,lv:LV};
+  $id('stampStats').innerHTML='难度 V'+LV+' · <span class="stars">'+starStr(stars)+'</span> · 落帐 '+moves+' 次 · 用时 '+
+    secs.toFixed(1)+'s · '+QUIPS[Math.floor(Math.random()*QUIPS.length)];
+  $id('stamp').hidden=false;
+  chime();
+  setTimeout(closeAndVerify,1800);
+}
+function closeAndVerify(){
+  verified=true;
+  $id('mask').hidden=true;
+  var box=$id('captchaBox');
+  box.classList.add('ok');
+  $id('cbIcon').textContent='✔';$id('cbIcon').classList.remove('spin');
+  $id('cbText').textContent='验证成功';
+  $id('loginBtn').disabled=false;
+  $id('formNote').textContent='身份已确认，欢迎回来，操作员。';
+  toast('验证通过 · HUMAN VERIFIED');
+  try{
+    if(window.parent && window.parent!==window){
+      window.parent.postMessage({type:'pz-solved', device:'V-40055', stats:solvedStats}, '*');
+    }
+  }catch(e){}
+}
+function toast(msg){
+  var t=$id('toast');t.textContent=msg;t.hidden=false;
+  clearTimeout(t._h);t._h=setTimeout(function(){t.hidden=true},2600);
+}
+
+/* ---------- 事件 ---------- */
+$id('captchaBox').addEventListener('click',function(){
+  if(checking)return;
+  if(verified){
+    verified=false;
+    this.classList.remove('ok');
+    $id('cbIcon').textContent='';
+    $id('cbText').textContent='我不是机器人（再来一局）';
+    $id('loginBtn').disabled=true;
+    $id('formNote').textContent='重新完成人机验证后才能登录。';
+  }
+  checking=true;
+  var ic=$id('cbIcon');ic.classList.add('spin');
+  $id('cbText').textContent='正在校验访问签名…';
+  tone(320,.1,'triangle',.05);
+  setTimeout(function(){
+    checking=false;
+    newChallenge();
+    $id('mask').hidden=false;
+    tone(440,.08,'triangle',.05);
+  },750+Math.random()*350);
+});
+$id('grid').addEventListener('click',function(e){
+  var el=e.target.closest?e.target.closest('.tile'):null;if(!el||solvedFlag)return;
+  var x=+el.dataset.x,y=+el.dataset.y,d,nx,ny,nb;
+  if(treeCell(x,y)){
+    el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake','shout');
+    tone(120,.12,'sawtooth',.05);
+    for(d=0;d<4;d++){
+      nx=x+DIRS[d][0];ny=y+DIRS[d][1];
+      if(!inB(nx,ny)||treeCell(nx,ny))continue;
+      nb=tileAt(nx,ny);
+      if(nb){nb.classList.add('nbr');setTimeout((function(n){return function(){n.classList.remove('nbr')}})(nb),780)}
+    }
+    toast('这是树木，不可移动 · 已高亮它四周的可用位置');
+    setTimeout(function(){el.classList.remove('shout')},420);
+    return;
+  }
+  if(tentAt(x,y)){
+    tents=tents.filter(function(t){return !(t.x===x&&t.y===y)});
+    paintCell(x,y,'out');
+    tone(200,.09,'square',.045);
+  }else{
+    if(!readyAt(x,y))badMoves++;
+    tents.push({x:x,y:y});
+    paintCell(x,y,'in');
+    tone(430+Math.random()*60,.08,'square',.05);
+  }
+  moves++;
+  var mEl=$id('stMoves');
+  mEl.textContent='帐篷 '+moves;
+  mEl.className=tents.length>pz.sol.length?'over':'';
+  refreshHints();
+  if(!solvedFlag&&verdict(tents,pz.trees,pz.rowHint,pz.colHint))onSolved();
+});
+$id('diffBar').addEventListener('click',function(e){
+  var b=e.target&&e.target.closest?e.target.closest('.diffbtn'):null;
+  if(!b)return;
+  var v=clampLv(b.getAttribute('data-lv'));
+  if(v===LV)return;
+  tone(480,.08,'triangle',.05);
+  setLevel(v);
+});
+$id('btnNew').addEventListener('click',function(){tone(300,.08,'triangle',.05);newChallenge()});
+$id('btnMute').addEventListener('click',function(){muted=!muted;this.textContent=muted?'🔇':'🔊'});
+$id('loginForm').addEventListener('submit',function(e){e.preventDefault();if(verified)toast('演示环境：登录请求已放行（无后端）')});
+
+/* ---------- 自检辅助：按难度生成并回验 ---------- */
+var SELFTEST_PER_LV=60;
+function genForLevel(v,sd){
+  var keep=LV;
+  LV=clampLv(v);
+  N=LV_TABLE[LV].n;
+  var out;
+  try{ out=genPuzzle(sd) }catch(e){ out=null }
+  LV=keep;
+  N=LV_TABLE[keep].n;
+  return out;
+}
+function selftest(){
+  var per=SELFTEST_PER_LV,tot=0,tt=0,grandOk=0,grandFail=0;
+  for(var v=1;v<=5;v++){
+    var okN=0,failN=0,ttv=0;
+    for(var si=0;si<per;si++){
+      var pp=genForLevel(v,si*17+3+v*7919);
+      if(!pp){failN++;console.log('[SELFTEST-FAIL] lv='+v+' seed='+(si*17+3)+' generator returned null');continue}
+      ttv+=pp.sol.length;
+      if(verdict(pp.sol,pp.trees,pp.rowHint,pp.colHint))okN++;
+      else{failN++;console.log('[SELFTEST-FAIL] lv='+v+' seed='+pp.seedUsed+' '+JSON.stringify(pp))}
+    }
+    tot+=per;tt+=ttv;grandOk+=okN;grandFail+=failN;
+    console.log('[SELFTEST-V'+v+'] 第 '+v+' 档（'+LV_TABLE[v].n+'×'+LV_TABLE[v].n+' · 帐篷 '+LV_TABLE[v].tents[0]+
+      (LV_TABLE[v].tents[1]>LV_TABLE[v].tents[0]?('-'+LV_TABLE[v].tents[1]):'')+'）生成 '+per+' 局 · 解配置通过判定器 '+okN+
+      ' 局 · 失败 '+failN+' 局 · 平均帐篷数 '+(ttv/per).toFixed(2));
+  }
+  console.log('[SELFTEST] 五档共生成 '+tot+' 局 · 解配置通过判定器 '+grandOk+' 局 · 失败 '+grandFail+' 局（应为 0）；生成重试 '+
+    ST.genRetry+' 次；可解性校验拒绝 '+ST.solveReject+' 次（应为 0）；平均帐篷数 '+(tt/tot).toFixed(2));
+}
+
+/* ---------- 导出当前局 level JSON ---------- */
+function buildLevelJSON(){
+  var spec=LV_TABLE[LV];
+  var p=pz||{n:spec.n,lv:LV,trees:[],rowHint:[],colHint:[],sol:[]};
+  var shortId='lv'+LV+'-'+((seed*2654435761)>>>0).toString(36).slice(0,6);
+  return {
+    game:'camping',
+    id:'camping-'+LV+'-'+shortId,
+    lv:LV,
+    name:'树与帐篷 V'+LV+' · '+spec.name,
+    desc:'在 '+spec.n+'×'+spec.n+' 网格中按行列提示摆放 '+(spec.tents[0]===spec.tents[1]?spec.tents[0]:spec.tents[0]+'-'+spec.tents[1])+
+      ' 顶帐篷，每顶贴身一棵树，帐篷互不相邻。',
+    play:'点击空格放置/移除帐篷；每顶帐篷必须与恰好一棵树正交相邻，每棵树恰好吃到一顶帐篷；任意两顶帐篷不得相邻（含斜角）；网格外的黄色数字是该行/该列应有的帐篷数，全绿即正确。',
+    params:{
+      n:p.n,
+      tents:p.sol.length,
+      rowHint:p.rowHint.slice(),
+      colHint:p.colHint.slice(),
+      trees:p.trees.map(function(t){return [t.x,t.y]}),
+      tentsPos:p.sol.map(function(t){return [t.x,t.y]})
+    },
+    enabled:true
+  };
+}
+function doExport(){
+  var lvl=buildLevelJSON();
+  console.log('[EXPORT] '+JSON.stringify(lvl));
+  return lvl;
+}
+function onReady(){
+  console.log('[GT-INIT] {lv:'+LV+',n:'+N_()+',seed:'+seed+',custom:'+customLevels.length+'}');
+  if(qs.get('export')==='1')doExport();
+}
+
+/* ---------- 启动 ---------- */
+function bootChallenge(){
+  try{ customLevels=readCustomLevels() }catch(e){ customLevels=[] }
+  queuedLevel=pickQueuedLevel(LV);
+  renderDiffBar();
+  newChallenge();
+  onReady();
+}
+
+/* ---------- 合集页直通模式 ---------- */
+if(qs.get('direct')==='1'){
+  setTimeout(function(){ $id('captchaBox').click(); }, 150);
+}else if(qs.get('selftest')==='1'){
+  selftest();
+  bootChallenge();
+}else{
+  bootChallenge();
+}
+</script>
+</body>
+</html>

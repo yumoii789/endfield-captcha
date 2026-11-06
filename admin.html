@@ -1,0 +1,2254 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>访客协议 VISITOR PROTOCOL · 管理后台</title>
+<style>
+:root{
+  /* 基础面（docs/worldbible.md 7.1） */
+  --bg:#0b0e11;--bg-deep:#0d1217;--bg-line:#0e1318;
+  --surface-1:#12171d;--surface-2:#161c23;--surface-3:#161d24;
+  --tile:#1a2129;--tile-alt:#20272f;
+  /* 描边 */
+  --line:#28313b;--line2:#3a4550;
+  /* 文字 */
+  --ink:#d9e0e7;--dim:#8a96a2;--mute:#5a6772;
+  /* 语义色 */
+  --acc:#ffb100;--on:#ffcb4a;--warn:#ff8f5e;--bad:#ff5252;--ok:#3ddc8f;--cy:#39d0e0;
+  /* 危险条 */
+  --hazard-a:#ffb100;--hazard-b:#141414;
+  /* 字体（7.2） */
+  --font-ui:'Segoe UI',system-ui,'Microsoft YaHei',sans-serif;
+  --font-mono:ui-monospace,Consolas,'Courier New',monospace;
+  /* 既有页面沿用的别名 */
+  --mono:var(--font-mono);
+  /* 难度分档色（V1→V5 冷→暖） */
+  --d1:#3ddc8f;--d2:#39d0e0;--d3:#ffcb4a;--d4:#ff8f5e;--d5:#ff5252;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none !important}
+html,body{overflow-x:hidden}
+body{min-height:100vh;background:radial-gradient(1000px 520px at 75% -10%,rgba(255,177,0,.07),transparent 60%),var(--bg);
+  color:var(--ink);font-family:var(--font-ui);font-size:14px;line-height:1.65;letter-spacing:.04em;-webkit-tap-highlight-color:transparent}
+.bg-grid{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);
+  background-size:42px 42px;
+  -webkit-mask-image:radial-gradient(ellipse at center,black 25%,transparent 78%);mask-image:radial-gradient(ellipse at center,black 25%,transparent 78%)}
+.bg-scan{position:fixed;inset:0;pointer-events:none;opacity:.5;z-index:0;
+  background:repeating-linear-gradient(180deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px)}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.dim{color:var(--dim)}.mute{color:var(--mute)}
+.small{font-size:11.5px}.tiny{font-size:10.5px;letter-spacing:.08em}
+.up{text-transform:uppercase;letter-spacing:.08em}
+.hazard{height:8px;border-radius:4px;opacity:.85;
+  background:repeating-linear-gradient(45deg,var(--hazard-a) 0 12px,var(--hazard-b) 12px 24px)}
+.hazard.thin{height:6px}
+button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
+button{cursor:pointer;background:none;border:0}
+.btn{min-height:44px;padding:9px 16px;border:1px solid var(--line2);border-radius:8px;background:linear-gradient(180deg,var(--surface-2),var(--surface-1));
+  color:var(--ink);font-size:13px;transition:border-color .15s,box-shadow .15s,transform .1s;touch-action:manipulation}
+.btn:hover{border-color:rgba(255,177,0,.55)}
+.btn:active{transform:translateY(1px)}
+.btn.pri{border-color:transparent;background:linear-gradient(180deg,#ffc23d,#f5a300);color:#1a1200;font-weight:700;letter-spacing:.18em}
+.btn.danger{border-color:rgba(255,82,82,.55);color:var(--bad)}
+.btn.danger:hover{border-color:var(--bad);box-shadow:0 0 0 1px rgba(255,82,82,.25) inset}
+.btn.sm{min-height:34px;padding:5px 10px;font-size:12px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.inp,select.inp,textarea.inp{width:100%;background:var(--bg-line);border:1px solid var(--line);border-radius:8px;padding:9px 11px;
+  color:var(--ink);font-size:13.5px;outline:none;transition:border-color .15s;min-height:44px}
+.inp:focus{border-color:rgba(255,177,0,.6)}
+textarea.inp{min-height:62px;resize:vertical;line-height:1.6}
+label.fld{display:block;margin:0 0 12px}
+label.fld>span{display:block;font-size:11.5px;color:var(--dim);margin-bottom:6px;letter-spacing:.1em}
+.card{background:linear-gradient(180deg,var(--surface-2),var(--surface-1));border:1px solid var(--line);border-radius:12px}
+.frame{position:relative}
+.frame::after{content:"";position:absolute;inset:6px;border:1px dashed rgba(255,177,0,.16);border-radius:10px;pointer-events:none}
+/* ---------- 登录 ---------- */
+#loginView{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 12px}
+.loginCard{width:min(94vw,400px);overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.55)}
+.lbrand{display:flex;gap:12px;align-items:center;padding:18px 22px 6px}
+.logo{width:42px;height:42px;flex:0 0 auto;border:1px solid var(--acc);border-radius:8px;display:grid;place-items:center;color:var(--acc);font-size:20px;box-shadow:inset 0 0 12px rgba(255,177,0,.25)}
+.lbrand h1{font-size:16px;letter-spacing:.14em}
+.lbrand p{font-size:10.5px;margin-top:3px;letter-spacing:.1em}
+.loginBody{padding:8px 22px 22px}
+.msg{font-size:12.5px;margin-top:10px;min-height:18px;color:var(--bad)}
+.msg.ok{color:var(--ok)}
+.msg.hint{color:var(--dim)}
+.gate{margin-top:16px;display:flex;align-items:center;gap:10px;background:var(--bg-line);border:1px solid var(--line);border-radius:8px;padding:11px 12px;cursor:pointer;user-select:none;transition:border-color .15s}
+.gate:hover{border-color:var(--line2)}
+.gate.ok{border-color:rgba(61,220,143,.55);cursor:default}
+.gate .cb{flex:0 0 auto;width:22px;height:22px;border:2px solid var(--line2);border-radius:4px;display:grid;place-items:center;font-size:14px;color:transparent}
+.gate.ok .cb{border-color:var(--ok);color:var(--ok)}
+.gate .cb.spin{border-radius:50%;border-color:var(--acc) transparent var(--acc) transparent;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.gate b{font-size:13px;font-weight:600}
+.gate .gs{font-size:10.5px;color:var(--dim);letter-spacing:.08em;margin-top:2px}
+#loginBtn{width:100%;margin-top:14px;padding:12px;border:0;border-radius:8px;background:linear-gradient(180deg,#ffc23d,#f5a300);color:#1a1200;
+  font-weight:700;letter-spacing:.3em;font-size:14px;opacity:.4;cursor:not-allowed;transition:all .2s}
+#loginBtn:not(:disabled){cursor:pointer;opacity:1;box-shadow:0 6px 18px rgba(255,177,0,.22)}
+/* ---------- 应用外壳 ---------- */
+#appView{position:relative;z-index:1;min-height:100vh;display:grid;grid-template-columns:216px 1fr}
+.side{position:sticky;top:0;align-self:start;height:100vh;max-height:100vh;display:flex;flex-direction:column;overflow:hidden;
+  background:linear-gradient(180deg,var(--surface-2),#0f141a);border-right:1px solid var(--line)}
+.sidehead{flex:0 0 auto}
+.sidefoot{flex:0 0 auto}
+.sidehead{padding:16px 16px 12px;display:flex;gap:10px;align-items:center}
+.sidehead .logo{width:34px;height:34px;font-size:16px}
+.sidehead h2{font-size:13px;letter-spacing:.14em}
+.sidehead p{font-size:9.5px;color:var(--dim);letter-spacing:.08em}
+.nav{display:flex;flex-direction:column;gap:2px;padding:6px 8px;flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.nav button{display:flex;align-items:center;gap:9px;min-height:44px;padding:8px 12px;border-radius:8px;border-left:2px solid transparent;
+  color:var(--dim);font-size:13.5px;text-align:left;transition:all .15s;white-space:nowrap}
+.nav button .ic{font-size:14px;opacity:.85}
+.nav button:hover{background:rgba(255,255,255,.035);color:var(--ink)}
+.nav button.on{background:linear-gradient(90deg,rgba(255,177,0,.16),transparent);border-left-color:var(--acc);color:var(--on)}
+.nav .sep{height:1px;background:var(--line);margin:6px 12px}
+.sidefoot{padding:10px 12px 14px;border-top:1px solid var(--line);font-size:11px;color:var(--mute)}
+.sidefoot .who{color:var(--dim);font-size:12px;margin-bottom:8px;word-break:break-all}
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(11,14,17,.9);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:12px 20px 10px}
+.topbar .t1{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.topbar h2{font-size:16px;letter-spacing:.14em}
+.topbar .t2{font-size:11.5px;color:var(--dim);margin-top:2px}
+.content{padding:18px 20px 60px;display:flex;flex-direction:column;gap:16px;max-width:1180px}
+.sec{padding:15px 16px 16px}
+.sec>h3{font-size:13.5px;letter-spacing:.14em;margin-bottom:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sec>h3::before{content:"";width:3px;height:15px;background:var(--acc);border-radius:2px;flex:0 0 auto}
+.sec>p.desc{font-size:11.5px;color:var(--dim);margin:6px 0 12px;line-height:1.7}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.gridk{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{padding:12px 13px;border:1px solid var(--line);border-radius:10px;background:linear-gradient(180deg,var(--surface-3),var(--surface-1))}
+.kpi .k{font-size:10.5px;color:var(--dim);letter-spacing:.1em}
+.kpi .v{font-family:var(--font-mono);font-size:22px;color:var(--on);margin-top:5px;line-height:1.25}
+.kpi .v.s{font-size:15px}
+.kpi .u{font-size:11px;color:var(--mute);margin-left:3px}
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:520px}
+th,td{padding:9px 11px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:10.5px;color:var(--dim);letter-spacing:.1em;background:var(--bg-deep);position:sticky;top:0}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:nth-child(odd){background:rgba(255,255,255,.014)}
+td.num{font-family:var(--font-mono);text-align:right;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:10.5px;padding:2px 6px;border-radius:4px;border:1px solid var(--line2);color:var(--dim);letter-spacing:.06em}
+.tag.ok{color:var(--ok);border-color:rgba(61,220,143,.5)}
+.tag.bad{color:var(--bad);border-color:rgba(255,82,82,.5)}
+.tag.acc{color:var(--acc);border-color:rgba(255,177,0,.45)}
+.probar{height:6px;border-radius:3px;background:var(--tile-alt);overflow:hidden}
+.probar>i{display:block;height:100%;background:linear-gradient(90deg,#3ddc8f,#9df3c6);width:var(--p,99.7%);transition:width .6s cubic-bezier(.2,.7,.3,1)}
+.probar.low>i{background:linear-gradient(90deg,#ff5252,#ff8f5e)}
+.bar{height:5px;border-radius:3px;background:var(--tile-alt);overflow:hidden;min-width:52px}
+.bar>i{display:block;height:100%;background:var(--acc)}
+.bar.d1>i{background:var(--d1)}.bar.d2>i{background:var(--d2)}.bar.d3>i{background:var(--d3)}.bar.d4>i{background:var(--d4)}.bar.d5>i{background:var(--d5)}
+/* ---------- 概率条 ---------- */
+.pbar-head{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.pbar-sum{font-family:var(--font-mono);font-size:12px;color:var(--dim)}
+.pbar-sum b{color:var(--ok);font-size:14px}
+.pbar-sum.err b{color:var(--bad)}
+.pbar-sum.err{color:var(--bad)}
+.distbox{position:relative;padding:22px 10px 26px}
+.distbox::before{content:"拖动 ▽ 手柄调整各段宽度";position:absolute;top:0;left:50%;transform:translateX(-50%);
+  font-size:10.5px;color:var(--mute);letter-spacing:.1em;white-space:nowrap}
+.pbar{position:relative;display:flex;height:46px;border:1px solid var(--line2);border-radius:10px;overflow:hidden;background:var(--bg-deep);touch-action:none;-webkit-user-select:none;user-select:none}
+.pseg{position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  transition:flex-basis .18s cubic-bezier(.2,.7,.3,1);border-right:1px solid rgba(0,0,0,.45);cursor:default}
+.pseg:last-child{border-right:0}
+.pseg .lab{font-size:11px;color:#0b0e11;font-weight:700;letter-spacing:.04em;white-space:nowrap;pointer-events:none;text-shadow:0 1px 0 rgba(255,255,255,.18)}
+.pseg.dragging{transition:none}
+.pseg.s1{background:linear-gradient(180deg,var(--d1),#2aa86b)}
+.pseg.s2{background:linear-gradient(180deg,var(--d2),#28a3b1)}
+.pseg.s3{background:linear-gradient(180deg,var(--d3),#d9a300)}
+.pseg.s4{background:linear-gradient(180deg,var(--d4),#d97448)}
+.pseg.s5{background:linear-gradient(180deg,var(--d5),#cc3b3b)}
+.ph{position:absolute;top:50%;transform:translate(-50%,-50%);width:26px;height:calc(100% + 14px);z-index:4;
+  display:grid;place-items:center;cursor:grab;touch-action:none}
+.ph::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:3px;margin-left:-1.5px;background:rgba(11,14,17,.85);
+  box-shadow:0 0 0 1px rgba(255,177,0,.55),0 0 10px rgba(255,177,0,.35);border-radius:2px}
+.ph::after{content:"⋮";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:14px;line-height:1;
+  color:var(--acc);background:var(--surface-1);border:1px solid rgba(255,177,0,.6);border-radius:6px;width:20px;height:26px;
+  display:grid;place-items:center;box-shadow:0 3px 10px rgba(0,0,0,.7)}
+.ph:hover::before,.ph.act::before{box-shadow:0 0 0 1px var(--acc),0 0 14px rgba(255,177,0,.6)}
+.ph:active{cursor:grabbing}
+.axis{position:relative;height:16px;margin-top:3px}
+.axis i{position:absolute;top:0;transform:translateX(-50%);font-style:normal;font-size:10px;color:var(--mute);font-family:var(--font-mono)}
+.leg{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.leg .li{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:3px 10px 3px 6px}
+.leg .sw{width:12px;height:12px;border-radius:3px;flex:0 0 auto}
+.leg .li b{color:var(--ink);font-family:var(--font-mono)}
+/* ---------- 关卡管理 ---------- */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{min-height:38px;padding:7px 14px;border:1px solid var(--line);border-radius:8px;color:var(--dim);font-size:12.5px;transition:all .15s}
+.tabs button:hover{border-color:var(--line2);color:var(--ink)}
+.tabs button.on{border-color:rgba(255,177,0,.6);color:var(--on);background:rgba(255,177,0,.1)}
+.tabs button .n{font-family:var(--font-mono);font-size:10.5px;opacity:.75;margin-left:4px}
+.lvl{padding:12px 13px;display:flex;flex-direction:column;gap:10px}
+.lvl .lhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lvl .lhead .id{font-family:var(--font-mono);font-size:11px;color:var(--cy)}
+.lvl .lk{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.lvl .lk label{display:block}
+.lvl .lk label>span{display:block;font-size:10.5px;color:var(--dim);letter-spacing:.1em;margin-bottom:4px}
+.lvl .lk .inp{min-height:38px;padding:7px 10px;font-size:12.5px}
+.sw{position:relative;width:46px;height:26px;flex:0 0 auto;border-radius:999px;background:var(--tile-alt);border:1px solid var(--line2);transition:all .18s}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--mute);transition:all .18s}
+.sw.on{background:rgba(61,220,143,.18);border-color:rgba(61,220,143,.6)}
+.sw.on::after{left:22px;background:var(--ok);box-shadow:0 0 10px rgba(61,220,143,.6)}
+.ovr{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.ovr .oc{display:flex;flex-direction:column;gap:4px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:6px 4px;background:var(--bg-deep)}
+.ovr .oc .ol{font-size:10px;color:var(--dim);letter-spacing:.06em}
+.ovr .oc input[type=range]{width:100%;accent-color:var(--acc);height:22px;touch-action:pan-y}
+.ovr .oc input[type=number]{width:100%;background:var(--bg-line);border:1px solid var(--line);border-radius:6px;padding:3px 5px;font-family:var(--font-mono);font-size:11.5px;text-align:center;min-height:30px}
+.errline{font-size:11.5px;color:var(--bad);min-height:16px;margin-top:6px;word-break:break-all}
+.errline.ok{color:var(--ok)}
+.drop{border:1px dashed var(--line2);border-radius:10px;padding:12px;background:var(--bg-deep)}
+/* ---------- 统计 ---------- */
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.chart{padding:12px 13px;border:1px solid var(--line);border-radius:10px;background:linear-gradient(180deg,var(--surface-3),var(--surface-1))}
+.chart h4{font-size:12px;letter-spacing:.1em;color:var(--ink);margin-bottom:2px}
+.chart p.cd{font-size:10.5px;color:var(--mute);margin-bottom:8px;letter-spacing:.06em}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.heat{display:grid;grid-template-rows:repeat(7,1fr);grid-auto-flow:column;grid-auto-columns:1fr;gap:3px}
+.heat i{aspect-ratio:1;border-radius:2px;background:var(--tile);display:block;border:1px solid rgba(255,255,255,.03)}
+.heat i.l1{background:#2a4a34}.heat i.l2{background:#2f7a4c}.heat i.l3{background:#3ddc8f}.heat i.l4{background:#9df3c6}
+/* ---------- 危险区 ---------- */
+.danger{border:1px solid rgba(255,82,82,.35);background:linear-gradient(180deg,rgba(255,82,82,.05),transparent),linear-gradient(180deg,var(--surface-2),var(--surface-1))}
+.danger>h3::before{background:var(--bad)}
+/* ---------- toast / 遮罩 ---------- */
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:60;background:var(--surface-3);border:1px solid var(--ok);
+  border-radius:8px;padding:10px 18px;font-size:13px;animation:fade .2s;max-width:min(92vw,420px);text-align:center}
+.toast.bad{border-color:var(--bad)}
+@keyframes fade{from{opacity:0;transform:translate(-50%,8px)}}
+.mask{position:fixed;inset:0;background:rgba(5,7,9,.72);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal{width:min(94vw,560px);max-height:92vh;overflow:auto;border:1px solid var(--line2);border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.72);
+  background:linear-gradient(180deg,var(--surface-2),#10151b)}
+.modal .mh{padding:14px 18px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.modal .mh h3{font-size:15px;letter-spacing:.12em}
+.modal .mb{padding:12px 18px 18px}
+.modal .mf{padding:0 18px 18px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.term{font-family:var(--font-mono);font-size:12px;line-height:1.75;color:var(--dim);padding-left:1.2em;text-indent:-1.2em}
+.term::before{content:"> ";color:var(--acc)}
+.term b{color:var(--ink);font-weight:600}
+/* ---------- 多端适配（7.6） ---------- */
+@media (max-width:640px){
+  .hazard{height:6px}
+  #appView{grid-template-columns:1fr}
+  .side{position:sticky;height:auto;border-right:0;border-bottom:1px solid var(--line)}
+  .sidehead{padding:10px 12px 6px}
+  .sidehead .logo{width:28px;height:28px;font-size:14px}
+  .nav{flex-direction:row;overflow-x:auto;gap:6px;padding:6px 10px 8px;scrollbar-width:none}
+  .nav::-webkit-scrollbar{display:none}
+  .nav button{min-height:40px;padding:7px 12px;border-left:0;border-bottom:2px solid transparent;font-size:12.5px;flex:0 0 auto}
+  .nav button.on{background:rgba(255,177,0,.12);border-left-color:transparent;border-bottom-color:var(--acc)}
+  .nav .sep{display:none}
+  .nav button .ic{font-size:13px}
+  .sidefoot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px}
+  .sidefoot .who{margin-bottom:0;font-size:11.5px}
+  .topbar{padding:10px 12px 8px}
+  .topbar h2{font-size:14.5px}
+  .content{padding:14px 12px 48px;gap:13px}
+  .sec{padding:13px 12px 14px}
+  table{min-width:460px}
+  .pbar{height:40px}
+  .pseg .lab{font-size:9.5px}
+  .ovr{grid-template-columns:repeat(3,1fr)}
+  .distbox{padding:24px 6px 28px}
+}
+@media (max-width:380px){
+  body{font-size:13px}
+  .kpi .v{font-size:19px}
+  .ovr{grid-template-columns:repeat(2,1fr)}
+  .pseg .lab{display:none}
+}
+@media (max-height:520px) and (orientation:landscape){
+  .loginCard{width:min(94vw,560px)}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms !important;transition-duration:.001ms !important}
+}
+/* == craft patch: impeccable x industrial-telemetry == */
+button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visible,.nav button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+/* == craft patch: impeccable x industrial-telemetry == */
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.scanlines{position:fixed;inset:0;pointer-events:none;z-index:99;background-image:linear-gradient(rgba(255,255,255,.016) 1px,transparent 1px);background-size:100% 3px}
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+<div class="bg-grid"></div>
+<div class="bg-scan"></div>
+
+<!-- ============ 登录 ============ -->
+<section id="loginView" hidden>
+  <div class="card frame loginCard">
+    <div class="hazard"></div>
+    <div class="lbrand">
+      <div class="logo">▣</div>
+      <div>
+        <h1>管理后台 · ADMIN</h1>
+        <p class="mono dim">VISITOR PROTOCOL // CONTROL CONSOLE</p>
+      </div>
+    </div>
+    <div class="loginBody">
+      <p class="small dim" style="margin:2px 0 14px">受控区域。请通过身份核验后进入控制台。</p>
+      <form id="loginForm" autocomplete="off">
+        <label class="fld"><span>管理员帐号</span>
+          <input class="inp mono" id="lgUser" type="text" autocomplete="username" spellcheck="false">
+        </label>
+        <label class="fld"><span>密码</span>
+          <input class="inp mono" id="lgPass" type="password" autocomplete="current-password">
+        </label>
+        <div class="gate" id="lgGate" role="checkbox" aria-checked="false" tabindex="0">
+          <div class="cb" id="lgCb">✔</div>
+          <div>
+            <b>我是人类</b>
+            <div class="gs mono" id="lgGateSub">HUMAN VERIFICATION REQUIRED</div>
+          </div>
+        </div>
+        <button type="submit" id="loginBtn" disabled>进 入 控 制 台</button>
+        <div class="msg" id="lgMsg" role="status"></div>
+      </form>
+      <p class="tiny mute" style="margin-top:10px;line-height:1.7">初始帐号 <span class="mono">admin</span> / 密码 <span class="mono">123456</span>，登录后可在「帐户」中修改。</p>
+    </div>
+    <div class="hazard thin"></div>
+  </div>
+  <p class="tiny mute" style="margin-top:14px;text-align:center;max-width:420px">粉丝练习作品 · 无网络请求 · 数据仅存于本机 localStorage</p>
+</section>
+
+<!-- ============ 控制台 ============ -->
+<div id="appView" hidden>
+  <aside class="side">
+    <div class="sidehead">
+      <div class="logo">▣</div>
+      <div>
+        <h2>控制台</h2>
+        <p class="mono">CONTROL CONSOLE</p>
+      </div>
+    </div>
+    <nav class="nav" id="nav" role="tablist"></nav>
+    <div class="sidefoot">
+      <div class="who">登录身份：<b class="mono" id="whoUser">-</b></div>
+      <button class="btn sm" id="logoutBtn">退出登录</button>
+    </div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div class="t1"><h2 id="pgTitle">状态</h2><span class="tag acc mono" id="pgCode">PG-01</span></div>
+      <div class="t2" id="pgSub">今日运行状态</div>
+      <div class="hazard thin" style="margin-top:9px"></div>
+    </header>
+    <div class="content" id="content"></div>
+  </main>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+<div id="modalRoot"></div>
+
+<script>
+'use strict';
+/* =========================================================================
+   访客协议 · 管理后台（admin.html）
+   单文件零依赖；所有数据存于 localStorage，无任何网络请求。
+   ========================================================================= */
+if (location.protocol === 'file:') {
+  console.error('[ADMIN] 检测到 file:// 协议：浏览器按「不透明来源」隔离 localStorage，页面间数据无法共享。请通过 http(s) 打开（例如 node _gt_srv.js 后访问 http://127.0.0.1:8099/admin.html）。');
+}
+
+/* ---------------- 常量与工具 ---------------- */
+var LS = {
+  user:     'endland-user',
+  cfg:      'endland-admin-cfg',
+  stats:    'endland-stats',
+  matchlog: 'endland-matchlog',
+  cred:     'endland-admin-cred',
+  levels:   function (g) { return 'endland-levels-' + g; },
+  session:  'endland-admin-session'
+};
+var CRED_DEFAULT = { user: 'admin', pass: '123456' };
+var GAMES = [
+  { key: 'circuit', name: '源石电路', dev: 'V-40053' },
+  { key: 'packing', name: '方块拼装', dev: 'V-40054' },
+  { key: 'gems',    name: '宝石神偷', dev: 'V-40056' },
+  { key: 'camping', name: '露营达人', dev: 'V-40055' },
+  { key: 'lights',  name: '灯光矩阵', dev: 'V-40057' },
+  { key: 'code',    name: '口令破译', dev: 'V-40058' },
+  { key: 'nonogram',name: '残影重建', dev: 'V-40059' },
+  { key: 'targets', name: '目标点选', dev: 'V-40060' },
+  { key: 'sliding', name: '滑块还原', dev: 'V-40061' }
+];
+var DV = ['简单', '容易', '中等', '较难', '困难'];
+var DHINT = ['V1 · 教学', 'V2 · 入门', 'V3 · 常规', 'V4 · 进阶', 'V5 · 极限'];
+var DEF_REDIRECT = 'hub.html';
+var UNIFORM5 = [20, 20, 20, 20, 20];
+var EPS = 0.05;
+
+function $(s, r) { return (r || document).querySelector(s); }
+function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+function el(tag, cls, txt) {
+  var n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (txt !== undefined && txt !== null) n.textContent = String(txt);
+  return n;
+}
+function esc(s) {
+  return String(s === undefined || s === null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+function pad2(n) { return (n < 10 ? '0' : '') + n; }
+function ymd(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+function today() { return ymd(new Date()); }
+function parseTs(ts) {
+  if (typeof ts === 'number' && isFinite(ts)) return new Date(ts);
+  var d = new Date(ts);
+  if (isFinite(d.getTime())) return d;
+  if (typeof ts === 'string') { d = new Date(String(ts).replace(' ', 'T')); }
+  return isFinite(d.getTime()) ? d : null;
+}
+function round1(n) { return Math.round(n * 10) / 10; }
+function pct1(n) { return (Math.round(n * 10) / 10).toFixed(1); }
+function clampInt(v, min, max, dflt) {
+  var n = parseInt(v, 10);
+  if (!isFinite(n)) n = dflt;
+  return Math.max(min, Math.min(max, n));
+}
+function fmtTime(d) { return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds()); }
+
+/* ---------------- localStorage 读写（全程 try/catch） ---------------- */
+function lsGet(key, dflt) {
+  if (typeof dflt === 'undefined') dflt = null;
+  try {
+    var raw = localStorage.getItem(key);
+    if (raw === null) return dflt;
+    return JSON.parse(raw);
+  } catch (e) {
+    console.warn('[ADMIN] 读取 ' + key + ' 失败，使用默认值：' + e.message);
+    return dflt;
+  }
+}
+function lsSet(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); return true; }
+  catch (e) { console.error('[ADMIN] 写入 ' + key + ' 失败：' + e.message); return null; }
+}
+function lsDel(key) { try { localStorage.removeItem(key); return true; } catch (e) { return false; } }
+function ssGet(key, dflt) {
+  if (typeof dflt === 'undefined') dflt = null;
+  try { var raw = sessionStorage.getItem(key); return raw === null ? dflt : JSON.parse(raw); }
+  catch (e) { return dflt; }
+}
+function ssSet(key, val) { try { sessionStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* 忽略 */ } }
+function ssDel(key) { try { sessionStorage.removeItem(key); } catch (e) { /* 忽略 */ } }
+
+function ensureArray(key) {
+  var v = lsGet(key, null);
+  return Array.isArray(v) ? v : [];
+}
+function todayStats() {
+  var t = today();
+  return ensureArray(LS.stats).filter(function (r) { return r && ymd(parseTs(r.ts) || new Date(0)) === t; });
+}
+function todayMatch() {
+  var t = today();
+  return ensureArray(LS.matchlog).filter(function (r) { return r && ymd(parseTs(r.ts) || new Date(0)) === t; });
+}
+
+/* ---------------- 难度分布 ---------------- */
+function sanitizeDist(arr) {
+  var a = [], i, s = 0;
+  for (i = 0; i < 5; i++) {
+    var v = Number(arr && arr[i]);
+    if (!isFinite(v) || v < 0) v = 0;
+    a.push(v); s += v;
+  }
+  if (s <= 0) return UNIFORM5.slice();
+  var out = [], acc = 0;
+  for (i = 0; i < 5; i++) {
+    var r = (i === 4) ? (100 - acc) : Math.round(a[i] / s * 1000) / 10;
+    r = Math.max(0, Math.min(100, r));
+    if (i === 4) r = 100 - acc;
+    out.push(Math.round(r * 10) / 10);
+    acc = Math.round((acc + out[i]) * 10) / 10;
+  }
+  return out;
+}
+function sumDist(d) { var s = 0, i; for (i = 0; i < 5; i++) s += Number(d[i]) || 0; return Math.round(s * 100) / 100; }
+function distToWidths(d) {
+  var w = [], i, prevEdge = 0, prevPct = 0;
+  for (i = 0; i < 5; i++) { w.push(round1(Math.max(0, d[i]))); }
+  return w;
+}
+function widthsToDist(w) {
+  // w 是相邻段宽（百分比），保证 Σ=100（末段吸收浮点残差）
+  var a = [], acc = 0, i;
+  for (i = 0; i < 5; i++) {
+    var r = (i === 4) ? (100 - acc) : Math.round(Number(w[i]) * 10) / 10;
+    r = Math.max(0, Math.min(100 - acc, r));
+    if (i === 4) r = Math.max(0, Math.min(100, 100 - acc));
+    a.push(Math.round(r * 10) / 10);
+    acc = Math.round((acc + a[i]) * 10) / 10;
+  }
+  return a;
+}
+
+/* ---------------- 配置 ---------------- */
+function defaultCfg() {
+  return { globalDist: UNIFORM5.slice(), levelDist: {}, redirect: DEF_REDIRECT, visitByDate: {} };
+}
+function loadCfg() {
+  var raw = lsGet(LS.cfg, null), cfg, changed = false, i;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) { cfg = defaultCfg(); changed = true; }
+  else {
+    cfg = raw;
+    if (!Array.isArray(cfg.globalDist) || cfg.globalDist.length !== 5) { cfg.globalDist = UNIFORM5.slice(); changed = true; }
+    else if (Math.abs(sumDist(cfg.globalDist) - 100) > EPS) { cfg.globalDist = sanitizeDist(cfg.globalDist); changed = true; }
+    if (!cfg.levelDist || typeof cfg.levelDist !== 'object' || Array.isArray(cfg.levelDist)) { cfg.levelDist = {}; changed = true; }
+    if (typeof cfg.redirect !== 'string') { cfg.redirect = DEF_REDIRECT; changed = true; }
+    if (!cfg.visitByDate || typeof cfg.visitByDate !== 'object' || Array.isArray(cfg.visitByDate)) { cfg.visitByDate = {}; changed = true; }
+  }
+  if (changed) lsSet(LS.cfg, cfg);
+  return cfg;
+}
+var CFG = loadCfg();
+var GLOBAL = CFG.globalDist.slice();
+function saveCfg() {
+  CFG.globalDist = GLOBAL.slice();
+  CFG.redirect = redirectUrl();
+  return lsSet(LS.cfg, CFG) !== null;
+}
+
+/* ---------------- 关卡 ---------------- */
+function readLevels(g) { return ensureArray(LS.levels(g)); }
+function writeLevels(g, arr) { return lsSet(LS.levels(g), arr) !== null; }
+function ovrOf(g, lv) {
+  var m = CFG.levelDist && CFG.levelDist[g];
+  if (!m) return null;
+  var v = m[String(lv)];
+  return Array.isArray(v) && v.length === 5 ? v.map(function (x) { return Number(x) || 0; }) : null;
+}
+function setOvr(g, lv, arrOrNull) {
+  if (!CFG.levelDist[g]) CFG.levelDist[g] = {};
+  if (arrOrNull === null) delete CFG.levelDist[g][String(lv)];
+  else CFG.levelDist[g][String(lv)] = arrOrNull.slice();
+  CFG.globalDist = GLOBAL.slice();
+  CFG.redirect = redirectUrl();
+  lsSet(LS.cfg, CFG);
+}
+
+/* ---------------- toast / modal ---------------- */
+var toastTimer = null;
+function toast(msg, bad) {
+  var t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast' + (bad ? ' bad' : '');
+  t.hidden = false;
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { t.hidden = true; }, 2600);
+}
+var modalOpen = null;
+function closeModal() {
+  if (!modalOpen) return;
+  var m = modalOpen; modalOpen = null;
+  m.root.remove();
+  if (m.onClose) { try { m.onClose(); } catch (e) { /* 忽略 */ } }
+}
+function showModal(opt) {
+  closeModal();
+  var root = el('div', 'mask');
+  var box = el('div', 'modal');
+  var h = el('div', 'mh');
+  h.appendChild(el('h3', null, opt.title || '确认'));
+  var x = el('button', 'btn sm', '✕');
+  x.setAttribute('aria-label', '关闭');
+  h.appendChild(x);
+  box.appendChild(h);
+  var b = el('div', 'mb');
+  if (opt.bodyNode) b.appendChild(opt.bodyNode);
+  else b.innerHTML = opt.body || '';
+  box.appendChild(b);
+  var f = el('div', 'mf');
+  (opt.buttons || []).forEach(function (bd) {
+    var btn = el('button', 'btn' + (bd.cls ? ' ' + bd.cls : ''), bd.label);
+    btn.addEventListener('click', function () {
+      if (bd.keepOpen) { bd.onClick && bd.onClick(); return; }
+      var keep = bd.onClick ? bd.onClick() : false;
+      if (keep !== true) closeModal();
+    });
+    f.appendChild(btn);
+  });
+  box.appendChild(f);
+  root.appendChild(box);
+  root.addEventListener('click', function (e) { if (e.target === root) closeModal(); });
+  x.addEventListener('click', closeModal);
+  $('#modalRoot').appendChild(root);
+  modalOpen = { root: root, onClose: opt.onClose };
+  var focus = box.querySelector('input,textarea,select,.btn');
+  if (focus) focus.focus();
+  return { root: root, body: b, foot: f, close: closeModal };
+}
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+
+/* ---------------- SVG 图表（纯手写，无第三方库） ---------------- */
+var SVGNS = 'http://www.w3.org/2000/svg';
+function sEl(tag, attrs, txt) {
+  var n = document.createElementNS(SVGNS, tag), k;
+  for (k in attrs) if (attrs.hasOwnProperty(k)) n.setAttribute(k, String(attrs[k]));
+  if (txt !== undefined) n.textContent = String(txt);
+  return n;
+}
+function niceMax(v) {
+  if (!isFinite(v) || v <= 0) return 1;
+  var p = Math.pow(10, Math.floor(Math.log(v) / Math.LN10));
+  var n = v / p;
+  var m = n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10;
+  return m * p;
+}
+function chartFrame(title, note, h) {
+  var wrap = el('div', 'chart');
+  wrap.appendChild(el('h4', null, title));
+  wrap.appendChild(el('p', 'cd', note));
+  var svg = sEl('svg', { viewBox: '0 0 660 ' + h, preserveAspectRatio: 'xMidYMid meet', role: 'img' });
+  svg.setAttribute('aria-label', title);
+  wrap.appendChild(svg);
+  return { wrap: wrap, svg: svg, h: h };
+}
+var C_AX = '#28313b', C_TX = '#5a6772';
+var PAL = ['#ffb100', '#39d0e0', '#3ddc8f', '#ff8f5e', '#ffcb4a', '#ff5252', '#5fb8ff', '#8f7dff', '#ff7ab8'];
+function lineChart(title, note, labels, series) {
+  var h = 190, c = chartFrame(title, note, h), svg = c.svg;
+  var L = 40, R = 12, T = 12, B = 26, W = 660, H = h;
+  var n = labels.length;
+  var max = 1;
+  series.forEach(function (s) { s.data.forEach(function (v) { if (v > max) max = v; }); });
+  max = niceMax(max);
+  function X(i) { return L + (n <= 1 ? (W - L - R) / 2 : (W - L - R) * i / (n - 1)); }
+  function Y(v) { return T + (H - T - B) * (1 - (v / max)); }
+  svg.appendChild(sEl('line', { x1: L - 3, y1: T + (H - T - B), x2: W - R, y2: T + (H - T - B), stroke: C_AX, 'stroke-width': 1 }));
+  svg.appendChild(sEl('line', { x1: L - 3, y1: T, x2: L - 3, y2: T + (H - T - B), stroke: C_AX, 'stroke-width': 1 }));
+  svg.appendChild(sEl('text', { x: L - 7, y: T + 5, fill: C_TX, 'font-size': 10, 'text-anchor': 'end', 'font-family': 'monospace' }, String(max)));
+  svg.appendChild(sEl('text', { x: L - 7, y: T + (H - T - B) + 4, fill: C_TX, 'font-size': 10, 'text-anchor': 'end', 'font-family': 'monospace' }, '0'));
+  var step = Math.max(1, Math.ceil(n / 8));
+  labels.forEach(function (lb, i) {
+    if (i % step !== 0 && i !== n - 1) return;
+    svg.appendChild(sEl('text', { x: X(i), y: H - 8, fill: C_TX, 'font-size': 9.5, 'text-anchor': 'middle', 'font-family': 'monospace' }, lb));
+  });
+  series.forEach(function (s, si) {
+    var col = s.color || PAL[si % PAL.length], d = '', i;
+    for (i = 0; i < n; i++) d += (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(s.data[i] || 0).toFixed(1) + ' ';
+    svg.appendChild(sEl('path', { d: d.trim(), fill: 'none', stroke: col, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+    for (i = 0; i < n; i++) {
+      var g = sEl('g', {});
+      g.appendChild(sEl('circle', { cx: X(i).toFixed(1), cy: Y(s.data[i] || 0).toFixed(1), r: 2.6, fill: col }));
+      g.appendChild(sEl('title', {}, labels[i] + ' · ' + s.name + ' ' + (s.data[i] || 0)));
+      svg.appendChild(g);
+    }
+    svg.appendChild(sEl('text', { x: X(n - 1), y: Math.max(11, Y(s.data[n - 1] || 0) - 7), fill: col, 'font-size': 10, 'text-anchor': 'end', 'font-family': 'monospace' }, s.name + ' ' + (s.data[n - 1] || 0)));
+  });
+  var lg = el('div', 'leg');
+  series.forEach(function (s, si) {
+    var li = el('div', 'li');
+    var sw = el('i', 'sw'); sw.style.background = s.color || PAL[si % PAL.length];
+    li.appendChild(sw); li.appendChild(document.createTextNode(s.name));
+    lg.appendChild(li);
+  });
+  c.wrap.appendChild(lg);
+  return c.wrap;
+}
+function barChartH(title, note, labels, data, colors) {
+  var h = 200, c = chartFrame(title, note, h), svg = c.svg;
+  var L = 40, R = 12, T = 14, B = 34, W = 660, H = h;
+  var n = labels.length || 1;
+  var max = niceMax(Math.max.apply(null, data.concat([0])));
+  var bw = (W - L - R) / n;
+  svg.appendChild(sEl('line', { x1: L - 3, y1: T + (H - T - B), x2: W - R, y2: T + (H - T - B), stroke: C_AX, 'stroke-width': 1 }));
+  svg.appendChild(sEl('line', { x1: L - 3, y1: T, x2: L - 3, y2: T + (H - T - B), stroke: C_AX, 'stroke-width': 1 }));
+  svg.appendChild(sEl('text', { x: L - 7, y: T + 5, fill: C_TX, 'font-size': 10, 'text-anchor': 'end', 'font-family': 'monospace' }, String(max)));
+  labels.forEach(function (lb, i) {
+    var v = data[i] || 0;
+    var bh = (H - T - B) * (v / max);
+    var x = L + bw * i + bw * 0.16, w = bw * 0.68, y = T + (H - T - B) - bh;
+    var col = (colors && colors[i]) || PAL[0];
+    var g = sEl('g', {});
+    g.appendChild(sEl('rect', { x: x.toFixed(1), y: y.toFixed(1), width: Math.max(1, w).toFixed(1), height: Math.max(0.5, bh).toFixed(1), rx: 3, fill: col, opacity: 0.9 }));
+    g.appendChild(sEl('title', {}, lb + ' ' + v));
+    svg.appendChild(g);
+    svg.appendChild(sEl('text', { x: (x + w / 2).toFixed(1), y: (y - 4).toFixed(1), fill: col, 'font-size': 10.5, 'text-anchor': 'middle', 'font-family': 'monospace' }, String(v)));
+    svg.appendChild(sEl('text', { x: (x + w / 2).toFixed(1), y: H - 12, fill: C_TX, 'font-size': 10.5, 'text-anchor': 'middle' }, lb));
+  });
+  return c.wrap;
+}
+function heatmap(labels, data) {
+  var wrap = el('div', 'chart');
+  wrap.appendChild(el('h4', null, '活跃热力（近 12 周）'));
+  wrap.appendChild(el('p', 'cd', '每格 1 天，颜色越亮当日活跃次数越多'));
+  var box = el('div', 'heat');
+  var max = Math.max.apply(null, data.concat([1]));
+  for (var i = 0; i < 84; i++) {
+    var cell = el('i');
+    var v = data[i] || 0;
+    var lv = v === 0 ? 0 : v < max * 0.25 ? 1 : v < max * 0.5 ? 2 : v < max * 0.8 ? 3 : 4;
+    if (lv) cell.className = 'l' + lv;
+    cell.title = labels[i] + ' · ' + v + ' 次';
+    box.appendChild(cell);
+  }
+  wrap.appendChild(box);
+  var lg = el('div', 'leg');
+  ['0', '少', '中', '多', '满'].forEach(function (t, i) {
+    var li = el('div', 'li');
+    var sw = el('i', 'sw'); sw.className = 'sw ' + (i ? 'h' + i : '');
+    sw.style.background = ['#1a2129', '#2a4a34', '#2f7a4c', '#3ddc8f', '#9df3c6'][i];
+    li.appendChild(sw); li.appendChild(document.createTextNode(t));
+    lg.appendChild(li);
+  });
+  wrap.appendChild(lg);
+  return wrap;
+}
+
+/* ---------------- 菜单定义 ---------------- */
+var PAGES = [
+  { id: 'status', name: '状态',   icon: '◉', code: 'PG-01', sub: '今日运行状态（仅统计今日）' },
+  { id: 'diff',   name: '难度',   icon: '◧', code: 'PG-02', sub: '全局概率条与关卡级覆盖' },
+  { id: 'levels', name: '关卡管理', icon: '▤', code: 'PG-03', sub: '自定义关卡增删改与上传' },
+  { id: 'acct',   name: '帐户',   icon: '◍', code: 'PG-04', sub: '管理后台登录凭据' },
+  { id: 'stats',  name: '统计',   icon: '◫', code: 'PG-05', sub: '时间范围 / 图表 / 数据导出' },
+  { id: 'adv',    name: '高级',   icon: '⚙', code: 'PG-06', sub: '跳转地址与危险区' }
+];
+var PAGE = 'status';
+var UI = {};    /* 页面级临时状态 */
+
+/* =========================================================================
+   一、状态
+   ========================================================================= */
+function renderStatus(root) {
+  var st = todayStats(), ml = todayMatch();
+  var use = st.filter(function (r) { return !!r.pass; });
+  var passRate = st.length ? (use.length / st.length * 100) : 0;
+  var visits = (CFG.visitByDate && Number(CFG.visitByDate[today()])) || 0;
+
+  var box = el('div', 'gridk');
+  function kpi(k, v, u, sub) {
+    var d = el('div', 'kpi');
+    d.appendChild(el('div', 'k', k));
+    var vv = el('div', 'v');
+    vv.appendChild(document.createTextNode(String(v)));
+    if (u) { var uu = el('span', 'u', u); vv.appendChild(uu); }
+    d.appendChild(vv);
+    if (sub) d.appendChild(el('div', 'tiny mute', sub));
+    return d;
+  }
+  box.appendChild(kpi('今日访问量', visits, '次', 'visitByDate[' + today() + ']'));
+  box.appendChild(kpi('今日验证次数', st.length, '次', '含失败'));
+  box.appendChild(kpi('今日通关数', use.length, '次'));
+  box.appendChild(kpi('今日总通关率', st.length ? pct1(passRate) : '—', st.length ? '%' : '', st.length ? '通关 / 验证' : '暂无数据'));
+  root.appendChild(box);
+
+  /* 各关卡通关率 + 被匹配次数 */
+  var c = el('div', 'card sec');
+  c.appendChild(el('h3', null, '各关卡今日表现'));
+  c.appendChild(el('p', 'desc', '通关率 = 该关卡今日通关次数 / 该关卡今日验证次数；被匹配次数来自 endland-matchlog（按 ts 过滤今日）。'));
+  var lvAgg = {}, order = [];
+  function bucket(game, lv) {
+    var key = game + '#' + lv;
+    if (!lvAgg[key]) { lvAgg[key] = { game: game, lv: lv, n: 0, pass: 0, match: 0 }; order.push(key); }
+    return lvAgg[key];
+  }
+  st.forEach(function (r) {
+    var g = r.game || '(未知)', lv = r.lv === undefined || r.lv === null ? '-' : r.lv;
+    var b = bucket(g, lv); b.n++; if (r.pass) b.pass++;
+  });
+  ml.forEach(function (r) {
+    var g = r.game || '(未知)', lv = r.lv === undefined || r.lv === null ? '-' : r.lv;
+    bucket(g, lv).match++;
+  });
+  if (!order.length) { c.appendChild(emptyNote('今日暂无 stats / matchlog 记录。')); }
+  else {
+    var tw = el('div', 'tblwrap');
+    var tb = el('table');
+    tb.innerHTML = '<thead><tr><th>游戏</th><th>关卡</th><th>难度</th><th style="text-align:right">被匹配次数</th><th style="text-align:right">验证次数</th><th style="text-align:right">通关次数</th><th>通关率</th></tr></thead>';
+    var tbod = el('tbody');
+    order.sort(function (a, b) { return (lvAgg[b].match + lvAgg[b].n) - (lvAgg[a].match + lvAgg[a].n); });
+    order.forEach(function (k) {
+      var b = lvAgg[k], tr = el('tr');
+      tr.appendChild(el('td', null, gName(b.game)));
+      tr.appendChild(el('td', 'mono', String(b.lv)));
+      tr.appendChild(el('td', null, dvName(b.lv)));
+      tr.appendChild(el('td', 'num', String(b.match)));
+      tr.appendChild(el('td', 'num', String(b.n)));
+      tr.appendChild(el('td', 'num', String(b.pass)));
+      var td = el('td');
+      if (!b.n) { td.appendChild(el('span', 'mute small', '—')); }
+      else {
+        var pr = b.pass / b.n * 100;
+        td.appendChild(el('span', 'mono small', pct1(pr) + '% '));
+        var bar = el('div', 'bar' + (pr < 95 ? ' d5' : pr >= 99 ? ' d1' : ' d3'));
+        bar.style.display = 'inline-block'; bar.style.verticalAlign = 'middle'; bar.style.minWidth = '64px';
+        bar.appendChild(el('i')).style.width = Math.max(1, Math.min(100, pr)) + '%';
+        td.appendChild(bar);
+      }
+      tr.appendChild(td);
+      tbod.appendChild(tr);
+    });
+    tb.appendChild(tbod);
+    tw.appendChild(tb);
+    c.appendChild(tw);
+  }
+  root.appendChild(c);
+
+  /* 各难度被匹配次数 */
+  var c2 = el('div', 'card sec');
+  c2.appendChild(el('h3', null, '各难度今日被匹配次数'));
+  c2.appendChild(el('p', 'desc', '按 matchlog.lv 汇总 V1–V5，仅今日。'));
+  var dcount = [0, 0, 0, 0, 0], got = 0;
+  ml.forEach(function (r) { var lv = clampInt(r.lv, 1, 5, 0); if (lv) { dcount[lv - 1]++; got++; } });
+  if (!got) c2.appendChild(emptyNote('今日暂无匹配记录。'));
+  else {
+    var tw2 = el('div', 'tblwrap'); var tb2 = el('table');
+    tb2.innerHTML = '<thead><tr><th>难度</th><th>名称</th><th style="text-align:right">被匹配次数</th><th>占比</th></tr></thead>';
+    var body2 = el('tbody');
+    dcount.forEach(function (n, i) {
+      var tr = el('tr');
+      tr.appendChild(el('td', 'mono', 'V' + (i + 1)));
+      tr.appendChild(el('td', null, DV[i]));
+      tr.appendChild(el('td', 'num', String(n)));
+      var td = el('td'); var bar = el('div', 'bar d' + (i + 1)); bar.style.minWidth = '120px';
+      bar.appendChild(el('i')).style.width = Math.max(0, n / got * 100) + '%';
+      td.appendChild(el('span', 'mono small', pct1(n / got * 100) + '% ')); td.appendChild(bar);
+      tr.appendChild(td); body2.appendChild(tr);
+    });
+    tb2.appendChild(body2); tw2.appendChild(tb2); c2.appendChild(tw2);
+  }
+  root.appendChild(c2);
+
+  var c3 = el('div', 'card sec');
+  c3.appendChild(el('h3', null, '今日明细（最近 20 条）'));
+  var rec = st.slice().sort(function (a, b) {
+    return (parseTs(b.ts) || 0) - (parseTs(a.ts) || 0);
+  }).slice(0, 20);
+  if (!rec.length) c3.appendChild(emptyNote('今日暂无验证记录。'));
+  else {
+    var tw3 = el('div', 'tblwrap'); var tb3 = el('table');
+    tb3.innerHTML = '<thead><tr><th>时间</th><th>设备</th><th>游戏</th><th>关卡</th><th>难度</th><th>星级</th><th>步/移</th><th>秒</th><th>结果</th></tr></thead>';
+    var body3 = el('tbody');
+    rec.forEach(function (r) {
+      var d = parseTs(r.ts), tr = el('tr');
+      tr.appendChild(el('td', 'mono small', d ? fmtTime(d) : '—'));
+      tr.appendChild(el('td', 'mono small', r.device || '—'));
+      tr.appendChild(el('td', null, gName(r.game)));
+      tr.appendChild(el('td', 'mono', String(r.lv === undefined || r.lv === null ? '—' : r.lv)));
+      tr.appendChild(el('td', null, dvName(r.lv)));
+      tr.appendChild(el('td', 'mono', r.stars ? '★'.repeat(clampInt(r.stars, 1, 5, 1)) : '—'));
+      tr.appendChild(el('td', 'num', String(r.moves === undefined ? '—' : r.moves)));
+      tr.appendChild(el('td', 'num', String(r.secs === undefined ? '—' : r.secs)));
+      var td = el('td');
+      td.appendChild(el('span', 'tag ' + (r.pass ? 'ok' : 'bad'), r.pass ? '通关' : '失败'));
+      tr.appendChild(td); body3.appendChild(tr);
+    });
+    tb3.appendChild(body3); tw3.appendChild(tb3); c3.appendChild(tw3);
+  }
+  root.appendChild(c3);
+
+  var c4 = el('div', 'card sec');
+  c4.appendChild(el('h3', null, '数据源'));
+  var t4 = el('div');
+  [
+    'endland-stats 共 <b>' + ensureArray(LS.stats).length + '</b> 条，其中今日 <b>' + st.length + '</b> 条',
+    'endland-matchlog 共 <b>' + ensureArray(LS.matchlog).length + '</b> 条，其中今日 <b>' + ml.length + '</b> 条',
+    'endland-admin-cfg.visitByDate 今日 <b>' + visits + '</b>'
+  ].forEach(function (line) {
+    var p = el('div', 'term'); p.innerHTML = line; t4.appendChild(p);
+  });
+  c4.appendChild(t4);
+  root.appendChild(c4);
+}
+function emptyNote(t) {
+  var d = el('div', 'small mute');
+  d.style.cssText = 'padding:14px;border:1px dashed var(--line2);border-radius:10px;text-align:center;background:var(--bg-deep)';
+  d.textContent = t;
+  return d;
+}
+function gName(k) {
+  for (var i = 0; i < GAMES.length; i++) if (GAMES[i].key === k) return GAMES[i].name;
+  return k ? String(k) : '—';
+}
+function gDev(k) { for (var i = 0; i < GAMES.length; i++) if (GAMES[i].key === k) return GAMES[i].dev; return ''; }
+function dvName(lv) {
+  var n = clampInt(lv, 1, 5, 0);
+  return n ? DV[n - 1] + '（V' + n + '）' : '—';
+}
+
+/* =========================================================================
+   二、难度
+   ========================================================================= */
+function renderDiff(root) {
+  var c = el('div', 'card sec');
+  c.appendChild(el('h3', null, '全局难度概率条'));
+  c.appendChild(el('p', 'desc', '一条 100% 横条分 5 段（V1 简单 → V5 困难）。拖动段间 4 个手柄改变各段宽度，任意拖动后 Σ 恒等于 100%（相邻两段此消彼长）。支持鼠标 / 触控 / 键盘方向键。'));
+  var sumRow = el('div', 'pbar-sum');
+  c.appendChild(sumRow);
+  var box = el('div', 'distbox');
+  var bar = el('div', 'pbar');
+  bar.id = 'pbar';
+  bar.setAttribute('role', 'group');
+  bar.setAttribute('aria-label', '全局难度概率条');
+  var segs = [], hs = [];
+  for (var i = 0; i < 5; i++) {
+    var s = el('div', 'pseg s' + (i + 1));
+    s.setAttribute('data-i', String(i));
+    var lab = el('span', 'lab');
+    s.appendChild(lab);
+    bar.appendChild(s); segs.push({ node: s, lab: lab });
+  }
+  box.appendChild(bar);
+  var axis = el('div', 'axis');
+  box.appendChild(axis);
+  c.appendChild(box);
+  var leg = el('div', 'leg');
+  c.appendChild(leg);
+
+  var drag = { i: 0, moved: false, active: false };
+  for (var k = 0; k < 4; k++) {
+    (function (bi) {
+      var h = el('div', 'ph');
+      h.setAttribute('role', 'slider');
+      h.setAttribute('tabindex', '0');
+      h.setAttribute('aria-label', DV[bi] + ' / ' + DV[bi + 1] + ' 分界手柄');
+      h.innerHTML = '<span style="position:absolute;clip:rect(0 0 0 0)">拖动</span>';
+      h.addEventListener('pointerdown', function (e) {
+        if (e.button !== undefined && e.button !== 0 && e.pointerType === 'mouse') return;
+        drag.i = bi; drag.moved = false; drag.active = true;
+        if (h.setPointerCapture) { try { h.setPointerCapture(e.pointerId); } catch (err) { /* 忽略 */ } }
+        h.classList.add('act');
+        segs[bi].node.classList.add('dragging'); segs[bi + 1].node.classList.add('dragging');
+        e.preventDefault();
+      });
+      h.addEventListener('pointermove', function (e) {
+        if (!drag.active || drag.i !== bi) return;
+        drag.moved = true;
+        applyPointer(e.clientX);
+      });
+      function end() {
+        if (!drag.active) return;
+        drag.active = false;
+        h.classList.remove('act');
+        segs[bi].node.classList.remove('dragging'); segs[bi + 1].node.classList.remove('dragging');
+        if (drag.moved) { saveCfg(); toast('全局概率已保存（Σ=100%）'); }
+      }
+      h.addEventListener('pointerup', end);
+      h.addEventListener('pointercancel', end);
+      h.addEventListener('lostpointercapture', end);
+      h.addEventListener('keydown', function (e) {
+        var step = e.shiftKey ? 5 : 1, i2 = bi;
+        if (e.key === 'ArrowLeft') {
+          if (GLOBAL[i2] - step < 0) return;
+          GLOBAL[i2] = round1(GLOBAL[i2] - step); GLOBAL[i2 + 1] = round1(GLOBAL[i2 + 1] + step);
+        } else if (e.key === 'ArrowRight') {
+          if (GLOBAL[i2 + 1] - step < 0) return;
+          GLOBAL[i2 + 1] = round1(GLOBAL[i2 + 1] - step); GLOBAL[i2] = round1(GLOBAL[i2] + step);
+        } else return;
+        e.preventDefault(); syncBar(); saveCfg();
+      });
+      bar.appendChild(h);
+      hs.push(h);
+    })(k);
+  }
+  function applyPointer(clientX) {
+    var bi = drag.i;
+    var r = bar.getBoundingClientRect();
+    if (r.width <= 0) return;
+    var p = (clientX - r.left) / r.width * 100;
+    var lo = 0, m;
+    for (m = 0; m < bi; m++) lo += GLOBAL[m];
+    var avail = lo + GLOBAL[bi] + GLOBAL[bi + 1];
+    p = Math.max(lo, Math.min(avail, p));
+    var nw = Math.round((p - lo) * 10) / 10;
+    GLOBAL[bi] = nw;
+    GLOBAL[bi + 1] = Math.round((avail - nw) * 10) / 10;
+    syncBar();
+  }
+  var lastW = [];
+  function syncBar() {
+    var acc = 0;
+    for (var i2 = 0; i2 < 5; i2++) {
+      var w = GLOBAL[i2];
+      segs[i2].node.style.flex = '0 0 ' + w + '%';
+      segs[i2].lab.textContent = DV[i2] + ' ' + (Math.round(w * 10) / 10) + '%';
+      segs[i2].node.title = 'V' + (i2 + 1) + ' ' + DV[i2] + ' · ' + (Math.round(w * 10) / 10) + '%';
+      if (i2 < 4) hs[i2].style.left = (acc + w) + '%';
+      acc += w;
+    }
+    var total = sumDist(GLOBAL);
+    sumRow.className = 'pbar-sum' + (Math.abs(total - 100) > EPS ? ' err' : '');
+    sumRow.innerHTML = '今日匹配权重合计 <b>Σ = ' + total + '%</b>' + (Math.abs(total - 100) > EPS ? '（应为 100%）' : ' · 合法');
+    lastW = GLOBAL.slice();
+    renderAxis(axis);
+    renderLegend(leg);
+  }
+  function renderAxis(node) {
+    node.innerHTML = '';
+    var acc = 0;
+    for (var i2 = 0; i2 < 5; i2++) {
+      var mid = acc + GLOBAL[i2] / 2;
+      if (GLOBAL[i2] >= 9) {
+        var s2 = el('i', null, 'V' + (i2 + 1));
+        s2.style.left = mid + '%';
+        node.appendChild(s2);
+      }
+      acc += GLOBAL[i2];
+    }
+  }
+  function renderLegend(node) {
+    node.innerHTML = '';
+    for (var i2 = 0; i2 < 5; i2++) {
+      var li = el('div', 'li');
+      var sw = el('i', 'sw'); sw.style.background = ['#3ddc8f', '#39d0e0', '#ffcb4a', '#ff8f5e', '#ff5252'][i2];
+      li.appendChild(sw);
+      li.appendChild(document.createTextNode('V' + (i2 + 1) + ' ' + DV[i2] + ' '));
+      var b = el('b', null, (Math.round(GLOBAL[i2] * 10) / 10) + '%');
+      li.appendChild(b);
+      node.appendChild(li);
+    }
+  }
+  syncBar();
+
+  var tools2 = el('div', 'row');
+  tools2.style.marginTop = '14px';
+  var bU = el('button', 'btn', '恢复均匀 20% × 5');
+  bU.addEventListener('click', function () {
+    GLOBAL = UNIFORM5.slice(); syncBar(); saveCfg(); toast('已恢复均匀分布 20% × 5');
+  });
+  var bS = el('button', 'btn pri', '保存全局概率');
+  bS.addEventListener('click', function () {
+    if (saveCfg()) toast('已保存 globalDist（Σ=' + sumDist(GLOBAL) + '%）');
+    else toast('保存失败', true);
+  });
+  tools2.appendChild(bU); tools2.appendChild(bS);
+  c.appendChild(tools2);
+  root.appendChild(c);
+
+  /* ---- 关卡级覆盖 ---- */
+  var c2 = el('div', 'card sec');
+  c2.appendChild(el('h3', null, '关卡级难度覆盖'));
+  c2.appendChild(el('p', 'desc', '每个关卡（按游戏 + 难度档 V1–V5）可单独覆盖 5 个难度权重（0–100）。留空/清除该行即回退为“无覆盖”（等价全局分布）。'));
+  var gym = el('div', 'tabs');
+  GAMES.forEach(function (g) {
+    var b = el('button', UI.ovrGame === g.key ? 'on' : '', g.name);
+    var n = el('span', 'n', gDev(g.key));
+    b.appendChild(n);
+    b.addEventListener('click', function () { UI.ovrGame = g.key; rerender(); });
+    gym.appendChild(b);
+  });
+  c2.appendChild(gym);
+  var cur = UI.ovrGame || GAMES[0].key;
+  var any = false;
+  [1, 2, 3, 4, 5].forEach(function (lv) {
+    var o = ovrOf(cur, lv);
+    var row = el('div', 'card');
+    row.style.cssText = 'padding:11px 12px;margin-bottom:10px;background:linear-gradient(180deg,var(--surface-3),var(--surface-1))';
+    var hd = el('div', 'row');
+    hd.style.marginBottom = '9px';
+    hd.appendChild(el('span', 'tag acc mono', 'V' + lv));
+    hd.appendChild(el('b', null, DV[lv - 1]));
+    hd.appendChild(el('span', 'tiny mute', DHINT[lv - 1]));
+    var st = el('span', 'tag' + (o ? ' ok' : ''), o ? '已覆盖' : '无覆盖（用全局）');
+    hd.appendChild(st);
+    var spacer = el('span'); spacer.style.flex = '1';
+    hd.appendChild(spacer);
+    var bClr = el('button', 'btn sm', '清除覆盖');
+    bClr.disabled = !o;
+    bClr.addEventListener('click', function () { setOvr(cur, lv, null); toast('已清除 V' + lv + ' 覆盖'); rerender(); });
+    hd.appendChild(bClr);
+    row.appendChild(hd);
+
+    var ov = el('div', 'ovr');
+    var vals = (o || GLOBAL.slice()).slice();
+    var inputs = [];
+    for (var d = 0; d < 5; d++) {
+      (function (di) {
+        var oc = el('div', 'oc');
+        oc.appendChild(el('div', 'ol', 'V' + (di + 1) + ' ' + DV[di]));
+        var rg = el('input');
+        rg.type = 'range'; rg.min = '0'; rg.max = '100'; rg.step = '1'; rg.value = String(Math.round(vals[di]));
+        var nm = el('input');
+        nm.type = 'number'; nm.min = '0'; nm.max = '100'; nm.step = '1'; nm.value = String(Math.round(vals[di]));
+        nm.setAttribute('aria-label', 'V' + lv + ' 关卡 V' + (di + 1) + ' 权重');
+        function set(v) {
+          v = clampInt(v, 0, 100, 0);
+          vals[di] = v; rg.value = String(v); if (document.activeElement !== nm) nm.value = String(v);
+        }
+        rg.addEventListener('input', function () { set(rg.value); });
+        nm.addEventListener('input', function () { set(nm.value); });
+        oc.appendChild(rg); oc.appendChild(nm);
+        ov.appendChild(oc);
+        inputs.push({ rg: rg, nm: nm, set: set });
+      })(d);
+    }
+    row.appendChild(ov);
+    var ft = el('div', 'row');
+    ft.style.marginTop = '9px';
+    var bW = el('button', 'btn sm', '取全局值');
+    bW.addEventListener('click', function () { for (var i2 = 0; i2 < 5; i2++) inputs[i2].set(Math.round(GLOBAL[i2])); });
+    var bS2 = el('button', 'btn sm pri', '保存覆盖');
+    bS2.addEventListener('click', function () { setOvr(cur, lv, vals.map(function (x) { return clampInt(x, 0, 100, 0); })); toast('已保存 ' + gName(cur) + ' V' + lv + ' 覆盖'); rerender(); });
+    ft.appendChild(bW); ft.appendChild(bS2);
+    ft.appendChild(el('span', 'tiny mute', '权重间不必求和为 100，匹配时按 ∝ P_g(d) × P_l(d) 归一化'));
+    row.appendChild(ft);
+    c2.appendChild(row);
+    if (o) any = true;
+  });
+  root.appendChild(c2);
+
+  /* ---- 公式 ---- */
+  var c3 = el('div', 'card sec frame');
+  c3.appendChild(el('h3', null, '匹配公式（只读）'));
+  var t3 = el('div');
+  [
+    '关卡被选中概率 = <b>关卡权重 / Σ 关卡权重</b>',
+    '难度概率 <b>∝ P_g(d) × P_l(d)</b>（全局分布 × 关卡覆盖）',
+    '归一化后 P(d) = P_g(d)·P_l(d) / Σ<sub>d′</sub> P_g(d′)·P_l(d′)',
+    '无覆盖时 P_l(d) ≡ 1，退化为 <b>P(d) = P_g(d)</b>',
+    '全局 Σ P_g(d) 恒等于 <b>100%</b>（概率条拖动保证）'
+  ].forEach(function (x) { var p = el('div', 'term'); p.innerHTML = x; t3.appendChild(p); });
+  c3.appendChild(t3);
+  var pre = el('div', 'small mono dim');
+  pre.style.cssText = 'margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg-deep);white-space:pre-wrap;word-break:break-all';
+  pre.textContent = 'globalDist = ' + JSON.stringify(GLOBAL) + '\nlevelDist.' + cur + ' = ' + JSON.stringify(CFG.levelDist[cur] || {});
+  c3.appendChild(pre);
+  root.appendChild(c3);
+
+  /* ---- 匹配沙盘 ---- */
+  var c4 = el('div', 'card sec');
+  c4.appendChild(el('h3', null, '匹配沙盘（按当前配置试算）'));
+  c4.appendChild(el('p', 'desc', '按上述公式，计算该游戏各难度档被选中的概率，用于校验配置是否符合预期。'));
+  var pool = [1, 2, 3, 4, 5].map(function (lv) {
+    var o = ovrOf(cur, lv);
+    var w = 1, d = o ? o.slice() : GLOBAL.map(function () { return 1; });
+    var s = 0; d.forEach(function (x) { s += x; });
+    return { lv: lv, w: w, d: d, s: s };
+  });
+  var tw = el('div', 'tblwrap'); var tb = el('table');
+  tb.innerHTML = '<thead><tr><th>关卡</th><th>权重</th><th>V1</th><th>V2</th><th>V3</th><th>V4</th><th>V5</th></tr></thead>';
+  var body = el('tbody');
+  var totW = 0; pool.forEach(function (p) { totW += p.w; });
+  pool.forEach(function (p) {
+    var tr = el('tr');
+    tr.appendChild(el('td', null, 'V' + p.lv + ' ' + DV[p.lv - 1]));
+    tr.appendChild(el('td', 'mono', (p.w / totW * 100).toFixed(1) + '%'));
+    var sumJ = 0;
+    for (var d = 0; d < 5; d++) sumJ += GLOBAL[d] * p.d[d];
+    for (var d2 = 0; d2 < 5; d2++) {
+      var joint = sumJ > 0 ? GLOBAL[d2] * p.d[d2] / sumJ * 100 : 0;
+      var td = el('td', 'mono');
+      td.textContent = pct1(joint) + '%';
+      td.style.color = joint >= 30 ? '#ffcb4a' : joint >= 15 ? '#d9e0e7' : '#8a96a2';
+      tr.appendChild(td);
+    }
+    body.appendChild(tr);
+  });
+  tb.appendChild(body); tw.appendChild(tb); c4.appendChild(tw);
+  root.appendChild(c4);
+}
+
+/* =========================================================================
+   三、关卡管理
+   ========================================================================= */
+var GEM_DIRS = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
+function validateLevel(o, expectGame) {
+  var errs = [];
+  if (!o || typeof o !== 'object' || Array.isArray(o)) { errs.push('条目必须是 JSON 对象'); return { ok: false, errs: errs }; }
+  var game = o.game;
+  if (typeof game !== 'string' || !GAMES.some(function (g) { return g.key === game; })) {
+    errs.push('game 必须是 ' + GAMES.map(function (g) { return g.key; }).join(' / ') + ' 之一（实际：' + JSON.stringify(game) + '）');
+  } else if (expectGame && game !== expectGame) {
+    errs.push('game=' + game + ' 与当前页签 ' + expectGame + ' 不一致（请切到对应游戏页签上传）');
+  }
+  var lv = parseInt(o.lv, 10);
+  if (!isFinite(lv) || lv < 1 || lv > 5) errs.push('lv 必须是 1–5 的整数（实际：' + JSON.stringify(o.lv) + '）');
+  if (o.id !== undefined && o.id !== null && String(o.id).length > 64) errs.push('id 过长（≤64 字符）');
+  if (o.name !== undefined && typeof o.name !== 'string') errs.push('name 必须是字符串');
+  ['desc', 'play'].forEach(function (k) { if (o[k] !== undefined && typeof o[k] !== 'string') errs.push(k + ' 必须是字符串'); });
+  var hasParams = o.params && typeof o.params === 'object' && !Array.isArray(o.params);
+  var hasHand = o.hand && typeof o.hand === 'object' && !Array.isArray(o.hand);
+  if (!hasParams && !hasHand) errs.push('缺少 params 或 hand（关卡定义体）');
+  if (game === 'gems') {
+    var h = hasHand ? o.hand : (hasParams ? o.params : null);
+    if (!h) errs.push('gems 关卡需要 hand 定义');
+    else {
+      if (!arr2(h.start)) errs.push('hand.start 必须是 [x,y]');
+      if (!arr2(h.goal)) errs.push('hand.goal 必须是 [x,y]');
+      if (!Array.isArray(h.gems)) errs.push('hand.gems 必须是坐标数组');
+      else {
+        for (var i = 0; i < h.gems.length; i++) if (!arr2(h.gems[i])) { errs.push('hand.gems[' + i + '] 不是 [x,y]'); break; }
+      }
+      if (arr2(h.start) && arr2(h.goal) && Array.isArray(h.gems)) {
+        var N = 7, k, seen = {};
+        for (k = 0; k < h.gems.length; k++) {
+          var gx = h.gems[k][0], gy = h.gems[k][1];
+          if (!(gx >= 0 && gx < N && gy >= 0 && gy < N)) { errs.push('hand.gems[' + k + ']=[' + gx + ',' + gy + '] 越界（0–6）'); break; }
+          if (gx === h.start[0] && gy === h.start[1]) { errs.push('hand.gems[' + k + '] 与起点重合'); break; }
+          if (gx === h.goal[0] && gy === h.goal[1]) { errs.push('hand.gems[' + k + '] 与终点重合'); break; }
+          if (seen[gx + ',' + gy]) { errs.push('hand.gems[' + k + '] 重复坐标 [' + gx + ',' + gy + ']'); break; }
+          seen[gx + ',' + gy] = 1;
+        }
+        if (!errs.length) {
+          var s0 = { x: h.start[0], y: h.start[1] };
+          var res = gemsBFS(s0, h.gems.map(function (g) { return { x: g[0], y: g[1] }; }), { x: h.goal[0], y: h.goal[1] }, N);
+          if (!res.ok) errs.push('可解性校验失败：按吃子跳规则无法吃完全部宝石抵达终点（最少 ' + res.min + ' 步也走不通）');
+        }
+      }
+    }
+  } else if (hasParams) {
+    var p = o.params;
+    if (!(Number(p.n) >= 2 && Number(p.n) <= 12)) errs.push('params.n 建议为 2–12 的整数（实际：' + JSON.stringify(p.n) + '）');
+  }
+  return { ok: errs.length === 0, errs: errs };
+}
+function arr2(v) { return Array.isArray(v) && v.length === 2 && isFinite(Number(v[0])) && isFinite(Number(v[1])); }
+/* 与 game3-gems.html 完全一致的走法规则（含“可越过 1 子、落点可在障碍另一侧”） */
+function gemsJumpOpts(px, py, gems, N) {
+  function inB(x, y) { return x >= 0 && x < N && y >= 0 && y < N; }
+  function hasGem(x, y) {
+    for (var i = 0; i < gems.length; i++) if (gems[i].x === x && gems[i].y === y) return true;
+    return false;
+  }
+  var out = [], i, d, dx, dy, ax, ay, bx, by, cx, cy, blocked;
+  for (i = 0; i < 8; i++) {
+    dx = GEM_DIRS[i][0]; dy = GEM_DIRS[i][1];
+    ax = px + dx; ay = py + dy;
+    if (!inB(ax, ay) || !hasGem(ax, ay)) continue;
+    bx = px + 2 * dx; by = py + 2 * dy;
+    if (!inB(bx, by) || hasGem(bx, by)) continue;
+    out.push({ x: bx, y: by, cap: { x: ax, y: ay } });
+  }
+  for (i = 0; i < 8; i++) {
+    dx = GEM_DIRS[i][0]; dy = GEM_DIRS[i][1]; blocked = false;
+    for (d = 2; ; d++) {
+      cx = px + dx * d; cy = py + dy * d;
+      if (!inB(cx, cy)) break;
+      if (!blocked) out.push({ x: cx, y: cy, cap: null });
+      if (hasGem(cx, cy)) blocked = true;
+    }
+  }
+  return out;
+}
+function gemsBFS(start, gems, goal, N) {
+  var CAP = 40000;
+  function key(px, py, gm) {
+    var a = [], i;
+    for (i = 0; i < gm.length; i++) a.push(gm[i].y * N + gm[i].x);
+    a.sort(function (p, q) { return p - q; });
+    return px * 100 + py + '|' + a.join(',');
+  }
+  var q = [{ x: start.x, y: start.y, gems: gems.slice(), d: 0 }];
+  var seen = {}, head = 0;
+  seen[key(start.x, start.y, gems)] = 1;
+  while (head < q.length) {
+    var cur = q[head++];
+    if (cur.gems.length === 0 && cur.x === goal.x && cur.y === goal.y) return { ok: true, min: cur.d };
+    var os = gemsJumpOpts(cur.x, cur.y, cur.gems, N), i, m, ng, k;
+    for (i = 0; i < os.length; i++) {
+      m = os[i];
+      ng = cur.gems.slice();
+      if (m.cap) {
+        for (var j = 0; j < ng.length; j++) if (ng[j].x === m.cap.x && ng[j].y === m.cap.y) { ng.splice(j, 1); break; }
+      }
+      k = key(m.x, m.y, ng);
+      if (seen[k]) continue;
+      seen[k] = 1;
+      if (q.length > CAP) return { ok: false, min: -1, overflow: true };
+      q.push({ x: m.x, y: m.y, gems: ng, d: cur.d + 1 });
+    }
+  }
+  return { ok: false, min: -1 };
+}
+function normalizeLevel(o, expectGame) {
+  var out = clone(o);
+  out.game = typeof out.game === 'string' && out.game ? out.game : expectGame;
+  out.lv = clampInt(out.lv, 1, 5, 1);
+  out.id = (out.id === undefined || out.id === null || out.id === '') ? genId(out.game) : String(out.id).trim();
+  out.name = typeof out.name === 'string' && out.name.trim() ? out.name.trim().slice(0, 60) : ('自定义 ' + out.id);
+  out.desc = typeof out.desc === 'string' ? out.desc : '';
+  out.play = typeof out.play === 'string' ? out.play : '';
+  out.enabled = out.enabled !== false;
+  return out;
+}
+function genId(game) {
+  var s = '';
+  for (var i = 0; i < 6; i++) s += 'abcdefghijklmnopqrstuvwxyz0123456789'.charAt(Math.floor(Math.random() * 36));
+  return game + '-' + Date.now().toString(36) + '-' + s.slice(0, 2);
+}
+
+function renderLevels(root) {
+  var g = UI.lvGame || GAMES[0].key;
+  var tabs = el('div', 'tabs');
+  GAMES.forEach(function (gm) {
+    var b = el('button', gm.key === g ? 'on' : '', gm.name);
+    b.appendChild(el('span', 'n', readLevels(gm.key).length + ' / ' + gDev(gm.key)));
+    b.addEventListener('click', function () { UI.lvGame = gm.key; rerender(); });
+    tabs.appendChild(b);
+  });
+  root.appendChild(tabs);
+
+  var arr = readLevels(g);
+  var c = el('div', 'card sec');
+  c.appendChild(el('h3', null, gName(g) + ' · 自定义关卡'));
+  c.appendChild(el('p', 'desc', '内置难度库（V1–V5 参数表，见 docs/level-spec.md）编译在游戏页内，<b>不可删除</b>，本页写的是追加在其后的自定义关卡。每条可用「启用/禁用」整体停用（写 enabled=false），游戏页启动时与内置库合并并跳过 disabled 项。'));
+  if (!arr.length) c.appendChild(emptyNote('暂无自定义关卡，可在下方「上传 JSON」新增。'));
+  else {
+    arr.forEach(function (o, idx) {
+      c.appendChild(levelEditor(o, idx, g, arr));
+    });
+  }
+  root.appendChild(c);
+
+  /* ---- 上传 ---- */
+  var c2 = el('div', 'card sec');
+  c2.appendChild(el('h3', null, '上传 JSON 关卡'));
+  c2.appendChild(el('p', 'desc', '支持单个对象或对象数组。必填 game / lv（1–5），且必须含 params 或 hand；gems 额外校验 start / goal / gems 坐标并在 7×7 棋盘上跑吃子跳 BFS 可解性校验。'));
+  var drop = el('div', 'drop');
+  var fi = el('input');
+  fi.type = 'file'; fi.accept = '.json,application/json'; fi.id = 'upFile';
+  fi.style.cssText = 'font-size:12.5px;max-width:100%';
+  drop.appendChild(fi);
+  var er = el('div', 'errline');
+  er.id = 'upErr';
+  drop.appendChild(er);
+  c2.appendChild(drop);
+  fi.addEventListener('change', function () {
+    var f = fi.files && fi.files[0];
+    if (!f) return;
+    readUpload(f, g, er);
+    fi.value = '';
+  });
+  var row = el('div', 'row');
+  row.style.marginTop = '10px';
+  var bT = el('button', 'btn sm', '填入合法样例');
+  bT.addEventListener('click', function () {
+    var sample = g === 'gems'
+      ? { game: 'gems', id: 'gems-99-zz', lv: 2, name: '样例宝石关', desc: '上传校验演示', play: '吃光宝石抵达终点', hand: { start: [0, 0], goal: [6, 6], gems: [[2, 0], [0, 2]] }, enabled: true }
+      : { game: g, lv: 3, name: '样例关卡', desc: '上传校验演示', play: '按难度档参数生成', params: g === 'camping' ? { n: 7, tents: [5, 6] } : g === 'packing' ? { cols: 5, rows: 6, hazard: 2, pieces: [7, 8] } : { n: 5, leaves: [4, 6] }, enabled: true };
+    window.__adSample = sample;
+    er.className = 'errline ok';
+    er.textContent = '合法样例已生成：可在控制台执行 copy(JSON.stringify(window.__adSample)) 复制，或直接点「写入样例」验证上传通道。';
+    toast('样例已生成到 window.__adSample');
+  });
+  var bW = el('button', 'btn sm pri', '写入样例（走同一校验）');
+  bW.addEventListener('click', function () {
+    if (!window.__adSample) { er.className = 'errline'; er.textContent = '请先点「填入合法样例」生成样例。'; return; }
+    ingest([window.__adSample], g, er);
+  });
+  var bI = el('button', 'btn sm danger', '写入一个非法样例（演示错误提示）');
+  bI.addEventListener('click', function () {
+    ingest([{ game: g, lv: 9, name: '非法样例' }], g, er);
+  });
+  row.appendChild(bT); row.appendChild(bW); row.appendChild(bI);
+  c2.appendChild(row);
+  root.appendChild(c2);
+
+  /* ---- 说明 ---- */
+  var c3 = el('div', 'card sec');
+  c3.appendChild(el('h3', null, '内置难度库（只读）'));
+  var t3 = el('div');
+  var doc = {
+    circuit: ['V1 n4 灯3-4 · 教学', 'V2 n4 灯5-7 · 分支增多', 'V3 n5 灯4-6 · 场地扩大', 'V4 n5 灯6-8 · T/十字件多', 'V5 n6 灯7-10 · 最大规模'],
+    packing: ['V1 5×5 禁区0-1', 'V2 5×6 禁区1-2', 'V3 5×6 禁区2-3', 'V4 6×6 禁区3', 'V5 6×7 禁区3-4'],
+    gems: ['V1 关1-5 直线吃子', 'V2 关6-10 对角/分叉', 'V3 关11-15 折返长跳', 'V4 关16-20 复合陷阱', 'V5 关21-25 多簇远征'],
+    camping: ['V1 n6 帐篷3-4', 'V2 n6 帐篷5', 'V3 n7 帐篷5-6', 'V4 n7 帐篷7', 'V5 n8 帐篷8-9']
+  };
+  doc[g].forEach(function (x) {
+    var p = el('div', 'term'); p.innerHTML = esc(x); t3.appendChild(p);
+  });
+  var w = el('p', 'small mute');
+  w.style.marginTop = '8px';
+  w.textContent = '内置关卡不可删除，只能通过上面的「启用/禁用」对自定义追加项生效；若需整体停用某游戏，请在「难度」页把该游戏全部难度覆盖权重设为 0，或直接不使用该游戏入口。';
+  c3.appendChild(t3); c3.appendChild(w);
+  root.appendChild(c3);
+}
+function levelEditor(o, idx, g, arr) {
+  var box = el('div', 'card lvl');
+  box.style.marginBottom = '10px';
+  box.style.background = 'linear-gradient(180deg,var(--surface-3),var(--surface-1))';
+  var head = el('div', 'lhead');
+  head.appendChild(el('span', 'id mono', o.id || '(无 id)'));
+  head.appendChild(el('span', 'tag ' + (o.enabled === false ? 'bad' : 'ok'), o.enabled === false ? '已禁用' : '已启用'));
+  head.appendChild(el('span', 'tag acc mono', 'V' + clampInt(o.lv, 1, 5, 1)));
+  head.appendChild(el('span', 'tiny mute', o.__custom === true ? '' : ''));
+  var sp = el('span'); sp.style.flex = '1'; head.appendChild(sp);
+  var sw = el('button', 'sw' + (o.enabled === false ? '' : ' on'));
+  sw.setAttribute('role', 'switch');
+  sw.setAttribute('aria-checked', String(o.enabled !== false));
+  sw.setAttribute('aria-label', '启用/禁用 ' + (o.name || o.id));
+  sw.addEventListener('click', function () {
+    var next = o.enabled === false;
+    o.enabled = next;
+    if (!writeLevels(g, arr)) { toast('写入失败', true); return; }
+    toast(next ? '已启用 ' + (o.name || o.id) : '已禁用 ' + (o.name || o.id) + '（游戏页下次生成时生效）');
+    rerender();
+  });
+  var bDel = el('button', 'btn sm danger', '删除');
+  bDel.addEventListener('click', function () {
+    showModal({
+      title: '删除关卡',
+      body: '<p class="small">确认删除 <b class="mono">' + esc(o.id) + '</b>（' + esc(o.name || '') + '）？该操作不可撤销。</p>',
+      buttons: [
+        { label: '取消' },
+        { label: '确认删除', cls: 'danger', onClick: function () {
+          arr.splice(idx, 1);
+          if (!writeLevels(g, arr)) { toast('写入失败', true); return; }
+          toast('已删除 ' + (o.name || o.id));
+          rerender();
+        } }
+      ]
+    });
+  });
+  head.appendChild(sw); head.appendChild(bDel);
+  box.appendChild(head);
+
+  var lk = el('div', 'lk');
+  function fld(label, val, onin) {
+    var l = el('label');
+    l.appendChild(el('span', null, label));
+    var inp = el('input', 'inp');
+    inp.value = val === undefined || val === null ? '' : String(val);
+    inp.addEventListener('input', function () { onin(inp.value); });
+    l.appendChild(inp);
+    lk.appendChild(l);
+    return inp;
+  }
+  fld('难度档 lv（1–5）', clampInt(o.lv, 1, 5, 1), function (v) { o.lv = clampInt(v, 1, 5, 1); });
+  var nameNode = fld('名称 name', o.name || '', function (v) { o.name = v; });
+  fld('编号 id', o.id || '', function (v) { o.id = v; });
+  var dNode = fld('介绍 desc', o.desc || '', function (v) { o.desc = v; });
+  var pNode = fld('玩法 play', o.play || '', function (v) { o.play = v; });
+  box.appendChild(lk);
+  var pv = el('div', 'tiny mute mono');
+  pv.style.cssText = 'word-break:break-all;opacity:.8';
+  pv.textContent = (o.params ? 'params=' + JSON.stringify(o.params) : '') + (o.hand ? ' hand=' + JSON.stringify(o.hand) : '');
+  box.appendChild(pv);
+  var ft = el('div', 'row');
+  var bSv = el('button', 'btn sm pri', '保存本关');
+  bSv.addEventListener('click', function () {
+    var chk = validateLevel(o, g);
+    if (!chk.ok) { toast('保存失败：' + chk.errs[0], true); pv.textContent = '⚠ ' + chk.errs.join('；'); return; }
+    if (!writeLevels(g, arr)) { toast('写入失败', true); return; }
+    toast('已写入本地，游戏页下次生成时生效');
+    rerender();
+  });
+  ft.appendChild(bSv);
+  var bR = el('button', 'btn sm', '还原');
+  bR.addEventListener('click', function () { rerender(); });
+  ft.appendChild(bR);
+  box.appendChild(ft);
+  return box;
+}
+function readUpload(file, g, errNode) {
+  if (file.size > 256 * 1024) {
+    errNode.className = 'errline';
+    errNode.textContent = '✕ 文件过大（' + Math.round(file.size / 1024) + ' KB > 256 KB），请拆分后上传。';
+    return;
+  }
+  var fr = new FileReader();
+  fr.onerror = function () {
+    errNode.className = 'errline';
+    errNode.textContent = '✕ 读取失败：' + (fr.error && fr.error.message ? fr.error.message : '未知错误');
+    console.error('[ADMIN] FileReader 失败', fr.error);
+  };
+  fr.onload = function () {
+    var parsed;
+    try { parsed = JSON.parse(String(fr.result)); }
+    catch (e) {
+      errNode.className = 'errline';
+      errNode.textContent = '✕ JSON 解析失败：' + e.message;
+      return;
+    }
+    var list = Array.isArray(parsed) ? parsed : [parsed];
+    if (!list.length) { errNode.className = 'errline'; errNode.textContent = '✕ 文件为空（没有可导入的条目）'; return; }
+    ingest(list, g, errNode);
+  };
+  fr.readAsText(file, 'utf-8');
+}
+function ingest(list, g, errNode) {
+  var all = []; list.forEach(function () { all.push(true); });
+  var bad = [], good = [], i;
+  for (i = 0; i < list.length; i++) {
+    var chk = validateLevel(list[i], g);
+    if (chk.ok) good.push(normalizeLevel(list[i], g));
+    else bad.push('第 ' + (i + 1) + ' 条：' + chk.errs.join('；'));
+  }
+  if (bad.length) {
+    errNode.className = 'errline';
+    errNode.innerHTML = '✕ 校验未通过（' + bad.length + '/' + list.length + ' 条），未写入任何数据：<br>' + bad.map(function (b) { return '· ' + esc(b); }).join('<br>');
+    console.warn('[ADMIN] 上传校验失败：', bad);
+    toast('上传失败：' + bad.length + ' 条不合法', true);
+    return;
+  }
+  var arr = readLevels(g);
+  var added = 0, skipped = 0;
+  good.forEach(function (o) {
+    var dup = arr.some(function (x) { return String(x.id) === String(o.id); });
+    if (dup) { o.id = genId(g); skipped++; }
+    arr.push(o); added++;
+  });
+  if (!writeLevels(g, arr)) { errNode.className = 'errline'; errNode.textContent = '✕ 写入 localStorage 失败（可能超配额）。'; return; }
+  errNode.className = 'errline ok';
+  errNode.textContent = '✓ 已写入 ' + added + ' 条到 endland-levels-' + g + (skipped ? '（' + skipped + ' 条 id 重复已自动改名）' : '') + '。已写入本地，游戏页下次生成时生效。';
+  toast('已写入本地，游戏页下次生成时生效');
+  rerender();
+}
+
+/* =========================================================================
+   四、帐户
+   ========================================================================= */
+function loadCred() {
+  var c = lsGet(LS.cred, null);
+  if (!c || typeof c !== 'object' || typeof c.user !== 'string' || typeof c.pass !== 'string' || !c.user || !c.pass) {
+    var d = { user: CRED_DEFAULT.user, pass: CRED_DEFAULT.pass };
+    lsSet(LS.cred, d);
+    return d;
+  }
+  return c;
+}
+function renderAcct(root) {
+  var cred = loadCred();
+  var c = el('div', 'card sec');
+  c.appendChild(el('h3', null, '管理后台登录凭据'));
+  c.appendChild(el('p', 'desc', '保存到 <b class="mono">endland-admin-cred</b>（{"user":"…","pass":"…"}）。必须先验证当前密码，密码需输入两次且一致，长度 ≥ 6。'));
+  var form = el('form');
+  form.autocomplete = 'off';
+  function fld(id, label, type) {
+    var l = el('label', 'fld');
+    l.appendChild(el('span', null, label));
+    var i = el('input', 'inp mono');
+    i.type = type || 'text'; i.id = id;
+    if (type === 'password') i.autocomplete = 'new-password';
+    l.appendChild(i); form.appendChild(l);
+    return i;
+  }
+  var cur = fld('acCur', '当前密码（必填校验）', 'password');
+  var u = fld('acUser', '新帐号', 'text');
+  u.value = cred.user;
+  var p1 = fld('acP1', '新密码', 'password');
+  var p2 = fld('acP2', '确认新密码', 'password');
+  var msg = el('div', 'msg'); msg.id = 'acMsg';
+  form.appendChild(msg);
+  var row = el('div', 'row');
+  var sub = el('button', 'btn pri', '保存凭据');
+  sub.type = 'submit';
+  row.appendChild(sub);
+  var bR = el('button', 'btn', '恢复默认 admin / 123456');
+  bR.type = 'button';
+  bR.addEventListener('click', function () {
+    showModal({
+      title: '恢复默认凭据',
+      body: '<p class="small">将帐号密码重置为 <b class="mono">admin / 123456</b>？</p>',
+      buttons: [{ label: '取消' }, { label: '确认重置', cls: 'danger', onClick: function () {
+        lsSet(LS.cred, { user: CRED_DEFAULT.user, pass: CRED_DEFAULT.pass });
+        $('#lgUser') && ($('#lgUser').value = CRED_DEFAULT.user);
+        toast('已恢复默认凭据 admin / 123456');
+        $('#whoUser') && ($('#whoUser').textContent = CRED_DEFAULT.user);
+        rerender();
+      } }]
+    });
+  });
+  row.appendChild(bR);
+  form.appendChild(row);
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var cc = loadCred();
+    function fail(t) { msg.className = 'msg'; msg.textContent = t; }
+    if (cur.value !== cc.pass) { fail('当前密码不正确'); cur.focus(); return; }
+    var nu = u.value.trim();
+    if (nu.length < 3) { fail('新帐号至少 3 个字符'); u.focus(); return; }
+    if (nu.length > 32) { fail('新帐号最多 32 个字符'); u.focus(); return; }
+    if (p1.value.length < 6) { fail('新密码至少 6 位'); p1.focus(); return; }
+    if (p1.value.length > 64) { fail('新密码最多 64 位'); p1.focus(); return; }
+    if (p1.value !== p2.value) { fail('两次输入的新密码不一致'); p2.focus(); return; }
+    if (nu === cc.user && p1.value === cc.pass) { fail('新帐号与新密码都与当前相同，无需修改'); return; }
+    if (!lsSet(LS.cred, { user: nu, pass: p1.value })) { fail('写入失败'); return; }
+    msg.className = 'msg ok';
+    msg.textContent = '✓ 已保存。帐号 ' + nu + '；下次登录请使用新密码。当前会话保持登录。';
+    $('#whoUser') && ($('#whoUser').textContent = nu);
+    toast('凭据已更新');
+    cur.value = ''; p1.value = ''; p2.value = '';
+  });
+  c.appendChild(form);
+  root.appendChild(c);
+
+  var c2 = el('div', 'card sec');
+  c2.appendChild(el('h3', null, '当前会话'));
+  var t2 = el('div');
+  [
+    '登录帐号 <b>' + esc(loadCred().user) + '</b>',
+    '会话标记 <b>sessionStorage[\'' + LS.session + '\']</b> = ' + JSON.stringify(ssGet(LS.session, null)),
+    '退出登录会清除会话标记，刷新后需重新验证身份'
+  ].forEach(function (x) { var p = el('div', 'term'); p.innerHTML = x; t2.appendChild(p); });
+  c2.appendChild(t2);
+  var out = el('button', 'btn', '退出登录');
+  out.style.marginTop = '10px';
+  out.addEventListener('click', doLogout);
+  c2.appendChild(out);
+  root.appendChild(c2);
+}
+
+/* =========================================================================
+   五、统计
+   ========================================================================= */
+var RANGES = [
+  { id: 'today', name: '今天' },
+  { id: 'week', name: '本周' },
+  { id: 'month', name: '本月' },
+  { id: 'year', name: '本年' },
+  { id: 'all', name: '全部' }
+];
+function rangeStart(id) {
+  var d = new Date();
+  if (id === 'today') return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  if (id === 'week') {
+    // 周一为一周之始
+    var wd = (d.getDay() + 6) % 7;
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate() - wd);
+  }
+  if (id === 'month') return new Date(d.getFullYear(), d.getMonth(), 1);
+  if (id === 'year') return new Date(d.getFullYear(), 0, 1);
+  return null;
+}
+function inRange(ts, id) {
+  var d = parseTs(ts);
+  if (!d) return false;
+  var s = rangeStart(id);
+  if (!s) return true;
+  return d.getTime() >= s.getTime();
+}
+function renderStats(root) {
+  var range = UI.range || 'today';
+  var tabs = el('div', 'tabs');
+  RANGES.forEach(function (r) {
+    var b = el('button', r.id === range ? 'on' : '', r.name);
+    b.addEventListener('click', function () { UI.range = r.id; rerender(); });
+    tabs.appendChild(b);
+  });
+  root.appendChild(tabs);
+
+  var all = ensureArray(LS.stats);
+  var rows = all.filter(function (r) { return r && inRange(r.ts, range); });
+  var passes = rows.filter(function (r) { return r.pass; });
+  var ml = ensureArray(LS.matchlog).filter(function (r) { return r && inRange(r.ts, range); });
+
+  var src = rangeStart(range);
+  var note = src ? ('自 ' + ymd(src) + ' 起') : '全部历史';
+
+  var box = el('div', 'gridk');
+  function kpi(k, v, u, sub) {
+    var d = el('div', 'kpi');
+    d.appendChild(el('div', 'k', k));
+    var vv = el('div', 'v'); vv.appendChild(document.createTextNode(String(v)));
+    if (u) vv.appendChild(el('span', 'u', u));
+    d.appendChild(vv);
+    if (sub) d.appendChild(el('div', 'tiny mute', sub));
+    return d;
+  }
+  box.appendChild(kpi('验证次数', rows.length, '次', note));
+  box.appendChild(kpi('通关次数', passes.length, '次'));
+  box.appendChild(kpi('通关率', rows.length ? pct1(passes.length / rows.length * 100) : '—', rows.length ? '%' : ''));
+  box.appendChild(kpi('匹配次数', ml.length, '次', 'endland-matchlog'));
+  box.appendChild(kpi('平均用时', passes.length ? Math.round(passes.reduce(function (a, r) { return a + (Number(r.secs) || 0); }, 0) / passes.length) : '—', passes.length ? 's' : ''));
+  box.appendChild(kpi('平均星级', passes.length ? (Math.round(passes.reduce(function (a, r) { return a + (Number(r.stars) || 0); }, 0) / passes.length * 100) / 100).toFixed(2) : '—', passes.length ? '★' : ''));
+  root.appendChild(box);
+
+  /* 日序列 */
+  var dayMap = {}, i;
+  rows.forEach(function (r) {
+    var d = parseTs(r.ts); if (!d) return;
+    var k = ymd(d);
+    if (!dayMap[k]) dayMap[k] = { n: 0, p: 0 };
+    dayMap[k].n++; if (r.pass) dayMap[k].p++;
+  });
+  var days = Object.keys(dayMap).sort();
+  var endD = new Date(), startD = src ? new Date(src) : (days.length ? new Date(days[0]) : new Date());
+  if (range === 'all' && days.length) startD = new Date(days[0]);
+  var maxPts = 92;
+  var span = Math.round((endD - startD) / 86400000) + 1;
+  var labels = [], dPass = [], dAll = [];
+  if (span > maxPts) {
+    var bucket = Math.ceil(span / maxPts);
+    var cur = new Date(startD);
+    while (cur <= endD) {
+      var sum = { n: 0, p: 0 }, k2;
+      for (k2 = 0; k2 < bucket; k2++) {
+        var kk = ymd(cur);
+        if (dayMap[kk]) { sum.n += dayMap[kk].n; sum.p += dayMap[kk].p; }
+        cur.setDate(cur.getDate() + 1);
+      }
+      labels.push(ymd(new Date(cur.getTime() - 86400000)).slice(5));
+      dAll.push(sum.n); dPass.push(sum.p);
+    }
+  } else {
+    var cur2 = new Date(startD);
+    while (cur2 <= endD) {
+      var k3 = ymd(cur2);
+      labels.push(k3.slice(5));
+      dAll.push(dayMap[k3] ? dayMap[k3].n : 0);
+      dPass.push(dayMap[k3] ? dayMap[k3].p : 0);
+      cur2.setDate(cur2.getDate() + 1);
+    }
+  }
+  if (!labels.length) { labels = [ymd(endD).slice(5)]; dAll = [0]; dPass = [0]; }
+
+  var charts = el('div', 'charts');
+  charts.appendChild(lineChart('每日通关数 / 验证次数', note + ' · ' + rows.length + ' 条验证记录', labels, [
+    { name: '验证次数', data: dAll, color: '#39d0e0' },
+    { name: '通关数', data: dPass, color: '#3ddc8f' }
+  ]));
+  root.appendChild(charts);
+
+  /* 各游戏通关分布 */
+  var byGame = {};
+  GAMES.forEach(function (g) { byGame[g.key] = 0; });
+  passes.forEach(function (r) { var k = r.game || '(未知)'; byGame[k] = (byGame[k] || 0) + 1; });
+  var gKeys = Object.keys(byGame);
+  var gLabels = gKeys.map(function (k) { return gName(k); });
+  var gData = gKeys.map(function (k) { return byGame[k]; });
+  var gColors = gKeys.map(function (k, i2) {
+    var idx = -1;
+    GAMES.forEach(function (g, j) { if (g.key === k) idx = j; });
+    return idx >= 0 ? PAL[idx] : '#5a6772';
+  });
+
+  /* 星级分布 */
+  var byStar = { 1: 0, 2: 0, 3: 0 };
+  passes.forEach(function (r) { var s = clampInt(r.stars, 1, 3, 1); byStar[s]++; });
+
+  /* 各难度通关分布 */
+  var byLv = [0, 0, 0, 0, 0];
+  passes.forEach(function (r) { var lv = clampInt(r.lv, 1, 5, 0); if (lv) byLv[lv - 1]++; });
+
+  var charts2 = el('div', 'charts');
+  charts2.appendChild(barChartH('各游戏通关分布', note + ' · 共 ' + passes.length + ' 次通关', gLabels, gData, gColors));
+  charts2.appendChild(barChartH('星级分布', '1★ 通关 / 2★ 较好 / 3★ 达最优', ['1★', '2★', '3★'], [byStar[1], byStar[2], byStar[3]], ['#ff8f5e', '#ffcb4a', '#3ddc8f']));
+  charts2.appendChild(barChartH('各难度通关分布', 'V1 简单 → V5 困难', DV.map(function (t, i2) { return 'V' + (i2 + 1); }), byLv, ['#3ddc8f', '#39d0e0', '#ffcb4a', '#ff8f5e', '#ff5252']));
+  root.appendChild(charts2);
+
+  /* 热力图 */
+  var heatLabels = [], heatData = [];
+  var heatEnd = new Date(); heatEnd.setHours(0, 0, 0, 0);
+  var wd2 = (heatEnd.getDay() + 6) % 7;
+  var heatStart = new Date(heatEnd.getTime() - (wd2 + 11 * 7) * 86400000);
+  for (i = 0; i < 84; i++) {
+    var hd = new Date(heatStart.getTime() + i * 86400000);
+    var hk = ymd(hd);
+    heatLabels.push(hk);
+    heatData.push(dayMap[hk] ? dayMap[hk].n : 0);
+  }
+  var cHeat = heatmap(heatLabels, heatData);
+  var hw = el('div', 'charts');
+  hw.appendChild(cHeat);
+  root.appendChild(hw);
+
+  /* 导出 */
+  var c = el('div', 'card sec');
+  c.appendChild(el('h3', null, '导出数据'));
+  c.appendChild(el('p', 'desc', '把当前 localStorage 内的原始数据打包为 JSON 下载（Blob + a[download]），不经过任何服务器。'));
+  var row = el('div', 'row');
+  var b1 = el('button', 'btn pri', '导出全部数据（JSON）');
+  b1.addEventListener('click', function () { exportAll(); });
+  row.appendChild(b1);
+  var b2 = el('button', 'btn', '仅导出当前范围 stats');
+  b2.addEventListener('click', function () {
+    downloadJson('endland-stats-' + range + '-' + today() + '.json', { range: range, from: src ? ymd(src) : null, generatedAt: new Date().toISOString(), stats: rows });
+  });
+  row.appendChild(b2);
+  var b3 = el('button', 'btn', '导出汇总报告');
+  b3.addEventListener('click', function () {
+    downloadJson('endland-report-' + range + '-' + today() + '.json', {
+      generatedAt: new Date().toISOString(), range: range, from: src ? ymd(src) : null,
+      totals: { stats: rows.length, pass: passes.length, match: ml.length },
+      byGame: byGame, byStar: byStar, byLv: byLv,
+      byDay: dayMap
+    });
+  });
+  row.appendChild(b3);
+  c.appendChild(row);
+  var info = el('div', 'term');
+  info.style.marginTop = '10px';
+  info.innerHTML = '导出内容：<b>endland-stats</b> / <b>endland-matchlog</b> / <b>endland-admin-cfg</b> / <b>endland-user</b> / ' +
+    '<b>endland-levels-*</b>（不含 admin-cred 密码，避免泄漏）';
+  c.appendChild(info);
+  root.appendChild(c);
+}
+function downloadJson(name, obj) {
+  var text = JSON.stringify(obj, null, 2);
+  try {
+    var blob = new Blob([text], { type: 'application/json;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = name; a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () {
+      try { document.body.removeChild(a); URL.revokeObjectURL(url); } catch (e) { /* 忽略 */ }
+    }, 1500);
+    console.log('[ADMIN] 已触发下载：' + name + '（' + blob.size + ' bytes）');
+    toast('已触发下载：' + name);
+    return { name: name, bytes: blob.size, url: url };
+  } catch (e) {
+    console.error('[ADMIN] 导出失败：' + e.message);
+    toast('导出失败：' + e.message, true);
+    return null;
+  }
+}
+function exportAll() {
+  var pack = {
+    exportedAt: new Date().toISOString(),
+    version: 1,
+    user: lsGet(LS.user, null),
+    cfg: lsGet(LS.cfg, null),
+    stats: ensureArray(LS.stats),
+    matchlog: ensureArray(LS.matchlog),
+    levels: {}
+  };
+  GAMES.forEach(function (g) { pack.levels[g.key] = readLevels(g.key); });
+  return downloadJson('endland-backup-' + today() + '.json', pack);
+}
+
+/* =========================================================================
+   六、高级
+   ========================================================================= */
+function redirectUrl() {
+  var i = $('#adRedirect');
+  if (!i) return CFG.redirect || DEF_REDIRECT;
+  var v = String(i.value || '').trim();
+  return v || DEF_REDIRECT;
+}
+function renderAdv(root) {
+  var c = el('div', 'card sec');
+  c.appendChild(el('h3', null, '人机验证完成后的跳转地址'));
+  c.appendChild(el('p', 'desc', '写 <b class="mono">endland-admin-cfg.redirect</b>。验证完成后：相对路径（如 <span class="mono">hub.html</span> / <span class="mono">/index.html</span>）直接自动跳转；外链（<span class="mono">http(s)://</span>）不自动跳转，由用户点击确认后再打开。'));
+  var l = el('label', 'fld');
+  l.appendChild(el('span', null, '跳转网址 redirect'));
+  var inp = el('input', 'inp mono');
+  inp.id = 'adRedirect';
+  inp.type = 'text';
+  inp.value = CFG.redirect || DEF_REDIRECT;
+  inp.placeholder = DEF_REDIRECT;
+  l.appendChild(inp);
+  c.appendChild(l);
+  var pv = el('div', 'term');
+  function sync() {
+    var v = String(inp.value || '').trim() || DEF_REDIRECT;
+    var isExt = /^(https?:)?\/\//i.test(v);
+    pv.innerHTML = '当前值 <b>' + esc(v) + '</b> → ' + (isExt ? '外链：<b>需用户点击确认</b>后打开' : '相对路径：<b>自动跳转</b>');
+    return v;
+  }
+  inp.addEventListener('input', sync);
+  sync();
+  c.appendChild(pv);
+  var row = el('div', 'row');
+  row.style.marginTop = '10px';
+  var b1 = el('button', 'btn pri', '保存 redirect');
+  b1.addEventListener('click', function () {
+    CFG.redirect = sync();
+    CFG.globalDist = GLOBAL.slice();
+    if (lsSet(LS.cfg, CFG) !== null) toast('已保存 redirect = ' + CFG.redirect);
+    else toast('保存失败', true);
+  });
+  var b2 = el('button', 'btn', '校验可跳转');
+  b2.addEventListener('click', function () {
+    var v = sync();
+    var isExt = /^(https?:)?\/\//i.test(v);
+    if (isExt) { toast('外链需用户点击确认，已记录但不会自动跳转'); return; }
+    var probe = v.split('#')[0].split('?')[0];
+    fetch(probe, { method: 'HEAD' }).then(function (r) {
+      toast('相对路径可达：' + probe + ' → HTTP ' + r.status, !r.ok);
+      console.log('[ADMIN] redirect 探测 ' + probe + ' → ' + r.status);
+    }).catch(function (e) {
+      toast('无法自动校验（file:// 下 fetch 不可用）：' + e.message, true);
+      console.warn('[ADMIN] redirect 探测失败：' + e.message);
+    });
+  });
+  row.appendChild(b1); row.appendChild(b2);
+  c.appendChild(row);
+  root.appendChild(c);
+
+  var d = el('div', 'card sec danger');
+  d.appendChild(el('h3', null, '危险区'));
+  d.appendChild(el('p', 'desc', '以下操作不可撤销，均需双重确认。'));
+  var r1 = el('div', 'row');
+  r1.style.marginBottom = '10px';
+  var t1 = el('div');
+  t1.style.flex = '1'; t1.style.minWidth = '220px';
+  t1.appendChild(el('b', null, '清空统计数据'));
+  t1.appendChild(el('div', 'tiny mute', '删除 endland-stats 与 endland-matchlog 的全部记录（保留配置与关卡）。'));
+  r1.appendChild(t1);
+  var c1 = el('button', 'btn danger', '清空统计');
+  c1.addEventListener('click', function () { confirmTwice('清空统计数据', '将删除 endland-stats 与 endland-matchlog 的全部记录。', function () {
+    lsSet(LS.stats, []); lsSet(LS.matchlog, []);
+    console.log('[ADMIN] 已清空统计数据');
+    toast('统计数据已清空'); rerender();
+  }); });
+  r1.appendChild(c1);
+  d.appendChild(r1);
+
+  var r2 = el('div', 'row');
+  var t2 = el('div');
+  t2.style.flex = '1'; t2.style.minWidth = '220px';
+  t2.appendChild(el('b', null, '重置全部配置'));
+  t2.appendChild(el('div', 'tiny mute', '删除 endland-admin-cfg（概率分布 / 关卡覆盖 / redirect / 访问量）并恢复默认 20%×5。'));
+  r2.appendChild(t2);
+  var c2 = el('button', 'btn danger', '重置配置');
+  c2.addEventListener('click', function () { confirmTwice('重置全部配置', '将删除 endland-admin-cfg 并恢复默认（均匀 20%×5、redirect=hub.html、访问量清零）。', function () {
+    lsDel(LS.cfg);
+    CFG = loadCfg(); GLOBAL = CFG.globalDist.slice();
+    console.log('[ADMIN] 已重置 endland-admin-cfg');
+    toast('配置已重置为默认'); rerender();
+  }); });
+  r2.appendChild(c2);
+  d.appendChild(r2);
+
+  var r3 = el('div', 'row');
+  r3.style.marginTop = '10px';
+  var t3 = el('div');
+  t3.style.flex = '1'; t3.style.minWidth = '220px';
+  t3.appendChild(el('b', null, '清空全部本机数据'));
+  t3.appendChild(el('div', 'tiny mute', '删除本后台管理的所有 endland-* 键（含自定义关卡与登录凭据），回到出厂状态。'));
+  r3.appendChild(t3);
+  var c3 = el('button', 'btn danger', '全部清空');
+  c3.addEventListener('click', function () { confirmTwice('清空全部本机数据', '将删除本机所有 endland-* 键（含凭据、关卡、统计、配置）。', function () {
+    var keys = [LS.cfg, LS.stats, LS.matchlog, LS.cred, LS.user];
+    GAMES.forEach(function (g) { keys.push(LS.levels(g.key)); });
+    keys.forEach(function (k) { lsDel(k); });
+    CFG = loadCfg(); GLOBAL = CFG.globalDist.slice();
+    console.log('[ADMIN] 已清空全部本机数据');
+    toast('已恢复出厂状态'); rerender();
+  }); });
+  r3.appendChild(c3);
+  d.appendChild(r3);
+  root.appendChild(d);
+
+  var c4 = el('div', 'card sec');
+  c4.appendChild(el('h3', null, '存储占用'));
+  var t4 = el('div');
+  var keys2 = [LS.cfg, LS.stats, LS.matchlog, LS.cred, LS.user];
+  GAMES.forEach(function (g) { keys2.push(LS.levels(g.key)); });
+  var total = 0;
+  keys2.forEach(function (k) {
+    var raw = null;
+    try { raw = localStorage.getItem(k); } catch (e) { raw = null; }
+    var n = raw ? raw.length : 0;
+    total += n;
+    var p = el('div', 'term');
+    p.innerHTML = '<b>' + esc(k) + '</b> ' + n + ' 字符';
+    t4.appendChild(p);
+  });
+  var pt = el('div', 'term');
+  pt.innerHTML = '合计 <b>' + total + '</b> 字符（localStorage 上限通常约 5 MB）';
+  t4.appendChild(pt);
+  c4.appendChild(t4);
+  root.appendChild(c4);
+}
+function confirmTwice(title, what, run) {
+  showModal({
+    title: title + ' · 第 1 / 2 步',
+    body: '<p class="small">' + esc(what) + '</p><p class="small" style="color:#ff8f5e;margin-top:8px">此操作不可撤销，请确认。</p>',
+    buttons: [{ label: '取消' }, { label: '继续', cls: 'danger', onClick: function () {
+      showModal({
+        title: title + ' · 第 2 / 2 步',
+        body: '<p class="small">最后确认：真的要执行「<b>' + esc(title) + '</b>」吗？</p>',
+        buttons: [{ label: '放弃' }, { label: '执行', cls: 'danger', onClick: function () { run(); } }]
+      });
+    } }]
+  });
+}
+
+/* =========================================================================
+   渲染与路由
+   ========================================================================= */
+var RENDERERS = { status: renderStatus, diff: renderDiff, levels: renderLevels, acct: renderAcct, stats: renderStats, adv: renderAdv };
+var rendered = {};
+function rerender() {
+  var root = $('#content');
+  var pg = PAGE;
+  var def = null;
+  PAGES.forEach(function (p) { if (p.id === pg) def = p; });
+  if (!def) { PAGE = pg = 'status'; def = PAGES[0]; }
+  $('#pgTitle').textContent = def.name;
+  $('#pgCode').textContent = def.code;
+  $('#pgSub').textContent = def.sub;
+  root.innerHTML = '';
+  try {
+    RENDERERS[pg](root);
+    rendered[pg] = true;
+  } catch (e) {
+    rendered[pg] = false;
+    console.error('[ADMIN] 渲染菜单「' + def.name + '」失败：', e);
+    var box = el('div', 'card sec danger');
+    box.appendChild(el('h3', null, '渲染异常'));
+    var pre = el('pre', 'small mono');
+    pre.style.cssText = 'white-space:pre-wrap;color:var(--bad)';
+    pre.textContent = String(e && e.stack ? e.stack : e);
+    box.appendChild(pre);
+    var b = el('button', 'btn');
+    b.textContent = '重试';
+    b.addEventListener('click', rerender);
+    box.appendChild(b);
+    root.appendChild(box);
+  }
+  syncNav();
+  painted[pg] = true;
+  console.log('[ADMIN-TEST] render menu=' + pg + ' ok=' + rendered[pg] + ' nodes=' + root.querySelectorAll('*').length);
+}
+var painted = {};
+function syncNav() {
+  $$('#nav button').forEach(function (b) {
+    var on = b.getAttribute('data-page') === PAGE;
+    b.className = on ? 'on' : '';
+    b.setAttribute('aria-selected', String(on));
+  });
+}
+function buildNav() {
+  var nav = $('#nav');
+  nav.innerHTML = '';
+  PAGES.forEach(function (p, i) {
+    if (p.id === 'acct') { var s = el('div', 'sep'); nav.appendChild(s); }
+    var b = el('button', '', p.name);
+    b.setAttribute('data-page', p.id);
+    b.setAttribute('role', 'tab');
+    var ic = el('span', 'ic', p.icon);
+    b.appendChild(ic);
+    b.appendChild(document.createTextNode(p.name));
+    b.addEventListener('click', function () {
+      PAGE = p.id;
+      rerender();
+      if (window.matchMedia('(max-width:640px)').matches) window.scrollTo(0, 0);
+    });
+    nav.appendChild(b);
+  });
+}
+
+/* =========================================================================
+   自检样例数据（?selftest=1）
+   ========================================================================= */
+function seedSample() {
+  var now = new Date(), t0 = now.getTime();
+  var stats = [], matchlog = [], visits = {};
+  var games = ['circuit', 'packing', 'gems', 'camping', 'lights', 'code', 'nonogram', 'targets', 'sliding'];
+  var devices = ['V-40053', 'V-40054', 'V-40056', 'V-40055', 'V-40057', 'V-40058', 'V-40059', 'V-40060', 'V-40061'];
+  var rnd = (function (a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; })(20260214);
+  var i;
+  for (i = 0; i < 30; i++) {
+    var gi = i % games.length, lv = (i % 5) + 1;
+    var pass = rnd() > 0.28;
+    var ts = new Date(t0 - Math.floor(rnd() * 1000 * 60 * 60 * 9));
+    stats.push({
+      ts: ts.toISOString(), device: devices[gi], game: games[gi], lv: lv,
+      stars: pass ? 1 + Math.floor(rnd() * 3) : 0,
+      moves: 4 + Math.floor(rnd() * 26), secs: 12 + Math.floor(rnd() * 180),
+      pass: pass
+    });
+  }
+  for (i = 0; i < 30; i++) {
+    var gi2 = i % games.length, lv2 = (i % 5) + 1;
+    matchlog.push({ ts: new Date(t0 - Math.floor(rnd() * 1000 * 60 * 60 * 9)).toISOString(), game: games[gi2], id: games[gi2] + '-' + (i + 1), lv: lv2 });
+  }
+  /* 造跨日历史，便于「统计」页时间范围与热力图有数据 */
+  for (i = 1; i <= 70; i++) {
+    if (rnd() > 0.55) continue;
+    var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i, 10 + (i % 9), 30);
+    var gg = games[i % games.length], ll = (i % 5) + 1, ps = rnd() > 0.3;
+    stats.push({ ts: d.toISOString(), device: devices[i % devices.length], game: gg, lv: ll, stars: ps ? 1 + Math.floor(rnd() * 3) : 0, moves: 5 + Math.floor(rnd() * 24), secs: 15 + Math.floor(rnd() * 150), pass: ps });
+    matchlog.push({ ts: d.toISOString(), game: gg, id: gg + '-h' + i, lv: ll });
+  }
+  for (i = 0; i < 21; i++) {
+    var d2 = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    visits[ymd(d2)] = 3 + Math.floor(rnd() * 60);
+  }
+  lsSet(LS.stats, stats);
+  lsSet(LS.matchlog, matchlog);
+  CFG.visitByDate = visits;
+  /* 示例数据只填充 visitByDate；概率条 / 关卡覆盖 / redirect 若已存在则原样保留，
+     否则自检刷新会覆盖用户在「难度」页保存的配置。 */
+  if (!lsGet(LS.cfg, null)) {
+    CFG.globalDist = [34, 26, 20, 13, 7];
+    CFG.levelDist = { circuit: { '3': [20, 30, 40, 20, 10], '5': [5, 10, 20, 40, 60] }, gems: { '4': [10, 10, 30, 40, 20] } };
+    CFG.redirect = CFG.redirect || DEF_REDIRECT;
+  }
+  GLOBAL = CFG.globalDist.slice();
+  lsSet(LS.cfg, CFG);
+  if (!lsGet(LS.user, null)) lsSet(LS.user, { name: '访客-自检', id: 'u-selftest', created: new Date().toISOString() });
+  /* 仅在没有凭据时写入默认值：自检不应覆盖用户已修改的密码（否则改密后刷新即失效） */
+  if (!lsGet(LS.cred, null)) lsSet(LS.cred, { user: CRED_DEFAULT.user, pass: CRED_DEFAULT.pass });
+  console.log('[ADMIN-TEST] seeded stats=' + stats.length + ' matchlog=' + matchlog.length + ' todayStats=' + todayStats().length + ' todayMatch=' + todayMatch().length);
+}
+function runSelfTest() {
+  console.log('[ADMIN-TEST] ===== 管理后台自检开始 =====');
+  seedSample();
+  /* 走一遍渲染（隐藏容器） */
+  var holder = el('div');
+  holder.style.cssText = 'position:fixed;left:-99999px;top:0;width:1100px';
+  document.body.appendChild(holder);
+  var origContent = $('#content');
+  var marks = {};
+  ['status', 'diff', 'levels', 'acct', 'stats', 'adv'].forEach(function (id) {
+    holder.innerHTML = '';
+    var fake = el('div');
+    holder.appendChild(fake);
+    var ok = true, err = null;
+    try { RENDERERS[id](fake); } catch (e) { ok = false; err = e; }
+    marks[id] = { ok: ok, nodes: fake.querySelectorAll('*').length, svg: fake.querySelectorAll('svg').length, tables: fake.querySelectorAll('table').length, err: err ? String(err.message || err) : null };
+    console.log('[ADMIN-TEST] menu=' + id + ' ok=' + ok + ' nodes=' + marks[id].nodes + ' svg=' + marks[id].svg + ' tables=' + marks[id].tables + (err ? ' ERR=' + err.message : ''));
+  });
+  holder.remove();
+  /* 概率条拖动模拟：等价于把手柄拖到 x% */
+  var before = GLOBAL.slice();
+  var t2 = [31.5, 22.5, 20, 16, 10];
+  GLOBAL = widthsToDist(t2);
+  var sumAfter = sumDist(GLOBAL);
+  GLOBAL = before.slice();
+  console.log('[ADMIN-TEST] dist Σ=100 check: ' + JSON.stringify(t2) + ' → Σ=' + sumAfter + ' ok=' + (Math.abs(sumAfter - 100) <= EPS));
+  /* 校验器 */
+  var g1 = validateLevel({ game: 'gems', lv: 2, hand: { start: [0, 0], goal: [6, 6], gems: [[2, 0], [0, 2]] } }, 'gems');
+  var g2 = validateLevel({ game: 'gems', lv: 9, name: 'bad' }, 'gems');
+  var g3 = validateLevel({ game: 'circuit', lv: 3, params: { n: 5, leaves: [4, 6] } }, 'circuit');
+  console.log('[ADMIN-TEST] validate legal(gems)=' + g1.ok + ' illegal=' + g2.ok + ' errs=' + JSON.stringify(g2.errs) + ' legal(circuit)=' + g3.ok);
+  console.log('[ADMIN-TEST] rendered menus: ' + JSON.stringify(marks));
+  console.log('[ADMIN-TEST] ===== 自检结束 =====');
+  window.__adminTest = marks;
+}
+
+/* =========================================================================
+   登录
+   ========================================================================= */
+var gate = { state: 'idle', armed: false, timer: null };
+function gateReset() {
+  gate.state = 'idle'; gate.armed = false;
+  if (gate.timer) { clearTimeout(gate.timer); gate.timer = null; }
+  var g = $('#lgGate'), cb = $('#lgCb');
+  if (!g) return;
+  g.className = 'gate'; cb.className = 'cb';
+  g.setAttribute('aria-checked', 'false');
+  $('#lgGateSub').textContent = 'HUMAN VERIFICATION REQUIRED';
+  g.querySelector('b').textContent = '我是人类';
+  updateLoginBtn();
+}
+function gateRun() {
+  if (gate.armed || gate.state === 'checking' || gate.state === 'ok') return;
+  gate.armed = true; gate.state = 'checking';
+  var g = $('#lgGate'), cb = $('#lgCb');
+  cb.className = 'cb spin';
+  $('#lgGateSub').textContent = '正在核验身份特征 …';
+  g.querySelector('b').textContent = '核验中';
+  updateLoginBtn();
+  var ms = (typeof window.__adminTest === 'object') ? 120 : 900;
+  gate.timer = setTimeout(function () {
+    gate.timer = null;
+    if (gate.state !== 'checking') return;
+    gate.state = 'ok';
+    g.className = 'gate ok';
+    cb.className = 'cb';
+    g.setAttribute('aria-checked', 'true');
+    $('#lgGateSub').textContent = 'HUMAN VERIFIED · 人类身份已确认';
+    g.querySelector('b').textContent = '人类身份已确认';
+    updateLoginBtn();
+  }, ms);
+}
+function updateLoginBtn() {
+  var b = $('#loginBtn');
+  if (b) b.disabled = !(gate.state === 'ok');
+}
+function initLogin() {
+  var cred = loadCred();
+  $('#lgUser').value = cred.user;
+  $('#lgPass').value = '';
+  gateReset();
+  $('#lgMsg').className = 'msg hint';
+  $('#lgMsg').textContent = '请完成人机验证后登录。';
+  var g = $('#lgGate');
+  g.addEventListener('click', gateRun);
+  g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); gateRun(); } });
+  $('#loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var c = loadCred();
+    var u = $('#lgUser').value.trim(), p = $('#lgPass').value;
+    if (gate.state !== 'ok') { fail('请先完成人机验证'); return; }
+    if (u !== c.user || p !== c.pass) {
+      fail('帐号或密码错误');
+      var box = $('#loginBtn');
+      box.animate ? box.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'translateX(0)' }], { duration: 220 }) : 0;
+      console.log('[ADMIN-TEST] login fail user=' + u);
+      return;
+    }
+    ssSet(LS.session, { user: c.user, at: new Date().toISOString(), token: Math.random().toString(36).slice(2, 10) });
+    console.log('[ADMIN-TEST] login ok user=' + c.user);
+    enterApp();
+  });
+  function fail(t) { var m = $('#lgMsg'); m.className = 'msg'; m.textContent = t; }
+}
+/* 侧栏「退出登录」只在 boot 绑一次，避免重入 boot 时重复挂载监听 */
+function bindLogout() {
+  var b = $('#logoutBtn');
+  if (b && !b.__bound) { b.__bound = true; b.addEventListener('click', doLogout); }
+}
+function doLogout() {
+  ssDel(LS.session);
+  console.log('[ADMIN-TEST] logout');
+  boot();
+}
+function enterApp() {
+  $('#loginView').hidden = true;
+  $('#appView').hidden = false;
+  $('#whoUser').textContent = loadCred().user;
+  if (gate.timer) { clearTimeout(gate.timer); gate.timer = null; }
+  rerender();
+}
+
+/* =========================================================================
+   启动
+   ========================================================================= */
+function boot() {
+  var qs = new URLSearchParams(location.search);
+  var selftest = qs.get('selftest') === '1';
+  if (selftest) window.__adminTest = {};
+  CFG = loadCfg();
+  loadCred();
+  if (selftest) seedSample();
+  CFG = loadCfg(); GLOBAL = CFG.globalDist.slice();
+
+  var pause = qs.get('pause') === '1';
+  var sess = pause ? null : ssGet(LS.session, null);
+  /* 回到未登录视图：显示登录页、隐藏控制台（退出登录复用 boot，必须双向复位） */
+  $('#appView').hidden = true;
+  $('#loginView').hidden = false;
+  $('#content').innerHTML = '';
+  buildNav();
+  initLogin();
+  bindLogout();
+  if (pause) console.log('[ADMIN-TEST] pause=1：停留登录界面，等待真实登录流程');
+  if (sess && sess.user) {
+    $('#lgUser').value = sess.user;
+    $('#lgPass').value = loadCred().pass;
+    gateRun();
+    gate.state = 'ok'; gate.armed = true;
+    var g = $('#lgGate');
+    g.className = 'gate ok';
+    $('#lgCb').className = 'cb';
+    g.setAttribute('aria-checked', 'true');
+    $('#lgGateSub').textContent = 'HUMAN VERIFIED · 会话内已核验';
+    g.querySelector('b').textContent = '人类身份已确认';
+    updateLoginBtn();
+    console.log('[ADMIN-TEST] session resumed user=' + sess.user);
+    enterApp();
+  }
+  if (selftest) {
+    setTimeout(function () {
+      runSelfTest();
+      var a = ssGet(LS.session, null);
+      if (!a) {
+        console.warn('[ADMIN-TEST] 无人机验证会话记录：登录门禁未走完（自检耗时 < 1 秒属预期）。需要走完整登录流程请用 admin.html?selftest=1&pause=1。');
+      }
+    }, 1300);
+  }
+  console.log('[ADMIN-TEST] boot selftest=' + selftest + ' pages=' + PAGES.length + ' games=' + GAMES.length + ' protocol=' + location.protocol);
+}
+document.addEventListener('DOMContentLoaded', boot);
+if (document.readyState !== 'loading') boot();
+</script>
+</body>
+</html>

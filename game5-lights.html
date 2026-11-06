@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>访客协议 VISITOR PROTOCOL · 灯光矩阵校验</title>
+<style>
+:root{--bg:#0b0e11;--line:#28313b;--line2:#3a4550;--ink:#d9e0e7;--dim:#8a96a2;--mute:#5a6772;--acc:#ffb100;--on:#ffcb4a;--ok:#3ddc8f;--bad:#ff5252;--cy:#39d0e0;--mono:ui-monospace,Consolas,'Courier New',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none !important}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(1000px 520px at 75% -10%,rgba(255,177,0,.07),transparent 60%),var(--bg);color:var(--ink);font-family:'Segoe UI',system-ui,'Microsoft YaHei',sans-serif;overflow-x:hidden;padding:24px 12px}
+.bg{position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);background-size:42px 42px;pointer-events:none;-webkit-mask-image:radial-gradient(ellipse at center,black 25%,transparent 78%);mask-image:radial-gradient(ellipse at center,black 25%,transparent 78%)}
+.mono{font-family:var(--mono)}
+.dim{color:var(--dim)}
+.wrap{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:12px}
+.hazard{height:8px;background:repeating-linear-gradient(45deg,var(--acc) 0 12px,#141414 12px 24px);opacity:.85}
+.devid{width:min(92vw,430px);display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:11px;letter-spacing:.1em;color:var(--mute);padding:0 4px}
+.devid b{color:var(--acc);font-weight:600}
+.head{text-align:center;padding:2px 0}
+.head h1{font-size:clamp(1.3rem,4vw,1.7rem);letter-spacing:.14em;font-weight:600}
+.head p{font-size:11px;margin-top:5px;letter-spacing:.08em;line-height:1.7}
+.panel{width:min(94vw,470px);background:linear-gradient(180deg,#161c23,#12171d);border:1px solid var(--line);border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.55);overflow:hidden}
+.diff{display:flex;gap:6px;align-items:center;padding:12px 16px 0}
+.diff .dlabel{font-size:11px;color:var(--dim);letter-spacing:.08em;margin-right:2px}
+.diffbtn{flex:1 1 0;min-width:0;background:transparent;border:1px solid var(--line2);color:var(--dim);border-radius:6px;padding:6px 0;font-family:var(--mono);font-size:12px;cursor:pointer;transition:all .15s}
+.diffbtn:hover{border-color:var(--acc);color:var(--acc)}
+.diffbtn.on{border-color:var(--acc);color:#1a1200;background:linear-gradient(180deg,#ffc23d,#f5a300);font-weight:700}
+.tip{padding:10px 16px 0;font-size:12.5px;color:var(--dim);line-height:1.75}
+.tip b{color:var(--ink);font-weight:600}
+.tip .k{color:var(--acc)}
+.param{padding:7px 16px 0;font-size:11px;color:var(--mute);letter-spacing:.04em;line-height:1.6}
+.param b{color:var(--cy);font-weight:600}
+.boardbox{padding:12px 16px 2px;display:flex;justify-content:center}
+.board{display:grid;gap:6px;width:min(84vw,400px);aspect-ratio:1;padding:8px;background:#0d1217;border:1px solid var(--line);border-radius:12px;position:relative;transition:border-color .2s}
+.board.win{animation:gridFlash .65s ease-out;border-color:rgba(61,220,143,.45)}
+.cell{position:relative;border-radius:8px;background:#141b22;border:1px solid #232c35;display:grid;place-items:center;cursor:pointer;user-select:none;touch-action:manipulation;transition:background .16s,border-color .16s,box-shadow .16s;overflow:hidden}
+.cell:hover{border-color:rgba(255,177,0,.45);background:#1a222b}
+.cell .lamp{position:absolute;inset:12%;border-radius:50%;background:radial-gradient(circle at 42% 38%,#2b333d,#171d24 70%);border:1px solid #2d3742;transition:background .18s,border-color .18s,box-shadow .18s}
+.cell .idx{position:absolute;left:4px;top:3px;font-family:var(--mono);font-size:9px;color:rgba(90,103,114,.65)}
+.cell.on{background:#1d2320;border-color:rgba(255,203,74,.4)}
+.cell.on .lamp{background:radial-gradient(circle at 42% 36%,#ffe9a8,var(--on) 58%,#a86b00 100%);border-color:#ffe09a;box-shadow:0 0 14px rgba(255,203,74,.55),inset 0 0 8px rgba(255,255,255,.4)}
+.cell.flash{animation:cellFlash .34s ease-out}
+.cell.center{outline:2px solid rgba(57,208,224,.9);outline-offset:-2px}
+.cell.center .lamp{border-color:var(--cy)}
+.cell.toggled::after{content:"";position:absolute;inset:0;border-radius:8px;border:1px solid rgba(255,177,0,.85);animation:ringOut .42s ease-out}
+@keyframes cellFlash{0%{background:#3b2f16;border-color:#ffd97a}100%{background:#141b22;border-color:#232c35}}
+@keyframes ringOut{from{opacity:1;transform:scale(.72)}to{opacity:0;transform:scale(1.18)}}
+@keyframes gridFlash{0%{box-shadow:0 0 0 rgba(61,220,143,0)}35%{box-shadow:0 0 46px rgba(61,220,143,.55)}100%{box-shadow:0 0 0 rgba(61,220,143,0)}}
+.foot{display:flex;justify-content:space-between;align-items:center;padding:12px 16px 16px;gap:10px;flex-wrap:wrap}
+.stats{display:flex;gap:14px;font-size:12px;color:var(--dim)}
+.stats b{color:var(--ink);font-weight:600}
+#stMoves.hit{color:var(--ok)}
+#stMoves.over{color:var(--bad)}
+.btns{display:flex;gap:8px}
+.ghost{background:transparent;border:1px solid var(--line2);color:var(--ink);border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer;transition:all .15s;min-height:34px}
+.ghost:hover{border-color:var(--acc);color:var(--acc)}
+.hintbar{padding:0 16px 12px;font-size:11px;color:var(--mute);letter-spacing:.04em;line-height:1.6}
+.stamp{position:absolute;inset:0;background:rgba(8,11,13,.87);display:grid;place-items:center;z-index:5;animation:fade .25s;border-radius:14px}
+.stamp-box{border:3px solid var(--ok);border-radius:12px;padding:18px 28px;text-align:center;transform:rotate(-6deg);color:var(--ok);box-shadow:0 0 30px rgba(61,220,143,.28);animation:stampIn .32s cubic-bezier(.2,1.6,.4,1);max-width:88%}
+.stamp-box .tick{font-size:38px;line-height:1}
+.stamp-box h3{margin-top:6px;letter-spacing:.22em;font-size:17px}
+.stamp-box p{margin-top:8px;font-size:11px;color:var(--ink);opacity:.88;line-height:1.65}
+.stars{color:var(--acc);letter-spacing:.16em}
+@keyframes stampIn{from{transform:rotate(-6deg) scale(1.6);opacity:0}}
+@keyframes fade{from{opacity:0}}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#161d24;border:1px solid var(--ok);color:var(--ink);padding:10px 18px;border-radius:8px;font-size:13px;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:fade .2s;max-width:min(92vw,420px);text-align:center}
+.toast.bad{border-color:var(--bad)}
+.coach{position:absolute;left:50%;top:8px;transform:translateX(-50%);background:rgba(14,19,24,.94);border:1px solid var(--acc);color:var(--ink);font-size:11.5px;padding:6px 12px;border-radius:6px;z-index:6;white-space:nowrap;letter-spacing:.04em;animation:fade .2s;pointer-events:none}
+/* == craft patch: impeccable x industrial-telemetry == */
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visible,.cell:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.scanlines{position:fixed;inset:0;pointer-events:none;z-index:99;background-image:linear-gradient(rgba(255,255,255,.016) 1px,transparent 1px);background-size:100% 3px}
+@media (max-width:640px){.foot{flex-wrap:wrap;gap:8px}.stats{font-size:11px;gap:8px}.board{width:92vw}.tip{font-size:12px}.devid{width:92vw}}
+@media (max-height:560px){.board{width:min(84vw,56vh)}}
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+<div class="bg"></div>
+<main class="wrap">
+  <div class="hazard" style="width:min(92vw,430px);border-radius:4px"></div>
+  <div class="devid mono"><span>校验设备 <b>V-40057</b></span><span>照明矩阵自检 · UNIT ONLINE</span></div>
+  <header class="head">
+    <h1>灯光矩阵校验</h1>
+    <p class="mono dim">V-40057 · 灯光矩阵校验 · 点击任一灯组会翻转其自身与上下左右共 5 格的亮灭，把全部灯组点亮即通过。</p>
+  </header>
+  <section class="panel">
+    <div class="diff" id="diffBar" role="group" aria-label="难度选择">
+      <span class="dlabel mono">难度</span>
+      <button class="diffbtn mono" type="button" data-lv="1">V1</button>
+      <button class="diffbtn mono" type="button" data-lv="2">V2</button>
+      <button class="diffbtn mono" type="button" data-lv="3">V3</button>
+      <button class="diffbtn mono" type="button" data-lv="4">V4</button>
+      <button class="diffbtn mono" type="button" data-lv="5">V5</button>
+    </div>
+    <p class="tip" id="tip"></p>
+    <p class="param mono" id="paramLine"></p>
+    <div class="boardbox"><div class="board" id="board" aria-label="灯光矩阵"></div></div>
+    <footer class="foot">
+      <div class="mono stats"><span id="stMoves">步数 0 / 0</span><span id="stLeft">未点亮 0</span><span id="stTime">00:00.0</span></div>
+      <div class="btns">
+        <button id="btnNew" class="ghost" type="button">换一个 ↻</button>
+        <button id="btnMute" class="ghost" type="button" title="声音开关" aria-label="声音开关">🔊</button>
+      </div>
+    </footer>
+    <p class="hintbar mono" id="hintBar"></p>
+    <div class="stamp" id="stamp" hidden>
+      <div class="stamp-box">
+        <div class="tick">✔</div>
+        <h3>人类身份已确认</h3>
+        <p class="mono" id="stampStats">HUMAN VERIFIED</p>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="toast" class="toast" hidden></div>
+<script>
+'use strict';
+/* ---------- 基础工具 ---------- */
+function $id(s){return document.getElementById(s)}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function toast(msg,bad){var t=$id('toast');t.textContent=msg;t.className='toast'+(bad?' bad':'');t.hidden=false;clearTimeout(t._h);t._h=setTimeout(function(){t.hidden=true},2600)}
+
+/* ---------- 参数 ---------- */
+var qs=new URLSearchParams(location.search);
+var DEBUG=qs.get('debug')==='1';
+/* V1–V5 难度参数表（严格照规格：网格 n 与生成点击上限 k） */
+var LV_TABLE={
+  1:{n:3,kMin:2,kMax:3,stars:'≤2 步满星',name:'教学'},
+  2:{n:3,kMin:4,kMax:5,stars:'≤2 步满星',name:'入门'},
+  3:{n:4,kMin:5,kMax:7,stars:'≤3 步满星',name:'常规'},
+  4:{n:4,kMin:8,kMax:10,stars:'≤4 步满星',name:'进阶'},
+  5:{n:5,kMin:10,kMax:14,stars:'≤6 步满星',name:'极限'}
+};
+var GUIDES={
+  1:{rule:'矩阵里 <b class="k">任一格</b> 被按下时，它<b>自己 + 上下左右</b>共 5 格的亮灭同时翻转。',
+     goal:'把 V-40057 的 <b>3×3 全部 9 格</b>点亮即通过。',
+     how:'点亮的格是<b>黄白色</b>，未点亮是灰暗格。矩阵四周的<b class="k">青色圆点</b>是「抖动提示」：每一行、每一列都提示该线还要点几下才能全亮（奇偶）。先看提示，再决定点哪几格。',
+     diff:'当前 <b>V1 · 教学</b>：3×3 矩阵，点位少、反馈快，点两下基本就亮。'},
+  2:{rule:'按下任一格，它<b>自己 + 上下左右</b>共 5 格亮灭翻转。',
+     goal:'点亮 3×3 全部 9 格。',
+     how:'V2 的题面需要 <b>2 下以上</b>，随手乱点会被自己推翻。别急着按满一圈，先按四周提示决定哪几行、哪几列要点奇数下。',
+     diff:'当前 <b>V2 · 入门</b>：还是 3×3，但需抖动 4–5 次，循环更容易踩。'},
+  3:{rule:'按下任一格，它<b>自己 + 上下左右</b>共 5 格亮灭翻转。',
+     goal:'点亮 4×4 全部 16 格。',
+     how:'矩阵变大后<b>边角格</b>只影响 3 格，通常不是好选择。优先找提示里必须按的格，别用蛮力铺满。',
+     diff:'当前 <b>V3 · 常规</b>：4×4 矩阵，需抖动 5–7 次。'},
+  4:{rule:'按下任一格，它<b>自己 + 上下左右</b>共 5 格亮灭翻转。',
+     goal:'点亮 4×4 全部 16 格。',
+     how:'V4 需要 <b>4 下左右</b>才能压住整片矩阵。建议按行推进：处理第 1 行时，某格不亮就按它<b>正下方</b>那一格，逐行收束。',
+     diff:'当前 <b>V4 · 进阶</b>：4×4 矩阵，需抖动 8–10 次，容错很小。'},
+  5:{rule:'按下任一格，它<b>自己 + 上下左右</b>共 5 格亮灭翻转。',
+     goal:'点亮 5×5 全部 25 格。',
+     how:'<b>V5 极限档。</b>推荐「逐行消除法」：处理第 1 行时某格不亮，就按它<b>正下方</b>的格；第 1 行处理完再处理第 2 行，依次向下。最后一行若仍有暗格，说明首行选错了——按「换一个 ↻」重开更省事。',
+     diff:'当前 <b>V5 · 极限</b>：5×5 矩阵，需抖动 10–14 次，明显更难。'}
+};
+var CUSTOM_KEY='endland-levels-lights';
+var seed=parseInt(qs.get('seed')||'',10); if(isNaN(seed)) seed=((Date.now()%1000000)|0)+1;
+function clampLv(v){v=parseInt(v,10);if(isNaN(v))return 1;return Math.max(1,Math.min(5,v))}
+var lvRaw=qs.get('lv');
+var LV=clampLv(lvRaw===null||lvRaw===''?1:lvRaw);
+
+/* ---------- 状态 ---------- */
+var pz=null,lit=null,clicks=[],moves=0,t0=0,timerId=null,solvedFlag=false,muted=false;
+var ST={genRetry:0,genReject:0,fix:0};
+var customLevels=[],queuedLevel=null,solvedStats=null;
+function readCustomLevels(){
+  var arr=[],raw=null;
+  try{raw=localStorage.getItem(CUSTOM_KEY)}catch(e){raw=null}
+  if(!raw)return arr;
+  try{
+    var parsed=JSON.parse(raw);
+    if(Object.prototype.toString.call(parsed)==='[object Array]'){
+      for(var i=0;i<parsed.length;i++){
+        var it=parsed[i];
+        if(!it||typeof it!=='object')continue;
+        if(it.enabled===false)continue;
+        if(it.game&&it.game!=='lights')continue;
+        if(it.lv===undefined||it.lv===null)continue;
+        arr.push(it);
+      }
+    }
+  }catch(e){}
+  return arr;
+}
+function pickQueuedLevel(lv){
+  for(var i=0;i<customLevels.length;i++){
+    var it=customLevels[i];
+    if(clampLv(it.lv)!==lv)continue;
+    if(!it.params||it.params.initial===undefined||it.params.initial===null)continue;
+    return it;
+  }
+  return null;
+}
+function maskToInit(arr,n){
+  var out=[],x,y,v;
+  for(y=0;y<n;y++)for(x=0;x<n;x++){v=(arr&&arr[y]&&arr[y][x])?1:0;out.push(v)}
+  return out;
+}
+function paramSpec(){
+  var s=LV_TABLE[LV];
+  if(queuedLevel&&queuedLevel.params){
+    var qn=parseInt(queuedLevel.params.n,10);
+    if(qn>=2&&qn<=9){
+      var ik=queuedLevel.params.k;
+      var kk=(Object.prototype.toString.call(ik)==='[object Array]')?ik:[ik,ik];
+      return {n:qn,kMin:Math.max(1,parseInt(kk[0],10)||1),kMax:Math.max(1,parseInt(kk[1],10)||parseInt(kk[0],10)||1),custom:queuedLevel};
+    }
+  }
+  return {n:s.n,kMin:s.kMin,kMax:s.kMax,custom:null};
+}
+
+/* ---------- GF(2) 高斯消元：最优步数 + 解空间 ---------- */
+function lumMask(n,x,y){var m=0,d,dx,dy,nx,ny;for(d=0;d<5;d++){dx=[0,1,-1,0,0][d];dy=[0,0,0,1,-1][d];nx=x+dx;ny=y+dy;if(nx<0||nx>=n||ny<0||ny>=n)continue;m|=1<<(ny*n+nx)}return m}
+function gf2Solve(n,init){
+  var N=n*n,row=[],i,j,r,piv=0,rank=0,pivCols=[];
+  for(i=0;i<N;i++){
+    var m=lumMask(n,i%n,Math.floor(i/n)),b=(init[i]?1:0);
+    row[i]=((m<<1)|b)>>>0;
+  }
+  for(j=0;j<N;j++){
+    var p=-1;
+    for(r=piv;r<N;r++){if((row[r]>>>j)&1){p=r;break}}
+    if(p<0)continue;
+    var t=row[p];row[p]=row[piv];row[piv]=t;
+    for(r=0;r<N;r++){if(r!==piv&&((row[r]>>>j)&1))row[r]=(row[r]^row[piv])>>>0}
+    pivCols.push(j);piv++;rank++;
+  }
+  for(i=0;i<N;i++){if((row[i]&((1<<N)-1))===0&&((row[i]>>>N)&1))return {ok:false}}
+  var free=[],isP=new Array(N).fill(false);
+  for(i=0;i<rank;i++)isP[pivCols[i]]=true;
+  for(j=0;j<N;j++)if(!isP[j])free.push(j);
+  function back(sub){
+    var x=new Array(N).fill(0),k,i2,c;
+    for(k=0;k<free.length;k++)x[free[k]]=sub[k];
+    for(i2=rank-1;i2>=0;i2--){
+      c=pivCols[i2];var v=(row[i2]>>>N)&1;
+      for(var q=c+1;q<N;q++)if((row[i2]>>>q)&1)v^=x[q];
+      x[c]=v;
+    }
+    var w=0;
+    for(k=0;k<N;k++)if(x[k])w++;
+    return {x:x,w:w};
+  }
+  var best=back(new Array(free.length).fill(0));
+  var count=1;
+  if(free.length<=14){
+    var total=1<<free.length;count=total;
+    for(var mask=1;mask<total;mask++){
+      var sub=new Array(free.length);var mm=mask;
+      for(var z=0;z<free.length;z++){sub[z]=mm&1;mm>>=1}
+      var cand=back(sub);
+      if(cand.w<best.w)best=cand;
+    }
+  }
+  return {ok:true,min:best.w,sol:best.x,frees:free.length,count:count};
+}
+/* 自测辅助：往返重放校验（verify 已有解是否真的全亮） */
+function applyMask(n,init,mask){
+  var out=new Array(n*n),i;
+  for(i=0;i<n*n;i++){var m=lumMask(n,i%n,Math.floor(i/n));out[i]=(init[i]?(mask&m)?0:1:(mask&m)?1:0)}
+  return out;
+}
+function allLit(a){for(var i=0;i<a.length;i++)if(!a[i])return false;return true}
+function maskFromArr(n,a){var m=0,i;for(i=0;i<n*n;i++)if(a[i])m|=1<<i;return m}
+function maskPop(m){var c=0;while(m){m&=m-1;c++}return c}
+
+/* ---------- 谜题生成：从全亮逆推 k 次点击 ---------- */
+function genOne(kind,n,rng,limit){
+  var picks=[],seen={},N=n*n,guard=0,target=0,i;
+  if(kind==='fixed'){
+    target=Math.max(1,Math.min(N,limit));
+    if(target>N)return null;
+    while(picks.length<target&&guard++<4000){
+      var c=Math.floor(rng()*N);
+      if(seen[c])continue;
+      seen[c]=1;picks.push(c);
+    }
+    if(picks.length<target){ST.genRetry++;return null}
+  }else{
+    var capN=rng()<0.84?(kind==='reduce'?2:1):3;
+    while(picks.length<limit&&picks.length<capN&&guard++<4000){
+      var c2=Math.floor(rng()*N);
+      var test=picks.concat([c2]);
+      var g=gf2Solve(n,applyMask(n,fill(1,N),maskFromArr(n,fillArr(N,test))));
+      if(!g.ok){ST.genRetry++;return null}
+      if(g.min!==picks.length+1){continue}
+      picks.push(c2);
+    }
+    target=picks.length;
+  }
+  if(!target)return null;
+  var init=applyMask(n,fill(1,N),maskFromArr(n,fillArr(N,picks)));
+  if(allLit(init)){ST.genRetry++;return null}
+  var g2=gf2Solve(n,init);
+  if(!g2.ok){ST.genReject++;return null}
+  if(g2.min>target){ST.genReject++;return null}
+  if(kind==='fixed'&&g2.min!==target){ST.genReject++;return null}
+  return {n:n,k:target,init:init,sol:g2.sol,min:g2.min,count:g2.count,picks:picks.slice(),frees:g2.frees};
+}
+function fill(v,n){var a=new Array(n),i;for(i=0;i<n;i++)a[i]=v;return a}
+function fillArr(n,list){var a=new Array(n).fill(0),i;for(i=0;i<list.length;i++)a[list[i]]=1;return a}
+
+/* ---------- 渲染 ---------- */
+function buildBoard(){
+  var b=$id('board'),n=pz.n,x,y;
+  b.style.gridTemplateColumns='repeat('+n+',1fr)';
+  b.innerHTML='';
+  b.classList.remove('win');
+  for(y=0;y<n;y++)for(x=0;x<n;x++){
+    var i=y*n+x;
+    var c=document.createElement('div');
+    c.className='cell';c.id='c-'+i;
+    c.dataset.i=i;c.tabIndex=0;
+    c.setAttribute('role','button');
+    c.setAttribute('aria-label','灯组 第'+(y+1)+'行 第'+(x+1)+'列');
+    c.innerHTML='<span class="lamp"></span><span class="idx mono">'+(i+1)+'</span>';
+    b.appendChild(c);
+  }
+  var box=b.parentNode;
+  var old=box.querySelector('.hintrow-top');if(old)old.parentNode.removeChild(old);
+  paintBoard();
+}
+function paintBoard(){
+  for(var i=0;i<pz.n*pz.n;i++){
+    var c=$id('c-'+i);if(!c)continue;
+    c.classList.toggle('on',!!lit[i]);
+    c.classList.toggle('center',!!clicks[i]);
+  }
+  refreshStats();
+}
+function flashCells(idxList){
+  for(var k=0;k<idxList.length;k++){
+    var c=$id('c-'+idxList[k]);if(!c)continue;
+    c.classList.remove('flash');void c.offsetWidth;c.classList.add('flash');
+  }
+}
+function refreshStats(){
+  var left=0,i;
+  for(i=0;i<lit.length;i++)if(!lit[i])left++;
+  $id('stLeft').textContent=left?('未点亮 '+left):'全部点亮';
+  var goal=pz.k,mEl=$id('stMoves');
+  mEl.textContent='步数 '+moves+' / '+goal;
+  mEl.className=moves<=goal?'hit':(moves<=Math.ceil(goal*1.5)?'':'over');
+}
+function fmt(s){var m=Math.floor(s/60),ss=s%60;return (m<10?'0':'')+m+':'+(ss<10?'0':'')+ss.toFixed(1)}
+function updTime(){if(t0&&!solvedFlag)$id('stTime').textContent=fmt((performance.now()-t0)/1000)}
+function starStr(n){return '★★★☆☆'.slice(3-n,6-n)}
+function starsFor(mv,goal){return mv<=goal?3:(mv<=Math.ceil(goal*1.5)?2:1)}
+
+/* ---------- 音效 ---------- */
+var AC=null;
+function tone(f,d,type,g,when){
+  if(muted)return;
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    var t=AC.currentTime+(when||0),o=AC.createOscillator(),ga=AC.createGain();
+    o.type=type||'square';o.frequency.value=f;
+    o.connect(ga);ga.connect(AC.destination);
+    ga.gain.setValueAtTime(g||.035,t);
+    ga.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.start(t);o.stop(t+d+.02);
+  }catch(e){}
+}
+function chime(){tone(523,.14,'triangle',.06,0);tone(659,.14,'triangle',.06,.1);tone(784,.18,'triangle',.06,.2);tone(1046,.3,'triangle',.07,.32)}
+var QUIPS=['行为特征：抖动分布均匀 ✔ 人类概率 99.6%',
+  '行为特征：存在无效试探点击 ✔ 非最短路径',
+  '行为特征：按压间隔抖动明显 ✔ 非脚本节拍',
+  '行为特征：逐行收束策略 ✔ 非机械扫描',
+  '行为特征：回退重按次数合理 ✔ 未见毫秒级精准'];
+
+/* ---------- 难度界面与引导 ---------- */
+var TIPS={1:'校准阶段 V1：3×3 矩阵，任一点击组合都能点亮，放手点两下试试。',
+  2:'校准阶段 V2：仍是 3×3，但需要 4–5 次抖动才能全亮，乱按会被自己推翻。',
+  3:'校准阶段 V3：矩阵扩大到 4×4，边角格只影响 3 格，先看四周提示。',
+  4:'校准阶段 V4：4×4 且需抖动 8–10 次，建议按行推进、逐行收束。',
+  5:'校准阶段 V5：5×5 极限矩阵，需抖动 10–14 次；推荐「逐行消除法」，最后一排不亮就换一个。'};
+function renderDiffBar(){
+  var bs=document.querySelectorAll('.diffbtn');
+  for(var i=0;i<bs.length;i++){
+    var on=parseInt(bs[i].getAttribute('data-lv'),10)===LV;
+    bs[i].className='diffbtn mono'+(on?' on':'');
+    bs[i].setAttribute('aria-pressed',on?'true':'false');
+    bs[i].title='V'+bs[i].getAttribute('data-lv')+' · '+LV_TABLE[bs[i].getAttribute('data-lv')].n+'×'+LV_TABLE[bs[i].getAttribute('data-lv')].n;
+  }
+}
+function renderGuide(){
+  var g=GUIDES[LV],s=LV_TABLE[LV];
+  $id('tip').innerHTML='<b class="k">规则</b> · '+g.rule+'<br><b class="k">目标</b> · '+g.goal+'<br><b class="k">提示点</b> · '+g.how+'<br><b class="k">难度</b> · '+g.diff;
+  $id('hintBar').textContent=TIPS[LV];
+}
+function renderParamLine(){
+  var s=LV_TABLE[LV],extra=(pz&&pz.custom)?(' · 自定义关卡 '+(pz.custom)):'';
+  $id('paramLine').innerHTML='参数 <b>V'+LV+'</b> · 网格 <b>'+s.n+'×'+s.n+'</b> · 抖动上限 <b>k='+s.kMin+(s.kMax>s.kMin?('-'+s.kMax):'')+
+    '</b> · 满星 <b>'+s.stars+'</b>'+(pz?(' · 本题 k=<b>'+pz.k+'</b>'):'')+extra;
+}
+function updateCoach(){
+  $id('hintBar').textContent=TIPS[LV]+(moves>0?('　当前已抖动 '+moves+' 次。'):'');
+}
+
+/* ---------- 挑战流程 ---------- */
+function newChallenge(){
+  solvedFlag=false;
+  if(!DEBUG){seed=((seed*1103515245+12345)%1000000007)|0;if(seed<0)seed=-seed;if(!seed)seed=1}
+  pz=genPuzzle(seed);
+  lit=pz.init.slice();
+  clicks=fill(0,pz.n*pz.n);
+  moves=0;
+  $id('stamp').hidden=true;
+  buildBoard();
+  renderGuide();renderParamLine();updateCoach();
+  t0=performance.now();
+  clearInterval(timerId);timerId=setInterval(updTime,100);updTime();
+  if(DEBUG)console.log('[GT] '+JSON.stringify({seed:pz.seedUsed,n:pz.n,k:pz.k,min:pz.min,count:pz.count,init:pz.init.join(''),sol:pz.sol.join('')}));
+}
+function toggle(i){
+  var n=pz.n,x=i%n,y=Math.floor(i/n),affected=[],d;
+  for(d=0;d<5;d++){
+    var dx=[0,1,-1,0,0][d],dy=[0,0,0,1,-1][d],nx=x+dx,ny=y+dy;
+    if(nx<0||nx>=n||ny<0||ny>=n)continue;
+    var j=ny*n+nx;
+    lit[j]=lit[j]?0:1;affected.push(j);
+  }
+  clicks[i]=clicks[i]?0:1;
+  moves++;
+  paintBoard();flashCells(affected);updateCoach();
+  tone(320+Math.random()*70,.07,'square',.04);
+  if(allLit(lit))onSolved();
+}
+function onSolved(){
+  solvedFlag=true;
+  clearInterval(timerId);
+  var secs=(performance.now()-t0)/1000;
+  var stars=starsFor(moves,pz.k);
+  $id('board').classList.add('win');
+  solvedStats={moves:moves,secs:secs,stars:stars,lv:LV};
+  $id('stampStats').innerHTML='难度 V'+LV+' · <span class="stars">'+starStr(stars)+'</span> · 抖动 '+moves+' 次（目标 '+pz.k+
+    '） · 用时 '+secs.toFixed(1)+'s<br>'+QUIPS[Math.floor(Math.random()*QUIPS.length)];
+  $id('stamp').hidden=false;
+  chime();
+  postSolved(stars,moves,secs);
+  setTimeout(function(){
+    $id('stamp').hidden=true;
+    newChallenge();
+  },1800);
+}
+function postSolved(stars,mv,secs){
+  try{
+    if(window.parent&&window.parent!==window){
+      window.parent.postMessage({type:'pz-solved',device:'V-40057',game:'lights',lv:LV,stars:stars,moves:mv,secs:Math.round(secs)},'*');
+    }
+  }catch(e){}
+}
+
+/* ---------- 导出 ---------- */
+function genPuzzle(sd){
+  var spec=paramSpec(),out=null,i;
+  if(spec.custom&&spec.custom.params&&spec.custom.params.initial!==undefined){
+    var n0=spec.n,init0=maskToInit(spec.custom.params.initial,n0);
+    var g0=gf2Solve(n0,init0);
+    if(g0.ok&&!allLit(init0))return {n:n0,k:g0.min,init:init0,sol:g0.sol,min:g0.min,count:g0.count,frees:g0.frees,picks:[],seedUsed:sd,custom:spec.custom.id||null};
+    ST.genReject++;
+  }
+  for(var att=0;att<400;att++){
+    var rng=mulberry32(((sd*2654435761)^((att+1)*40503))>>>0);
+    var kind;
+    var r=rng();
+    if(r<0.28)kind='fixed';
+    else if(r<0.62)kind='grow';
+    else kind='reduce';
+    var p=genOne(kind,spec.n,rng,rng()<0.5?spec.kMin:spec.kMax);
+    if(!p)continue;
+    if(p.k<spec.kMin||p.k>spec.kMax)continue;
+    p.seedUsed=sd;p.custom=null;return p;
+  }
+  /* 兜底：固定 k=kMin，保证一定有题 */
+  for(var att2=0;att2<400;att2++){
+    var rng2=mulberry32(((sd*104729)^((att2+1)*7919))>>>0);
+    var p2=genOne('fixed',spec.n,rng2,spec.kMin);
+    if(p2&&p2.k>=spec.kMin&&p2.k<=spec.kMax){p2.seedUsed=sd;p2.custom=null;ST.fix++;return p2}
+  }
+  return {n:spec.n,k:1,init:applyMask(spec.n,fill(1,spec.n*spec.n),1),sol:(function(){var a=fill(0,spec.n*spec.n);a[0]=1;return a})(),min:1,count:1,frees:0,picks:[0],seedUsed:sd,custom:null};
+}
+
+/* ---------- 难度切换 ---------- */
+function setLevel(v){
+  LV=clampLv(v);
+  queuedLevel=pickQueuedLevel(LV);
+  renderDiffBar();
+  renderGuide();
+  tone(480,.08,'triangle',.05);
+  newChallenge();
+}
+
+/* ---------- 事件 ---------- */
+document.addEventListener('click',function(e){
+  var el=e.target.closest?e.target.closest('.cell'):null;
+  if(!el||solvedFlag||!pz)return;
+  toggle(parseInt(el.dataset.i,10));
+});
+document.addEventListener('keydown',function(e){
+  var el=e.target.closest?e.target.closest('.cell'):null;
+  if(!el||solvedFlag||!pz)return;
+  if(e.key===' '||e.key==='Enter'){e.preventDefault();toggle(parseInt(el.dataset.i,10))}
+});
+$id('diffBar').addEventListener('click',function(e){
+  var b=e.target&&e.target.closest?e.target.closest('.diffbtn'):null;
+  if(!b)return;
+  var v=clampLv(b.getAttribute('data-lv'));
+  if(v===LV)return;
+  setLevel(v);
+});
+$id('btnNew').addEventListener('click',function(){tone(300,.08,'triangle',.05);solvedFlag=false;newChallenge()});
+$id('btnMute').addEventListener('click',function(){muted=!muted;this.textContent=muted?'🔇':'🔊'});
+
+/* ---------- 导出当前局 level JSON ---------- */
+function buildLevelJSON(){
+  var spec=LV_TABLE[LV];
+  var p=pz||{n:spec.n,k:spec.kMin,init:[],sol:[]};
+  var shortId='lv'+LV+'-'+((seed*2654435761)>>>0).toString(36).slice(0,6);
+  var rows=[],y,x;
+  for(y=0;y<p.n;y++){var r=[];for(x=0;x<p.n;x++)r.push(p.init[y*p.n+x]?1:0);rows.push(r)}
+  return {
+    game:'lights',
+    id:'lights-'+LV+'-'+shortId,
+    lv:LV,
+    name:'灯光矩阵 V'+LV+' · '+spec.name,
+    desc:'在 '+p.n+'×'+p.n+' 灯阵中点击 '+p.k+' 次（最优）让全部灯组点亮。',
+    play:'点击任一格会翻转该格与上下左右共 5 格的状态；全部点亮即通过。矩阵四周青点是行列需要点击次数的奇偶提示。',
+    params:{ n:p.n, k:p.k, initial:rows },
+    enabled:true
+  };
+}
+function doExport(){var l=buildLevelJSON();console.log('[EXPORT] '+JSON.stringify(l));return l}
+
+/* ---------- 自测（同步 + 微任务内完成，禁止定时器驱动） ---------- */
+function selftest(){
+  var pass=0,samples=[],lines=[],tbl=[];
+  for(var v=1;v<=5;v++){
+    var spec=LV_TABLE[v];
+    var p=genPuzzle(1000+v*7919);
+    var ok=true,why=[];
+    if(!p){ok=false;why.push('生成失败')}
+    else{
+      if(p.n!==spec.n){ok=false;why.push('网格 '+p.n+'≠'+spec.n)}
+      if(p.k<spec.kMin||p.k>spec.kMax){ok=false;why.push('k='+p.k+' 超出 ['+spec.kMin+','+spec.kMax+']')}
+      var g=gf2Solve(p.n,p.init);
+      if(!g.ok){ok=false;why.push('初始局面无解')}
+      else if(g.min>p.k){ok=false;why.push('高斯消元最优 '+g.min+'> k='+p.k)}
+      if(allLit(p.init)){ok=false;why.push('初始状态已全亮')}
+      /* 往返重放：用生成解点击，必须全亮 */
+      var rep=applyMask(p.n,p.init,maskFromArr(p.n,p.sol));
+      if(!allLit(rep)){ok=false;why.push('解重放未全亮')}
+      /* UI 判定一致性：走一遍 BFS 状态图，真最优步数与高斯消元一致 */
+      if(p.n<=4){
+        var bfs=bfsMin(p.n,p.init);
+        if(bfs!==g.min){ok=false;why.push('BFS 最优 '+bfs+'≠高斯消元 '+g.min)}
+      }
+      tbl.push('V'+v+' | '+p.n+'×'+p.n+' | k='+p.k+' | min='+g.min+' | free='+g.frees+' | 解空间='+g.count+' | seed='+p.seedUsed);
+      if(ok){
+        samples.push(buildLevelJSONFor(v,p));
+      }
+    }
+    lines.push('[G5-TEST] lv'+v+' '+(ok?'PASS':'FAIL')+' · '+spec.n+'×'+spec.n+' · k∈['+spec.kMin+','+spec.kMax+']'+
+      (p?(' · 生成 k='+p.k+(g2min(p))):'')+(ok?'':' · '+why.join('；')));
+    if(ok)pass++;
+  }
+  for(var i=0;i<tbl.length;i++)console.log('[G5-TEST] 参数核对 '+tbl[i]);
+  for(var j=0;j<lines.length;j++)console.log(lines[j]);
+  try{localStorage.setItem(CUSTOM_KEY,JSON.stringify(samples))}catch(e){}
+  var pct=(pass/5*100).toFixed(1);
+  console.log('[G5-TEST] '+(pct==='100.0'?'全档通过':'存在失败档')+' · 样例 '+samples.length+' 条已写入 '+CUSTOM_KEY);
+  console.log(pass+'/5 '+pct+'%');
+  return pass===5;
+}
+function g2min(p){try{var g=gf2Solve(p.n,p.init);return ' · 最优 '+g.min+' 步'}catch(e){return ''}}
+function buildLevelJSONFor(v,p){
+  var spec=LV_TABLE[v],rows=[],y,x;
+  for(y=0;y<p.n;y++){var r=[];for(x=0;x<p.n;x++)r.push(p.init[y*p.n+x]?1:0);rows.push(r)}
+  return {game:'lights',id:'lights-'+v+'-sample'+((p.seedUsed*31)>>>0).toString(36).slice(0,4),lv:v,
+    name:'灯光矩阵 V'+v+' · '+spec.name,
+    desc:'在 '+p.n+'×'+p.n+' 灯阵中点击 '+p.k+' 次（最优）让全部灯组点亮。',
+    play:'点击任一格会翻转该格与上下左右共 5 格的状态；全部点亮即通过。',
+    params:{n:p.n,k:p.k,initial:rows},enabled:true};
+}
+/* 独立 BFS：直接按「点击翻转 5 格」状态转移求最短步数，用于交叉验证高斯消元 */
+function bfsMin(n,init){
+  var N=n*n,start=maskFromArr(n,init),goal=(1<<N)-1;
+  var lums=[],i;
+  for(i=0;i<N;i++)lums.push(lumMask(n,i%n,Math.floor(i/n)));
+  var seen={},q=[start],d=[0],head=0;
+  seen[start]=1;
+  while(head<q.length){
+    var cur=q[head],cd=d[head];head++;
+    if(cur===goal)return cd;
+    for(i=0;i<N;i++){var nx=cur^lums[i];if(!seen[nx]){seen[nx]=1;q.push(nx);d.push(cd+1)}}
+  }
+  return -1;
+}
+
+/* ---------- 启动 ---------- */
+function bootChallenge(){
+  try{customLevels=readCustomLevels()}catch(e){customLevels=[]}
+  queuedLevel=pickQueuedLevel(LV);
+  renderDiffBar();
+  newChallenge();
+}
+function onReady(){
+  console.log('[GT-INIT] {lv:'+LV+',n:'+((pz&&pz.n)||LV_TABLE[LV].n)+',seed:'+seed+',custom:'+customLevels.length+'}');
+  if(qs.get('export')==='1')doExport();
+}
+function runSelftest(){
+  var ok=selftest();
+  bootChallenge();
+  if(DEBUG)console.log('[GT-SELFTEST] boot ok='+ok);
+}
+if(qs.get('direct')==='1'||qs.get('selftest')==='1'){
+  if(qs.get('selftest')==='1'){runSelftest()}else{bootChallenge()}
+}else{
+  bootChallenge();
+}
+</script>
+</body>
+</html>
+

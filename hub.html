@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>访客协议 VISITOR PROTOCOL · 游戏模式</title>
+<style>
+:root{--bg:#0b0e11;--line:#28313b;--line2:#3a4550;--ink:#d9e0e7;--dim:#8a96a2;--acc:#ffb100;--on:#ffcb4a;--ok:#3ddc8f;--mono:ui-monospace,Consolas,'Courier New',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(1000px 520px at 75% -10%,rgba(255,177,0,.07),transparent 60%),var(--bg);color:var(--ink);font-family:'Segoe UI',system-ui,'Microsoft YaHei',sans-serif;padding:26px 14px}
+.bg{position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);background-size:42px 42px;pointer-events:none;-webkit-mask-image:radial-gradient(ellipse at center,black 25%,transparent 78%);mask-image:radial-gradient(ellipse at center,black 25%,transparent 78%)}
+.mono{font-family:var(--mono)}
+.dim{color:var(--dim)}
+.wrap{position:relative;z-index:1;width:min(94vw,880px)}
+.head{display:flex;align-items:center;gap:14px;margin-bottom:4px}
+.logo{width:46px;height:46px;border:1px solid var(--acc);border-radius:10px;display:grid;place-items:center;color:var(--acc);font-size:24px;box-shadow:inset 0 0 14px rgba(255,177,0,.25)}
+.head h1{font-size:20px;letter-spacing:.12em}
+.head p{font-size:11px;margin-top:4px;letter-spacing:.08em}
+.hazard{height:8px;background:repeating-linear-gradient(45deg,var(--acc) 0 12px,#141414 12px 24px);opacity:.85;border-radius:4px;margin:10px 0 16px}
+.note{font-size:12.5px;color:var(--dim);margin-bottom:16px;line-height:1.7}
+.note b{color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.card{position:relative;background:linear-gradient(180deg,#161c23,#12171d);border:1px solid var(--line);border-radius:12px;padding:16px 16px 14px;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s}
+.card:hover{transform:translateY(-3px);border-color:rgba(255,177,0,.55);box-shadow:0 14px 34px rgba(0,0,0,.45)}
+.card.pass{border-color:rgba(61,220,143,.45)}
+.card .no{position:absolute;top:10px;right:14px;font-size:24px;color:rgba(255,177,0,.28);font-weight:700}
+.card .dev{font-size:10.5px;color:var(--acc);letter-spacing:.08em}
+.card h2{font-size:16px;margin:6px 0 6px;letter-spacing:.06em}
+.card p{font-size:12px;color:var(--dim);line-height:1.65;min-height:38px}
+.card .state{position:absolute;right:14px;bottom:12px;font-size:11px;color:var(--ok)}
+.diffbar{display:none;margin-top:12px;gap:6px;flex-wrap:wrap}
+.card.open .diffbar{display:flex}
+.diffbar button{flex:1;min-width:44px;background:#0e1318;border:1px solid var(--line2);color:var(--dim);border-radius:6px;padding:8px 4px;font-size:11px;cursor:pointer;font-family:var(--mono);transition:all .15s}
+.diffbar button:hover{border-color:var(--acc);color:var(--acc)}
+.diffbar button b{display:block;font-size:13px;color:var(--ink)}
+.diffbar button.sel{border-color:var(--acc);color:var(--acc);box-shadow:inset 0 0 10px rgba(255,177,0,.2)}
+.diffbar button.sel b{color:var(--acc)}
+.tools{margin-top:10px;display:flex;justify-content:space-between;align-items:center}
+.tools .go{font-size:12px;color:var(--acc);cursor:pointer}
+.tools .reset{font-size:11px;color:var(--mute);cursor:pointer;border:0;background:transparent;text-decoration:underline}
+.banner{margin:0 0 16px;border:2px solid var(--ok);border-radius:10px;padding:12px 18px;color:var(--ok);text-align:center;font-weight:700;letter-spacing:.15em;box-shadow:0 0 26px rgba(61,220,143,.25);animation:fade .3s}
+.credit{margin-top:18px;font-size:11px;color:var(--dim);opacity:.7;text-align:center}
+.mask{position:fixed;inset:0;background:rgba(5,7,9,.78);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:50;animation:fade .2s}
+.framebox{width:min(96vw,840px);height:min(94vh,900px);background:#10151b;border:1px solid var(--line2);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.fbar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--dim);gap:10px}
+.fbar button{background:transparent;border:1px solid var(--line2);color:var(--ink);border-radius:6px;padding:4px 12px;cursor:pointer;font-size:12px}
+.fbar button:hover{border-color:var(--acc);color:var(--acc)}
+iframe{flex:1;width:100%;border:0;background:#0b0e11}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#161d24;border:1px solid var(--ok);color:var(--ink);padding:10px 18px;border-radius:8px;font-size:13px;z-index:60;animation:fade .2s}
+@keyframes fade{from{opacity:0}}
+@media (max-width:640px){.grid{grid-template-columns:1fr}.head h1{font-size:17px}}
+/* == craft patch: impeccable x industrial-telemetry == */
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.scanlines{position:fixed;inset:0;pointer-events:none;z-index:99;background-image:linear-gradient(rgba(255,255,255,.016) 1px,transparent 1px);background-size:100% 3px}
+@media (max-width:640px){.mfoot{flex-wrap:wrap;gap:8px}.mtip{font-size:12px}.stats{font-size:11px;gap:8px}.grid{width:92vw}.card{padding:14px}}
+.lvbtns button,.ghost{min-height:34px}
+.head h1{font-size:clamp(1.4rem,3.5vw,2rem);letter-spacing:.02em}
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+<div class="bg"></div>
+<main class="wrap">
+  <div class="head">
+    <div class="logo">◈</div>
+    <div><h1>访客协议 · 游戏模式</h1><p class="mono dim">VISITOR PROTOCOL // 自由校验 · 选择设备与难度</p></div>
+  </div>
+  <div class="hazard"></div>
+  <div class="banner" id="banner" hidden>✔ 校验设备通过 — 你已证明自己是人类</div>
+  <p class="note">选择一台校验设备，挑一个难度（<b>V1 简单 → V5 困难</b>），完成挑战即可点亮对应星级。进度保存在本机。</p>
+  <div class="grid" id="cards"></div>
+  <p class="credit">灵感致敬《明日方舟：终末地》与 GiiKER 计客益智玩具 · 粉丝练习作品，与鹰角网络 / 计客无关</p>
+</main>
+<div class="mask" id="mask" hidden>
+  <div class="framebox">
+    <div class="fbar"><span class="mono" id="fTitle">设备接入中…</span><span><button id="btnNext" hidden>下一台设备 →</button> <button id="btnClose">✕ 断开连接</button></span></div>
+    <iframe id="frame" title="校验设备"></iframe>
+  </div>
+</div>
+<div id="toast" class="toast" hidden></div>
+<script>
+'use strict';
+var GAMES=[
+ {no:'01',dev:'V-40053',game:'circuit',name:'源石电路维修',page:'game1-circuit.html',desc:'点击旋转导能管件，把源核的电力接通到全部信标灯，不得有管口悬空。',scale:'4×4 → 6×6'},
+ {no:'02',dev:'V-40054',game:'packing',name:'方块拼装作业',page:'puzzle2.html',desc:'按行列分色计数提示，把配重模块旋转后填入舱格；斜纹封锁格不可占用。',scale:'5×5 → 6×7'},
+ {no:'03',dev:'V-40056',game:'gems',name:'宝石神偷',page:'game3-gems.html',desc:'操控回收无人机跳吃全部残料晶簇并停泊回收井；步数有限，谨慎规划。',scale:'25 个手工关卡'},
+ {no:'04',dev:'V-40055',game:'camping',name:'露营达人',page:'game4-camping.html',desc:'为每棵信号树配一顶相邻驻守帐，帐篷互不相邻，行列配额必须吻合。',scale:'6×6 → 8×8'},
+ {no:'05',dev:'V-40057',game:'lights',name:'灯光矩阵校验',page:'game5-lights.html',desc:'点击任一灯位会同时翻转其所在行列的十字区域，把全部灯组点亮即通过。',scale:'5×5 → 7×7'},
+ {no:'06',dev:'V-40058',game:'code',name:'口令破译',page:'game6-code.html',desc:'访客口令已损坏，逐位尝试并依据金点/银点反馈还原完整口令。',scale:'4 位 → 8 位口令'},
+ {no:'07',dev:'V-40059',game:'nonogram',name:'图形校验',page:'game7-nonogram.html',desc:'按每行每列的校验码涂黑格位，重建被抹除的源石影像。',scale:'5×5 → 8×8'},
+ {no:'08',dev:'V-40060',game:'targets',name:'目标点选',page:'game8-targets.html',desc:'筛查监控画面中的异常信号源，点选全部合规目标，误选伪装噪声即失败。',scale:'12 处信号源'},
+ {no:'09',dev:'V-40061',game:'sliding',name:'滑块还原',page:'game9-slide.html',desc:'错位的影像碎片只能借助空位滑动，把画面恢复到原始对位。',scale:'3×3 → 5×5'}
+];
+var LVN=['','简单','容易','中等','较难','困难'];
+var KEY='endland-hub-progress';
+function $id(s){return document.getElementById(s)}
+function loadProg(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return {}}}
+function saveProg(p){try{localStorage.setItem(KEY,JSON.stringify(p))}catch(e){}}
+function logStats(rec){try{var a=JSON.parse(localStorage.getItem('endland-stats')||'[]');a.push(rec);localStorage.setItem('endland-stats',JSON.stringify(a))}catch(e){}}
+function toast(m){var t=$id('toast');t.textContent=m;t.hidden=false;clearTimeout(t._h);t._h=setTimeout(function(){t.hidden=true},2600)}
+var selLv={};
+function render(){
+  var prog=loadProg(),g=$id('cards');g.innerHTML='';
+  GAMES.forEach(function(x){
+    var pr=prog[x.dev],pass=!!pr;
+    var el=document.createElement('div');
+    el.className='card'+(pass?' pass':'');
+    el.dataset.dev=x.dev;
+    var stars=pass&&pr.stars?('★'.repeat(pr.stars)+'☆'.repeat(3-pr.stars)):'';
+    el.innerHTML='<div class="no mono">'+x.no+'</div><div class="dev mono">设备 '+x.dev+' · '+x.scale+'</div><h2>'+x.name+'</h2><p>'+x.desc+'</p>'
+      +'<div class="diffbar">'+[1,2,3,4,5].map(function(i){return '<button data-lv="'+i+'"'+(selLv[x.dev]===i?' style="border-color:var(--acc)"':'')+'><b>V'+i+'</b>'+LVN[i]+'</button>'}).join('')+'</div>'
+      +'<div class="tools"><span class="go mono">开始校验 →</span>'+(pass?'<span class="state mono">✔ '+stars+'</span>':'')+'</div>';
+    el.addEventListener('click',function(e){
+      if(e.target.dataset.lv){selLv[x.dev]=+e.target.dataset.lv;render();return}
+      if(e.target.classList.contains('go')){
+        var lv=selLv[x.dev]||1;
+        $id('fTitle').textContent='设备 '+x.dev+' · '+x.name+' · 难度 V'+lv+' · 接入中';
+        var url=x.page+'?direct=1&lv='+lv;
+        if(x.game==='gems')url+='&stage='+(lv*5-4);
+        $id('frame').src=url;
+        $id('mask').hidden=false;
+        $id('btnNext').hidden=true;
+        $id('fTitle').dataset.dev=x.dev;
+      }
+    });
+    g.appendChild(el);
+  });
+  var prog2=loadProg();
+  var done=GAMES.filter(function(x){return prog2[x.dev]}).length;
+  $id('banner').hidden=done<4;
+  if(done>=4)$id('banner').textContent='✔ 已通过 '+done+' 台校验设备 — 你已证明自己是人类';
+}
+function markNext(){
+  var dev=$id('fTitle').dataset.dev;
+  var i=GAMES.findIndex(function(x){return x.dev===dev});
+  var prog=loadProg();
+  for(var k=1;k<=GAMES.length;k++){
+    var cand=GAMES[(i+k)%GAMES.length];
+    if(!prog[cand.dev]){$id('btnNext').hidden=false;$id('btnNext').onclick=function(){var c=cand;$id('fTitle').textContent='设备 '+c.dev+' · '+c.name;$id('frame').src=c.page+'?direct=1';$id('fTitle').dataset.dev=c.dev;$id('btnNext').hidden=true;render()};return}
+  }
+  $id('btnNext').hidden=true;
+}
+window.addEventListener('message',function(e){
+  var d=e.data||{};
+  if(d.type==='pz-solved'){
+    var prog=loadProg();
+    prog[d.device]={lv:d.lv||1,stars:d.stars||1};
+    saveProg(prog);
+    logStats({ts:new Date().toISOString(),device:d.device,game:d.game||'',lv:d.lv||1,stars:d.stars||1,moves:d.moves!=null?d.moves:'—',secs:d.secs!=null?d.secs:'—',pass:true});
+    $id('fTitle').textContent='✔ '+d.device+' 校验通过（'+('★'.repeat(d.stars||1)+'☆'.repeat(3-(d.stars||1)))+'）· 可断开或继续';
+    toast('✔ 设备 '+d.device+' 校验通过');
+    markNext();render();
+  }
+  if(d.type==='pz-failed'){
+    logStats({ts:new Date().toISOString(),device:d.device,game:'',lv:d.lv||1,stars:0,moves:d.moves!=null?d.moves:'—',secs:'—',pass:false});
+    toast('设备 '+d.device+' 本轮未通过 — 再试一次？');
+  }
+});
+$id('btnClose').addEventListener('click',function(){$id('mask').hidden=true;$id('frame').src='about:blank';render()});
+document.getElementById('cards').addEventListener('click',function(e){
+  if(e.target.classList.contains('reset')||e.target.id==='resetAll'){
+    if(confirm('确定清空全部校验进度？')){localStorage.removeItem(KEY);render()}
+  }
+});
+var resetBar=document.createElement('p');
+resetBar.className='note';resetBar.style.textAlign='right';
+resetBar.innerHTML='<span id="resetAll" style="color:var(--mute);cursor:pointer;text-decoration:underline;font-size:11px">重置全部进度</span>';
+document.querySelector('.wrap').insertBefore(resetBar,document.getElementById('cards'));
+document.getElementById('resetAll').addEventListener('click',function(){
+  if(confirm('确定清空全部校验进度？')){localStorage.removeItem(KEY);render();toast('进度已重置')}
+});
+if(new URLSearchParams(location.search).get('selftest')==='1'){
+  setTimeout(function(){
+    var seq=[{device:'V-40053',game:'circuit',lv:1,stars:3},{device:'V-40054',game:'packing',lv:2,stars:2},{device:'V-40056',game:'gems',lv:3,stars:3},{device:'V-40055',game:'camping',lv:5,stars:1}];
+    seq.forEach(function(d,i){
+      window.dispatchEvent(new MessageEvent('message',{data:{type:'pz-solved',device:d.device,game:d.game,lv:d.lv,stars:d.stars,moves:5,secs:4}}));
+      console.log('[HUB-TEST] '+(i+1)+'/4 '+d.device+' stars='+d.stars);
+    });
+    console.log('[HUB-TEST] banner should be visible');
+  },400);
+}
+render();
+</script>
+</body>
+</html>

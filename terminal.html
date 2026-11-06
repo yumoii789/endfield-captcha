@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>访客协议 VISITOR PROTOCOL · 人机验证终端</title>
+<style>
+:root{--bg:#050708;--panel:#0b0e11;--line:#28313b;--line2:#3a4550;--ink:#c8d2da;--dim:#8a96a2;--mute:#5a6772;--acc:#ffb100;--on:#ffcb4a;--ok:#3ddc8f;--warn:#ff8f5e;--bad:#ff5252;--mono:ui-monospace,Consolas,'Courier New',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{background:radial-gradient(900px 480px at 70% -10%,rgba(255,177,0,.05),transparent 60%),var(--bg);color:var(--ink);font-family:var(--mono);min-height:100vh}
+.bgline{position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px);background-size:100% 3px;pointer-events:none}
+.wrap{max-width:920px;margin:0 auto;padding:26px 16px 60px;position:relative;z-index:1}
+.topbar{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);border-radius:8px 8px 0 0;background:#0d1217;padding:8px 14px;font-size:12px;color:var(--dim)}
+.topbar .dot{color:var(--ok)}
+.screen{border:1px solid var(--line);border-top:0;border-radius:0 0 8px 8px;background:var(--panel);min-height:52vh;padding:18px 16px 10px;font-size:14px;line-height:1.9;overflow-y:auto;max-height:70vh}
+.tl{white-space:pre-wrap;word-break:break-all}
+.tl.dim{color:var(--dim)}
+.tl.ok{color:var(--ok)}
+.tl.warn{color:var(--warn)}
+.tl.acc{color:var(--acc)}
+.tl.bad{color:var(--bad)}
+.tl .inl{background:transparent;border:0;border-bottom:1px solid var(--line2);color:var(--on);font:inherit;outline:none;width:46%;padding:0 4px}
+.gframe{margin-top:14px;border:1px solid var(--line2);border-radius:10px;overflow:hidden;background:#0b0e11}
+.gframe iframe{width:100%;height:min(88vh,760px);border:0;display:block}
+.foot{margin-top:14px;font-size:11px;color:var(--mute);text-align:center;line-height:1.7}
+.jbtn{display:inline-block;margin-top:8px;background:linear-gradient(180deg,#ffc23d,#f5a300);color:#1a1200;font-weight:700;border:0;border-radius:6px;padding:10px 22px;cursor:pointer;font-family:var(--mono);font-size:13px;text-decoration:none}
+/* == craft patch: impeccable x industrial-telemetry == */
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.scanlines{position:fixed;inset:0;pointer-events:none;z-index:99;background-image:linear-gradient(rgba(255,255,255,.016) 1px,transparent 1px);background-size:100% 3px}
+@media (max-width:640px){.mfoot{flex-wrap:wrap;gap:8px}.mtip{font-size:12px}.stats{font-size:11px;gap:8px}.grid{width:92vw}.card{padding:14px}}
+.lvbtns button,.ghost{min-height:34px}
+.head h1{font-size:clamp(1.4rem,3.5vw,2rem);letter-spacing:.02em}
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+<div class="bgline"></div>
+<div class="wrap">
+  <div class="topbar"><span class="mono">◈ 访客协议 VISITOR PROTOCOL — 验证终端</span><span class="dot">● SECURE CHANNEL</span></div>
+  <div class="screen" id="screen"></div>
+  <div class="gframe" id="gframe" hidden><iframe id="frame" title="校验设备"></iframe></div>
+  <p class="foot">灵感致敬《明日方舟：终末地》与 GiiKER 计客益智玩具 · 粉丝练习作品，与鹰角网络 / 计客无关<br>全部数据仅保存在你的浏览器本地</p>
+</div>
+<script>
+'use strict';
+var qs=new URLSearchParams(location.search);
+var DEBUG=qs.get('debug')==='1';
+var SELFTEST=qs.get('selftest')==='1';
+var TYPE_MS=DEBUG?4:24, LINE_MS=DEBUG?30:180;
+var screen=document.getElementById('screen');
+function $id(s){return document.getElementById(s)}
+function sleep(ms){return new Promise(function(r){if(SELFTEST||DEBUG)r();else setTimeout(r,ms)})}
+function today(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
+async function typeLine(text,cls){
+  var div=document.createElement('div');div.className='tl '+(cls||'');screen.appendChild(div);
+  if(DEBUG||SELFTEST){div.textContent=text;}else{for(var i=0;i<text.length;i++){div.textContent+=text[i];if(i%3===2)await sleep(TYPE_MS);}}
+  await sleep(LINE_MS);
+  screen.scrollTop=screen.scrollHeight;return div;
+}
+function readJSON(k,d){try{var v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}}
+function writeJSON(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+var GAMES=[
+ {game:'circuit', device:'V-40053', name:'源石电路维修', page:'game1-circuit.html'},
+ {game:'packing', device:'V-40054', name:'方块拼装作业', page:'puzzle2.html'},
+ {game:'gems',    device:'V-40056', name:'宝石神偷',    page:'game3-gems.html'},
+ {game:'camping', device:'V-40055', name:'露营达人',    page:'game4-camping.html'},
+ {game:'lights',  device:'V-40057', name:'灯光矩阵校验', page:'game5-lights.html'},
+ {game:'code',    device:'V-40058', name:'口令破译',     page:'game6-code.html'},
+ {game:'nonogram',device:'V-40059', name:'图形校验',     page:'game7-nonogram.html'},
+ {game:'targets', device:'V-40060', name:'目标点选',     page:'game8-targets.html'},
+ {game:'sliding', device:'V-40061', name:'滑块还原',     page:'game9-slide.html'}
+];
+var FAILQUIPS=['通关失败。不过说实话，这个错误很有"人味"。','通关失败。我认为机器人应该不会这么笨。','通关失败。别灰心，连 AI 都会犯错——尤其是 AI。','通关失败。系统已记录这次可爱的失误。','通关失败。你的固执已被标注为"非常人类"。','通关失败。检测到强烈的碳基生物特征：手忙脚乱。','通关失败。没关系，防线还会再考你一次。','通关失败。ERR-SI-404：渗透体伪装失败。'];
+function readCfg(){return readJSON('endland-admin-cfg',{})}
+function genId(){
+  var h='';for(var i=0;i<4;i++)h+=('0'+Math.floor(Math.random()*256).toString(16)).slice(-2)+':';
+  return '10.24.'+(1+Math.floor(Math.random()*254))+'.'+(1+Math.floor(Math.random()*254))+' / A4:'+h.slice(0,-1);
+}
+function matchLevel(cfg){
+  // 联合分布：P(关卡,难度) ∝ 全局难度概率 × 该关卡对应难度覆盖（无覆盖=不改变，即×100）
+  var rows=[],tot=0;
+  for(var i=0;i<GAMES.length;i++){
+    var g=GAMES[i],ld=(cfg.levelDist||{})[g.game],row=[];
+    for(var d=0;d<5;d++){
+      var w=(Array.isArray(cfg.globalDist)&&cfg.globalDist.length===5)?(+cfg.globalDist[d]||0):20;
+      var o=(ld&&ld[d+1]!=null)?(+ld[d+1]||0):100;
+      var v=Math.max(0,w)*Math.max(0,o)/100;
+      row.push(v);tot+=v;
+    }
+    rows.push(row);
+  }
+  if(tot<=0){var g0=GAMES[Math.floor(Math.random()*GAMES.length)];
+    return {game:g0.game,device:g0.device,name:g0.name,page:g0.page,lv:1+Math.floor(Math.random()*5)};}
+  var r=Math.random()*tot;
+  for(i=0;i<GAMES.length;i++)for(var d2=0;d2<5;d2++){r-=rows[i][d2];
+    if(r<0){var gg=GAMES[i];return {game:gg.game,device:gg.device,name:gg.name,page:gg.page,lv:d2+1}}}
+  var gl=GAMES[GAMES.length-1];
+  return {game:gl.game,device:gl.device,name:gl.name,page:gl.page,lv:5};
+}
+function askInput(prompt){
+  return new Promise(function(res){
+    var div=document.createElement('div');div.className='tl acc';
+    div.appendChild(document.createTextNode(prompt));
+    var inp=document.createElement('input');inp.className='inl';inp.autocomplete='off';
+    div.appendChild(inp);screen.appendChild(div);inp.focus();
+    screen.scrollTop=screen.scrollHeight;
+    function done(){
+      var v=inp.value.trim();inp.disabled=true;
+      inp.removeEventListener('keydown',onkey);inp.removeEventListener('blur',onblur);
+      res(v);
+    }
+    function onkey(e){if(e.key==='Enter'){if(SELFTEST&&!inp.value){inp.value='测试访客'}done()}}
+    function onblur(){if(!inp.disabled&&document.activeElement!==inp){inp.focus()}}
+    inp.addEventListener('keydown',onkey);
+    if(!SELFTEST)inp.addEventListener('blur',onblur);
+    if(SELFTEST)setTimeout(function(){if(!inp.disabled){inp.value='测试访客';done()}},600);
+  });
+}
+var resultResolve=null;
+window.addEventListener('message',function(e){
+  var d=e.data||{};
+  if((d.type==='pz-solved'||d.type==='pz-failed')&&resultResolve){var f=resultResolve;resultResolve=null;f(d)}
+});
+function waitResult(){return new Promise(function(r){resultResolve=r})}
+function logStats(rec){var a=readJSON('endland-stats',[]);a.push(rec);writeJSON('endland-stats',a)}
+function logMatch(rec){var a=readJSON('endland-matchlog',[]);a.push(rec);writeJSON('endland-matchlog',a)}
+async function main(){
+  var cfg=readCfg();
+  cfg.visitByDate=cfg.visitByDate||{};cfg.visitByDate[today()]=(cfg.visitByDate[today()]||0)+1;writeJSON('endland-admin-cfg',cfg);
+  await typeLine('> 连接中…','dim');await sleep(DEBUG?80:600);
+  await typeLine('> 正在载入用户数据','dim');await sleep(DEBUG?60:500);
+  var user=readJSON('endland-user',null);
+  if(qs.get('reset')==='1'){localStorage.removeItem('endland-user');user=null;await typeLine('> 档案已清除，重新注册','warn')}
+  if(!user){
+    await typeLine('> 检测到新用户进入','warn');
+    await typeLine('> 正在为您创建用户档案','dim');
+    var name=await askInput('> 请输入你的名字：');
+    if(!name)name='访客-'+(1000+Math.floor(Math.random()*9000));
+    user={name:name,id:genId(),created:new Date().toISOString()};
+    writeJSON('endland-user',user);
+    await typeLine('> 用户档案创建成功','ok');
+    await typeLine('  档案号 '+user.id,'dim');
+    console.log('[T-REG] name='+user.name);
+  }else{
+    await typeLine('> 用户 '+user.name+'，欢迎来到访客中心','ok');
+    await typeLine('  用户名: '+user.name,'dim');
+    await typeLine('  ID: '+user.id,'dim');
+    await typeLine('> 我们需要对你进行身份验证，以确保你不是机器人','warn');
+    await typeLine('> 正在为您匹配合适的验证方式','dim');
+    console.log('[T-REG] name='+user.name+' (returning)');
+  }
+  var pick=matchLevel(cfg);
+  await typeLine('> 匹配成功 — '+pick.device+' — '+pick.name+' · 难度 V'+pick.lv,'acc');
+  logMatch({ts:new Date().toISOString(),game:pick.game,id:pick.device+'-lv'+pick.lv,lv:pick.lv});
+  await typeLine('> 正在将您传送到识别中心','dim');
+  await sleep(DEBUG?100:800);
+  console.log('[T-MATCH] '+pick.game+' lv'+pick.lv);
+  var gf=$id('gframe');
+  gf.hidden=false;
+  $id('frame').src=pick.page+'?direct=1&lv='+pick.lv;
+  gf.scrollIntoView({behavior:'smooth'});
+  var res;
+  if(SELFTEST){
+    res=await new Promise(function(r){r({type:'pz-solved',device:pick.device,game:pick.game,lv:pick.lv,stars:3,moves:5,secs:4.2})});
+  }else{
+    res=await waitResult();
+  }
+  gf.hidden=true;
+  var pass=res.type==='pz-solved';
+  logStats({ts:new Date().toISOString(),device:res.device||pick.device,game:res.game||pick.game,lv:res.lv!=null?res.lv:pick.lv,stars:res.stars!=null?res.stars:'—',moves:res.moves!=null?res.moves:'—',secs:res.secs!=null?res.secs:'—',pass:pass});
+  if(pass){
+    await typeLine('> 通关成功','ok');
+    await typeLine('> 用户通关数据：难度 V'+(res.lv!=null?res.lv:pick.lv)+' · '+(res.stars!=null?res.stars:'—')+' 星 · 步数 '+(res.moves!=null?res.moves:'—')+' · 用时 '+(res.secs!=null?res.secs:'—')+'s','dim');
+  }else{
+    await typeLine('> 通关失败','bad');
+    await typeLine('> 用户通关数据：难度 V'+(res.lv!=null?res.lv:pick.lv)+' · 步数 '+(res.moves!=null?res.moves:'—'),'dim');
+    await typeLine('> '+FAILQUIPS[Math.floor(Math.random()*FAILQUIPS.length)],'warn');
+  }
+  await typeLine('> 身份验证成功','ok');
+  console.log('[T-SOLVED] pass='+pass);
+  var rd=cfg.redirect||'hub.html';
+  if(/^https?:/i.test(rd)){
+    await typeLine('> 识别完成。请点击下方按钮前往目标网址（外链需手动确认）：','dim');
+    var a=document.createElement('a');a.className='jbtn';a.href=rd;a.target='_blank';a.rel='noopener';a.textContent='前往 '+rd;
+    screen.appendChild(a);
+  }else{
+    await typeLine('> 正在跳转到设定的网址…','dim');
+    await sleep(SELFTEST?10:1500);
+    if(SELFTEST){await typeLine('（selftest：跳转已挂起，流程验证完毕）','dim');return}
+    location.href=rd;
+  }
+}
+document.addEventListener('keydown',function(e){
+  if(e.key!==String.fromCharCode(96))return;
+  typeLine('> 可用命令：reset（清除档案重新注册）· help（本帮助）· 当前模式：'+(DEBUG?'debug 快进':'正常'), 'dim');
+});
+main();
+</script>
+</body>
+</html>
