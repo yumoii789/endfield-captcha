@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%220.9em%22 font-size=%2290%22>◈</text></svg>'>
 <meta name="theme-color" content="#0b0e11">
 <title>访客协议 VISITOR PROTOCOL · 游戏模式</title>
 <style>
@@ -86,11 +87,24 @@ button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visibl
 </main>
 <div class="mask" id="mask" hidden>
   <div class="framebox">
-    <div class="fbar"><span class="mono" id="fTitle">设备接入中…</span><span><button id="btnNext" hidden>下一台设备 →</button> <button id="btnClose">✕ 断开连接</button></span></div>
+    <div class="fbar"><span class="mono" id="fTitle">设备接入中…</span><span><button id="btnSfx" title="音效开关">🔊</button> <button id="btnNext" hidden>下一台设备 →</button> <button id="btnClose">✕ 断开连接</button></span></div>
     <iframe id="frame" title="校验设备"></iframe>
   </div>
 </div>
 <div id="toast" class="toast" hidden></div>
+<script src="sfx.js"></script>
+<script>
+addEventListener('DOMContentLoaded',function(){
+  var b=document.getElementById('btnSfx');
+  if(!b)return;
+  function paint(){b.textContent=SFX.on()?'\uD83D\uDD0A':'\uD83D\uDD07'}
+  paint();
+  b.addEventListener('click',function(){SFX.toggle();paint()});
+  document.addEventListener('click',function(e){
+    if(e.target.closest('button')&&e.target.id!=='btnSfx'&&SFX.on())SFX.click();
+  },true);
+});
+</script>
 <script>
 'use strict';
 var GAMES=[
