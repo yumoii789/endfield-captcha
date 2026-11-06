@@ -58,6 +58,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visibl
 var qs=new URLSearchParams(location.search);
 var DEBUG=qs.get('debug')==='1';
 var SELFTEST=qs.get('selftest')==='1';
+var WAIT_MS=Math.max(2000,parseInt(qs.get('wait')||'',10)||600000);
 var TYPE_MS=DEBUG?4:24, LINE_MS=DEBUG?30:180;
 var screen=document.getElementById('screen');
 function $id(s){return document.getElementById(s)}
@@ -128,12 +129,18 @@ function askInput(prompt){
     if(SELFTEST)setTimeout(function(){if(!inp.disabled){inp.value='测试访客';done()}},600);
   });
 }
-var resultResolve=null;
+var resultResolve=null,resultTimer=null;
+function settleResult(d){
+  if(!resultResolve)return;
+  var f=resultResolve;resultResolve=null;
+  if(resultTimer){clearTimeout(resultTimer);resultTimer=null}
+  f(d);
+}
 window.addEventListener('message',function(e){
   var d=e.data||{};
-  if((d.type==='pz-solved'||d.type==='pz-failed')&&resultResolve){var f=resultResolve;resultResolve=null;f(d)}
+  if(d.type==='pz-solved'||d.type==='pz-failed')settleResult(d);
 });
-function waitResult(){return new Promise(function(r){resultResolve=r})}
+function waitResult(){return new Promise(function(r){resultResolve=r;resultTimer=setTimeout(function(){settleResult({type:'pz-timeout'})},WAIT_MS)})}
 function logStats(rec){var a=readJSON('endland-stats',[]);a.push(rec);writeJSON('endland-stats',a)}
 function logMatch(rec){var a=readJSON('endland-matchlog',[]);a.push(rec);writeJSON('endland-matchlog',a)}
 async function main(){
@@ -178,13 +185,13 @@ async function main(){
     res=await waitResult();
   }
   gf.hidden=true;
-  var pass=res.type==='pz-solved';
+  var pass=res.type==='pz-solved',timedOut=res.type==='pz-timeout';
   logStats({ts:new Date().toISOString(),device:res.device||pick.device,game:res.game||pick.game,lv:res.lv!=null?res.lv:pick.lv,stars:res.stars!=null?res.stars:'—',moves:res.moves!=null?res.moves:'—',secs:res.secs!=null?res.secs:'—',pass:pass});
   if(pass){
     await typeLine('> 通关成功','ok');
     await typeLine('> 用户通关数据：难度 V'+(res.lv!=null?res.lv:pick.lv)+' · '+(res.stars!=null?res.stars:'—')+' 星 · 步数 '+(res.moves!=null?res.moves:'—')+' · 用时 '+(res.secs!=null?res.secs:'—')+'s','dim');
   }else{
-    await typeLine('> 通关失败','bad');
+    await typeLine(timedOut?'> 设备无响应（等待超时），连接已中止':'> 通关失败',timedOut?'warn':'bad');
     await typeLine('> 用户通关数据：难度 V'+(res.lv!=null?res.lv:pick.lv)+' · 步数 '+(res.moves!=null?res.moves:'—'),'dim');
     await typeLine('> '+FAILQUIPS[Math.floor(Math.random()*FAILQUIPS.length)],'warn');
   }
