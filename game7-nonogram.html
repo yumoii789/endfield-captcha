@@ -689,7 +689,7 @@ function onSolved(){
   $id('grid').classList.add('solved');
   for(var y=0;y<pz.height;y++)for(var x=0;x<pz.width;x++)paintCell(x,y);
   var st=$id('mStatus');st.textContent='校验通过';st.classList.add('pass');
-  var stars=errors===0?3:(errors<=2?2:1);
+  var stars=errors===0?3:(errors<=[2,2,1,1,0][Math.min(5,Math.max(1,LV))-1]?2:1);
   var sp=[];
   for(var k=0;k<pz.rowHint.length;k++)sp.push(pz.rowHint[k].join(' '));
   var stats={lv:LV,w:pz.width,h:pz.height,stars:stars,moves:moves,errors:errors,secs:+secs.toFixed(1),

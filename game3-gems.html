@@ -291,7 +291,8 @@ function levelById(id){var a=allLevels();for(var i=0;i<a.length;i++)if(a[i].id==
 function starsFor(steps,best){
   if(best<0)return 1;
   if(steps<=best)return 3;
-  if(steps<=best+2)return 2;
+  var SM=[2,2,2,1,1][Math.min(5,Math.max(1,curLv))-1];
+  if(steps<=best+SM)return 2;
   return 1;
 }
 function starStr(n){var s='';for(var i=0;i<5;i++)s+=(i<Math.max(1,Math.min(3,n))?'★':'☆');return s}

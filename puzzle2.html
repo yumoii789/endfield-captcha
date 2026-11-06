@@ -827,7 +827,7 @@ function quip(){
   return QUIPS[Math.floor(Math.random()*QUIPS.length)];
 }
 /* 星级：3 星=0 次非法放置，2 星=≤2 次，1 星=通关 */
-function starsFor(n){return n===0?3:(n<=2?2:1)}
+function starsFor(n){var t=[2,2,1,1,0][Math.min(5,Math.max(1,lv))-1];return n===0?3:(n<=t?2:1)}
 function starStr(n){var s='',i;for(i=0;i<3;i++)s+=(i<n?'★':'☆');return s}
 
 function onSolved(){

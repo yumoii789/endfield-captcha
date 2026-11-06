@@ -393,7 +393,7 @@ function markDone(){
 function onSolved(){
   solvedFlag=true;markDone();
   var secs=(performance.now()-t0)/1000;
-  var stars=fails===0?3:(fails===1?2:1);
+  var stars=fails===0?3:(fails<=[1,1,1,0,0][Math.min(5,Math.max(1,LV))-1]?2:1);
   var st=$id('mStatus');st.textContent='筛查通过';st.classList.add('pass');
   $id('stampBox').classList.remove('bad');
   $id('stampTick').textContent='✔';

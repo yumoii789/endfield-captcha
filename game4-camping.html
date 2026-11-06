@@ -521,7 +521,7 @@ function onSolved(){
   var secs=(performance.now()-t0)/1000;
   $id('grid').classList.add('solved');
   var st=$id('mStatus');st.textContent='校验通过';st.classList.add('pass');
-  var stars=badMoves===0?3:(badMoves<=2?2:1);
+  var stars=badMoves===0?3:(badMoves<=[2,2,1,1,0][Math.min(5,Math.max(1,LV))-1]?2:1);
   solvedStats={moves:moves,secs:secs,stars:stars,lv:LV};
   $id('stampStats').innerHTML='难度 V'+LV+' · <span class="stars">'+starStr(stars)+'</span> · 落帐 '+moves+' 次 · 用时 '+
     secs.toFixed(1)+'s · '+QUIPS[Math.floor(Math.random()*QUIPS.length)];
