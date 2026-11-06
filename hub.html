@@ -87,23 +87,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visibl
 </main>
 <div class="mask" id="mask" hidden>
   <div class="framebox">
-    <div class="fbar"><span class="mono" id="fTitle">设备接入中…</span><span><button id="btnSfx" title="音效开关">🔊</button> <button id="btnNext" hidden>下一台设备 →</button> <button id="btnClose">✕ 断开连接</button></span></div>
+    <div class="fbar"><span class="mono" id="fTitle">设备接入中…</span><span><button id="btnNext" hidden>下一台设备 →</button> <button id="btnClose">✕ 断开连接</button></span></div>
     <iframe id="frame" title="校验设备"></iframe>
   </div>
 </div>
 <div id="toast" class="toast" hidden></div>
-<script src="sfx.js"></script>
-<script>
-addEventListener('DOMContentLoaded',function(){
-  var b=document.getElementById('btnSfx');
-  if(!b)return;
-  function paint(){b.textContent=SFX.on()?'\uD83D\uDD0A':'\uD83D\uDD07'}
-  paint();
-  b.addEventListener('click',function(){SFX.toggle();paint()});
-  document.addEventListener('click',function(e){
-    if(e.target.closest('button')&&e.target.id!=='btnSfx'&&SFX.on())SFX.click();
-  },true);
-});
 </script>
 <script>
 'use strict';
@@ -121,16 +109,6 @@ var GAMES=[
 var LVN=['','简单','容易','中等','较难','困难'];
 var KEY='endland-hub-progress';
 function $id(s){return document.getElementById(s)}
-// 同源 iframe 内的一次触摸 → 父页合成短音（覆盖全部关卡，无需改游戏页）
-var PZFRAME=$id('frame');
-if(PZFRAME)PZFRAME.addEventListener('load',function(){
-  try{
-    var d=PZFRAME.contentDocument;
-    if(!d||d.__sfxTap)return;
-    d.__sfxTap=1;
-    d.addEventListener('pointerdown',function(){if(window.SFX)SFX.click()},{passive:true});
-  }catch(e){}
-});
 function loadProg(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return {}}}
 function saveProg(p){try{localStorage.setItem(KEY,JSON.stringify(p))}catch(e){}}
 function logStats(rec){try{var a=JSON.parse(localStorage.getItem('endland-stats')||'[]');a.push(rec);localStorage.setItem('endland-stats',JSON.stringify(a))}catch(e){}}

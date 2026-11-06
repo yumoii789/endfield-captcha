@@ -53,7 +53,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visibl
   <div class="gframe" id="gframe" hidden><iframe id="frame" title="校验设备"></iframe></div>
   <p class="foot">灵感致敬《明日方舟：终末地》与 GiiKER 计客益智玩具 · 粉丝练习作品，与鹰角网络 / 计客无关<br>全部数据仅保存在你的浏览器本地</p>
 </div>
-<script src="sfx.js"></script>
 <script>
 'use strict';
 var qs=new URLSearchParams(location.search);
@@ -134,15 +133,6 @@ window.addEventListener('message',function(e){
   var d=e.data||{};
   if((d.type==='pz-solved'||d.type==='pz-failed')&&resultResolve){var f=resultResolve;resultResolve=null;f(d)}
 });
-var PZFRAME=document.getElementById('frame');
-if(PZFRAME)PZFRAME.addEventListener('load',function(){
-  try{
-    var d=PZFRAME.contentDocument;
-    if(!d||d.__sfxTap)return;
-    d.__sfxTap=1;
-    d.addEventListener('pointerdown',function(){if(window.SFX)SFX.click()},{passive:true});
-  }catch(e){}
-});
 function waitResult(){return new Promise(function(r){resultResolve=r})}
 function logStats(rec){var a=readJSON('endland-stats',[]);a.push(rec);writeJSON('endland-stats',a)}
 function logMatch(rec){var a=readJSON('endland-matchlog',[]);a.push(rec);writeJSON('endland-matchlog',a)}
@@ -189,7 +179,6 @@ async function main(){
   }
   gf.hidden=true;
   var pass=res.type==='pz-solved';
-  if(window.SFX){ if(pass)SFX.win(); else SFX.fail(); }
   logStats({ts:new Date().toISOString(),device:res.device||pick.device,game:res.game||pick.game,lv:res.lv!=null?res.lv:pick.lv,stars:res.stars!=null?res.stars:'—',moves:res.moves!=null?res.moves:'—',secs:res.secs!=null?res.secs:'—',pass:pass});
   if(pass){
     await typeLine('> 通关成功','ok');
