@@ -2,17 +2,26 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0e11">
 <title>访客协议 VISITOR PROTOCOL</title>
 <meta http-equiv="refresh" content="0; url=terminal.html">
 <style>
+html{-webkit-tap-highlight-color:transparent}
+html,body{overscroll-behavior:none}
+button,a,[role=button]{touch-action:manipulation}
+button:active,a:active,[role=button]:active{filter:brightness(.9)}
+@media(hover:hover) and (pointer:fine){
+a:hover{background:rgba(255,177,0,.12)}
+}
+
 :root{--bg:#0b0e11;--ink:#d9e0e7;--dim:#8a96a2;--acc:#ffb100;--mono:ui-monospace,Consolas,'Courier New',monospace}
 *{box-sizing:border-box;margin:0;padding:0}
-body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--ink);font-family:var(--mono)}
+body{min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--ink);font-family:var(--mono)}
 .wrap{text-align:center}
 p{color:var(--dim);font-size:13px;letter-spacing:.12em}
 a{color:var(--acc);text-decoration:none;border:1px solid var(--acc);border-radius:6px;padding:9px 16px;margin-top:16px;display:inline-block;font-size:13px;letter-spacing:.1em}
-a:hover{background:rgba(255,177,0,.12)}
+
 </style>
 </head>
 <body>

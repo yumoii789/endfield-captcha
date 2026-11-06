@@ -2,13 +2,24 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0e11">
 <title>访客协议 VISITOR PROTOCOL · 源石电路维修</title>
 <style>
+html{-webkit-tap-highlight-color:transparent}
+html,body{overscroll-behavior:none}
+button,a,[role=button]{touch-action:manipulation}
+button:active,a:active,[role=button]:active{filter:brightness(.9)}
+@media(hover:hover) and (pointer:fine){
+.captcha-box:hover{border-color:var(--line2)}
+.tile.rot:hover{border-color:rgba(255,177,0,.55)}
+.ghost:hover{border-color:var(--acc);color:var(--acc)}
+}
+
 :root{--bg:#0b0e11;--line:#28313b;--line2:#3a4550;--ink:#d9e0e7;--dim:#8a96a2;--acc:#ffb100;--on:#ffcb4a;--ok:#3ddc8f;--mono:ui-monospace,Consolas,'Courier New',monospace}
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none !important}
-body{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(1000px 520px at 75% -10%,rgba(255,177,0,.07),transparent 60%),var(--bg);color:var(--ink);font-family:'Segoe UI',system-ui,'Microsoft YaHei',sans-serif;overflow-x:hidden;padding:24px 12px}
+body{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(1000px 520px at 75% -10%,rgba(255,177,0,.07),transparent 60%),var(--bg);color:var(--ink);font-family:'Segoe UI',system-ui,'Microsoft YaHei',sans-serif;overflow-x:hidden;padding:24px 12px}
 .bg{position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);background-size:42px 42px;pointer-events:none;-webkit-mask-image:radial-gradient(ellipse at center,black 25%,transparent 78%);mask-image:radial-gradient(ellipse at center,black 25%,transparent 78%)}
 .mono{font-family:var(--mono)}
 .dim{color:var(--dim)}
@@ -26,7 +37,7 @@ form{padding:10px 22px 22px}
 .field span{display:block;font-size:12px;color:var(--dim);margin-bottom:6px;letter-spacing:.1em}
 .field input{width:100%;background:#0e1318;border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--ink);font-size:14px;outline:none}
 .captcha-box{margin:16px 0 12px;display:flex;align-items:center;gap:12px;background:#0e1318;border:1px solid var(--line);border-radius:8px;padding:12px;cursor:pointer;user-select:none;transition:border-color .15s}
-.captcha-box:hover{border-color:var(--line2)}
+
 .captcha-box.ok{border-color:rgba(61,220,143,.55);cursor:default}
 .cb{flex:0 0 auto;width:22px;height:22px;border:2px solid var(--line2);border-radius:4px;display:grid;place-items:center;font-size:14px;color:transparent}
 .captcha-box.ok .cb{border-color:var(--ok);color:var(--ok)}
@@ -50,7 +61,7 @@ form{padding:10px 22px 22px}
 .grid{--n:4;display:grid;grid-template-columns:repeat(var(--n),1fr);gap:6px;width:min(76vw,380px);background:#0d1217;border:1px solid var(--line);border-radius:10px;padding:10px}
 .tile{position:relative;aspect-ratio:1;background:#1a2129;border:1px solid #262f38;border-radius:8px;transition:border-color .15s;touch-action:manipulation}
 .tile.rot{cursor:pointer}
-.tile.rot:hover{border-color:rgba(255,177,0,.55)}
+
 .tile.fixed{cursor:default;background:#161d24}
 .tile svg{position:absolute;inset:6%;width:88%;height:88%;transform:rotate(var(--r,0deg));transition:transform .18s cubic-bezier(.2,.7,.3,1.15)}
 .pipe{stroke:#5a6772;stroke-width:15;stroke-linecap:round;transition:stroke .18s,filter .18s}
@@ -90,7 +101,7 @@ form{padding:10px 22px 22px}
 .stats{display:flex;gap:14px;font-size:12px;color:var(--dim)}
 .mbtns{display:flex;gap:8px}
 .ghost{background:transparent;border:1px solid var(--line2);color:var(--ink);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;transition:all .15s}
-.ghost:hover{border-color:var(--acc);color:var(--acc)}
+
 .lvbtns{display:flex;gap:4px}
 .lvbtns button{background:transparent;border:1px solid var(--line2);color:var(--dim);border-radius:4px;padding:4px 7px;font-size:10px;cursor:pointer;font-family:var(--mono)}
 .lvbtns button.on{border-color:var(--acc);color:var(--acc);box-shadow:inset 0 0 6px rgba(255,177,0,.25)}

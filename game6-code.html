@@ -2,13 +2,27 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0e11">
 <title>访客协议 VISITOR PROTOCOL · 口令破译</title>
 <style>
+html{-webkit-tap-highlight-color:transparent}
+html,body{overscroll-behavior:none}
+button,a,[role=button]{touch-action:manipulation}
+button:active,a:active,[role=button]:active{filter:brightness(.9)}
+@media(hover:hover) and (pointer:fine){
+.captcha-box:hover{border-color:var(--line2)}
+.diffbtn:hover{border-color:var(--acc);color:var(--acc)}
+.key:hover{border-color:rgba(255,177,0,.5);background:#20272f}
+.ghost:hover{border-color:var(--acc);color:var(--acc)}
+.ghost:disabled:hover{border-color:var(--line2);color:var(--ink)}
+.ghost.primary:disabled:hover{color:#1a1200}
+}
+
 :root{--bg:#0b0e11;--line:#28313b;--line2:#3a4550;--ink:#d9e0e7;--dim:#8a96a2;--acc:#ffb100;--on:#ffcb4a;--ok:#3ddc8f;--bad:#ff5252;--cy:#39d0e0;--mono:ui-monospace,Consolas,'Courier New',monospace}
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none !important}
-body{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(1000px 520px at 75% -10%,rgba(255,177,0,.07),transparent 60%),var(--bg);color:var(--ink);font-family:'Segoe UI',system-ui,'Microsoft YaHei',sans-serif;overflow-x:hidden;padding:24px 12px}
+body{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(1000px 520px at 75% -10%,rgba(255,177,0,.07),transparent 60%),var(--bg);color:var(--ink);font-family:'Segoe UI',system-ui,'Microsoft YaHei',sans-serif;overflow-x:hidden;padding:24px 12px}
 .bg{position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);background-size:42px 42px;pointer-events:none;-webkit-mask-image:radial-gradient(ellipse at center,black 25%,transparent 78%);mask-image:radial-gradient(ellipse at center,black 25%,transparent 78%)}
 .mono{font-family:var(--mono)}
 .dim{color:var(--dim)}
@@ -29,7 +43,7 @@ form{padding:10px 22px 22px}
 .field span{display:block;font-size:12px;color:var(--dim);margin-bottom:6px;letter-spacing:.1em}
 .field input{width:100%;background:#0e1318;border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--ink);font-size:14px;outline:none}
 .captcha-box{margin:16px 0 12px;display:flex;align-items:center;gap:12px;background:#0e1318;border:1px solid var(--line);border-radius:8px;padding:12px;cursor:pointer;user-select:none;transition:border-color .15s}
-.captcha-box:hover{border-color:var(--line2)}
+
 .captcha-box.ok{border-color:rgba(61,220,143,.55);cursor:default}
 .cb{flex:0 0 auto;width:22px;height:22px;border:2px solid var(--line2);border-radius:4px;display:grid;place-items:center;font-size:14px;color:transparent}
 .captcha-box.ok .cb{border-color:var(--ok);color:var(--ok)}
@@ -53,7 +67,7 @@ form{padding:10px 22px 22px}
 .diffbar{display:flex;gap:6px;padding:10px 20px 0;align-items:center}
 .diffbar .dlabel{font-size:11px;color:var(--dim);letter-spacing:.08em;margin-right:2px}
 .diffbtn{flex:1 1 0;min-width:0;background:transparent;border:1px solid var(--line2);color:var(--dim);border-radius:6px;padding:5px 0;font-family:var(--mono);font-size:12px;cursor:pointer;transition:all .15s}
-.diffbtn:hover{border-color:var(--acc);color:var(--acc)}
+
 .diffbtn.on{border-color:var(--acc);color:#1a1200;background:linear-gradient(180deg,#ffc23d,#f5a300);font-weight:700}
 .gboard{padding:14px 20px 4px;display:flex;gap:16px;align-items:flex-start;justify-content:center}
 .slotcol{display:flex;flex-direction:column;gap:6px}
@@ -72,18 +86,18 @@ form{padding:10px 22px 22px}
 .keyrow{display:flex;gap:7px;align-items:center}
 .keyrow .rlab{font-family:var(--mono);font-size:10.5px;color:var(--dim);width:14px;flex:0 0 auto}
 .key{flex:1 1 0;min-width:0;height:44px;background:#1a2129;border:1px solid #262f38;border-radius:8px;cursor:pointer;position:relative;display:grid;place-items:center;padding:0;touch-action:manipulation;transition:border-color .15s,background .15s,transform .08s}
-.key:hover{border-color:rgba(255,177,0,.5);background:#20272f}
+
 .key:active{transform:translateY(1px)}
 .key svg{width:62%;height:62%;display:block}
 .key .kn{position:absolute;font-family:var(--mono);font-size:10px;color:var(--dim);transform:translateY(15px)}
 .oprow{padding:12px 20px 0;display:flex;gap:8px}
 .oprow .ghost{flex:1 1 0;min-height:38px}
 .ghost{background:transparent;border:1px solid var(--line2);color:var(--ink);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;transition:all .15s}
-.ghost:hover{border-color:var(--acc);color:var(--acc)}
+
 .ghost.primary{border-color:var(--acc);color:#1a1200;background:linear-gradient(180deg,#ffc23d,#f5a300);font-weight:700;letter-spacing:.1em}
 .ghost:disabled{opacity:.38;cursor:not-allowed}
-.ghost:disabled:hover{border-color:var(--line2);color:var(--ink)}
-.ghost.primary:disabled:hover{color:#1a1200}
+
+
 .histwrap{padding:12px 20px 0}
 .histhead{display:flex;justify-content:space-between;align-items:baseline;font-size:10.5px;color:var(--dim);letter-spacing:.1em;margin-bottom:6px}
 .hist{max-height:170px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;padding-right:2px}
