@@ -324,7 +324,7 @@ function jumpOpts(px,py,gems){
   }
   for(i=0;i<8;i++){
     dx=DIRS[i][0];dy=DIRS[i][1];blocked=false;
-    for(d=2;d++){
+    for(d=2;;d++){
       cx=px+dx*d;cy=py+dy*d;
       if(!inB(cx,cy))break;
       if(!blocked)out.push({x:cx,y:cy,cap:null,dx:dx,dy:dy,d:d,eat:false});
