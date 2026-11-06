@@ -208,9 +208,11 @@ function maskToInit(arr,n){
   for(y=0;y<n;y++)for(x=0;x<n;x++){v=(arr&&arr[y]&&arr[y][x])?1:0;out.push(v)}
   return out;
 }
-function paramSpec(){
-  var s=LV_TABLE[LV];
-  if(queuedLevel&&queuedLevel.params){
+function paramSpec(lvOverride){
+  /* lvOverride：显式指定档位（自检需逐档验证）；缺省用当前档 LV */
+  var v=(lvOverride===undefined||lvOverride===null)?LV:clampLv(lvOverride);
+  var s=LV_TABLE[v];
+  if(queuedLevel&&queuedLevel.params&&v===LV){
     var qn=parseInt(queuedLevel.params.n,10);
     if(qn>=2&&qn<=9){
       var ik=queuedLevel.params.k;
@@ -224,10 +226,11 @@ function paramSpec(){
 /* ---------- GF(2) 高斯消元：最优步数 + 解空间 ---------- */
 function lumMask(n,x,y){var m=0,d,dx,dy,nx,ny;for(d=0;d<5;d++){dx=[0,1,-1,0,0][d];dy=[0,0,0,1,-1][d];nx=x+dx;ny=y+dy;if(nx<0||nx>=n||ny<0||ny>=n)continue;m|=1<<(ny*n+nx)}return m}
 function gf2Solve(n,init){
-  var N=n*n,row=[],i,j,r,piv=0,rank=0,pivCols=[];
+  var N=n*n,ones=(1<<N)-1,row=[],i,j,r,piv=0,rank=0,pivCols=[];
   for(i=0;i<N;i++){
-    var m=lumMask(n,i%n,Math.floor(i/n)),b=(init[i]?1:0);
-    row[i]=((m<<1)|b)>>>0;
+    /* 变量位在 0..N-1，增广位在第 N 位；目标「全亮」⇒ 需要翻转的恰是当前暗格 */
+    var m=lumMask(n,i%n,Math.floor(i/n)),b=init[i]?0:1;
+    row[i]=(m|(b<<N))>>>0;
   }
   for(j=0;j<N;j++){
     var p=-1;
@@ -237,7 +240,7 @@ function gf2Solve(n,init){
     for(r=0;r<N;r++){if(r!==piv&&((row[r]>>>j)&1))row[r]=(row[r]^row[piv])>>>0}
     pivCols.push(j);piv++;rank++;
   }
-  for(i=0;i<N;i++){if((row[i]&((1<<N)-1))===0&&((row[i]>>>N)&1))return {ok:false}}
+  for(i=0;i<N;i++){if((row[i]&ones)===0&&((row[i]>>>N)&1))return {ok:false}}
   var free=[],isP=new Array(N).fill(false);
   for(i=0;i<rank;i++)isP[pivCols[i]]=true;
   for(j=0;j<N;j++)if(!isP[j])free.push(j);
@@ -266,51 +269,94 @@ function gf2Solve(n,init){
   }
   return {ok:true,min:best.w,sol:best.x,frees:free.length,count:count};
 }
-/* 自测辅助：往返重放校验（verify 已有解是否真的全亮） */
+/* 按下集合 mask 的翻转掩码：邻域按「奇数个」异或，与页面 toggle 的实际行为一致 */
+function pressFlip(n,mask){
+  var f=0,i;
+  for(i=0;i<n*n;i++)if((mask>>>i)&1)f^=lumMask(n,i%n,Math.floor(i/n));
+  return f;
+}
+/* 自测辅助：往返重放校验（把「按下集合 mask」作用到棋盘 init 上） */
 function applyMask(n,init,mask){
-  var out=new Array(n*n),i;
-  for(i=0;i<n*n;i++){var m=lumMask(n,i%n,Math.floor(i/n));out[i]=(init[i]?(mask&m)?0:1:(mask&m)?1:0)}
+  var f=pressFlip(n,mask),out=new Array(n*n),i;
+  for(i=0;i<n*n;i++)out[i]=init[i]?(((f>>>i)&1)?0:1):(((f>>>i)&1)?1:0);
   return out;
 }
 function allLit(a){for(var i=0;i<a.length;i++)if(!a[i])return false;return true}
 function maskFromArr(n,a){var m=0,i;for(i=0;i<n*n;i++)if(a[i])m|=1<<i;return m}
 function maskPop(m){var c=0;while(m){m&=m-1;c++}return c}
 
-/* ---------- 谜题生成：从全亮逆推 k 次点击 ---------- */
-function genOne(kind,n,rng,limit){
-  var picks=[],seen={},N=n*n,guard=0,target=0,i;
-  if(kind==='fixed'){
-    target=Math.max(1,Math.min(N,limit));
-    if(target>N)return null;
-    while(picks.length<target&&guard++<4000){
-      var c=Math.floor(rng()*N);
-      if(seen[c])continue;
-      seen[c]=1;picks.push(c);
-    }
-    if(picks.length<target){ST.genRetry++;return null}
-  }else{
-    var capN=rng()<0.84?(kind==='reduce'?2:1):3;
-    while(picks.length<limit&&picks.length<capN&&guard++<4000){
-      var c2=Math.floor(rng()*N);
-      var test=picks.concat([c2]);
-      var g=gf2Solve(n,applyMask(n,fill(1,N),maskFromArr(n,fillArr(N,test))));
-      if(!g.ok){ST.genRetry++;return null}
-      if(g.min!==picks.length+1){continue}
-      picks.push(c2);
-    }
-    target=picks.length;
+/* ---------- 谜题生成：先定「真实最优步数」，再从全亮逆推棋盘 ---------- */
+/* 齐次系统 A x = 0 的零空间基底（按 n 缓存）：同一陪集内的按下集合给出同一棋盘 */
+var NULL_BASIS={};
+function nullBasis(n){
+  if(NULL_BASIS[n])return NULL_BASIS[n];
+  var N=n*n,row=[],i,j,r,piv=0,pivCols=[];
+  for(i=0;i<N;i++)row[i]=lumMask(n,i%n,Math.floor(i/n));
+  for(j=0;j<N;j++){
+    var p=-1;
+    for(r=piv;r<N;r++){if((row[r]>>>j)&1){p=r;break}}
+    if(p<0)continue;
+    var t=row[p];row[p]=row[piv];row[piv]=t;
+    for(r=0;r<N;r++){if(r!==piv&&((row[r]>>>j)&1))row[r]=(row[r]^row[piv])>>>0}
+    pivCols.push(j);piv++;
   }
-  if(!target)return null;
-  var init=applyMask(n,fill(1,N),maskFromArr(n,fillArr(N,picks)));
-  if(allLit(init)){ST.genRetry++;return null}
-  var g2=gf2Solve(n,init);
-  if(!g2.ok){ST.genReject++;return null}
-  if(g2.min>target){ST.genReject++;return null}
-  if(kind==='fixed'&&g2.min!==target){ST.genReject++;return null}
-  return {n:n,k:target,init:init,sol:g2.sol,min:g2.min,count:g2.count,picks:picks.slice(),frees:g2.frees};
+  var isP=new Array(N).fill(false);
+  for(i=0;i<piv;i++)isP[pivCols[i]]=true;
+  var basis=[];
+  for(j=0;j<N;j++){
+    if(isP[j])continue;
+    var x=fill(0,N);x[j]=1;
+    for(i=piv-1;i>=0;i--){
+      var c=pivCols[i],v=0;
+      for(var q=c+1;q<N;q++)if((row[i]>>>q)&1)v^=x[q];
+      x[c]=v;
+    }
+    basis.push(maskFromArr(n,x));
+  }
+  NULL_BASIS[n]=basis;
+  return basis;
+}
+/* 陪集最小重量 = 该棋盘在「全亮」目标下的真实最优步数 */
+function cosetMin(n,mask){
+  var basis=nullBasis(n),best=maskPop(mask),total=1<<basis.length,comb,i,sub,w;
+  if(basis.length>12)return best;   /* 防御：网格过大时不做陪集枚举，避免长时间枚举 */
+  for(comb=1;comb<total;comb++){
+    sub=mask;
+    for(i=0;i<basis.length;i++)if((comb>>>i)&1)sub^=basis[i];
+    w=maskPop(sub);if(w<best)best=w;
+  }
+  return best;
+}
+function maskList(n,m){var a=[],i;for(i=0;i<n*n;i++)if((m>>>i)&1)a.push(i);return a}
+function randMask(n,rng){return Math.floor(rng()*Math.pow(2,n*n))}
+/* 由按下集合构造题面，并用 gf2Solve 复核「最优步数 = mn」 */
+function buildOne(n,mask,mn){
+  var init=applyMask(n,fill(1,n*n),mask);
+  if(mn<1||allLit(init)){ST.genReject++;return null}
+  var g=gf2Solve(n,init);
+  if(!g.ok||g.min!==mn){ST.genReject++;return null}
+  return {n:n,k:mn,init:init,sol:g.sol,min:g.min,count:g.count,frees:g.frees,picks:maskList(n,mask)};
+}
+/* target=期望的最优步数：均匀采样陪集，留下 cosetMin===target 的棋盘。
+   若该网格根本达不到 target（如 4×4 全亮目标的上限是 7 步），
+   退化为「采样中能达到的最大步数」，由 genPuzzle 记录档位区间内的声明步数 k。 */
+var GEN_TRY=1500,GEN_TRY2=5000;
+function genOne(n,target,rng){
+  var i,m,mn,best=null;
+  for(i=0;i<GEN_TRY;i++){
+    m=randMask(n,rng);mn=cosetMin(n,m);
+    if(mn===target)return buildOne(n,m,mn);
+    if(mn>0&&(!best||mn>best.mn))best={m:m,mn:mn};
+  }
+  for(i=0;i<GEN_TRY2;i++){
+    m=randMask(n,rng);mn=cosetMin(n,m);
+    if(best&&mn>best.mn)best={m:m,mn:mn};
+    if(best&&best.mn>=target)break;
+  }
+  ST.genRetry++;
+  return best?buildOne(n,best.m,best.mn):null;
 }
 function fill(v,n){var a=new Array(n),i;for(i=0;i<n;i++)a[i]=v;return a}
-function fillArr(n,list){var a=new Array(n).fill(0),i;for(i=0;i<list.length;i++)a[list[i]]=1;return a}
 
 /* ---------- 渲染 ---------- */
 function buildBoard(){
@@ -464,33 +510,33 @@ function postSolved(stars,mv,secs){
 }
 
 /* ---------- 导出 ---------- */
-function genPuzzle(sd){
-  var spec=paramSpec(),out=null,i;
+function genPuzzle(sd,lvOverride){
+  var v=(lvOverride===undefined||lvOverride===null)?LV:clampLv(lvOverride);
+  var spec=paramSpec(lvOverride),out=null,i;
+  /* 棋盘用 32 位掩码表示，只有 n≤5（n*n≤30）能精确求解；更大的自定义棋盘无法校验，
+     回退到档位题面（旧版此时会给出无解题面）。 */
+  if(spec.custom&&spec.n>5)spec={n:LV_TABLE[v].n,kMin:LV_TABLE[v].kMin,kMax:LV_TABLE[v].kMax,custom:null};
   if(spec.custom&&spec.custom.params&&spec.custom.params.initial!==undefined){
     var n0=spec.n,init0=maskToInit(spec.custom.params.initial,n0);
     var g0=gf2Solve(n0,init0);
-    if(g0.ok&&!allLit(init0))return {n:n0,k:g0.min,init:init0,sol:g0.sol,min:g0.min,count:g0.count,frees:g0.frees,picks:[],seedUsed:sd,custom:spec.custom.id||null};
+    if(g0.ok&&!allLit(init0))return {n:n0,k:Math.max(1,g0.min),init:init0,sol:g0.sol,min:g0.min,count:g0.count,frees:g0.frees,picks:[],seedUsed:sd,custom:spec.custom.id||null};
     ST.genReject++;
   }
-  for(var att=0;att<400;att++){
+  /* 声明步数 k 取档位区间内的值；棋盘的真实最优 min 由生成器保证落在 k 以内 */
+  var span=Math.max(0,spec.kMax-spec.kMin);
+  for(var att=0;att<60&&!out;att++){
     var rng=mulberry32(((sd*2654435761)^((att+1)*40503))>>>0);
-    var kind;
-    var r=rng();
-    if(r<0.28)kind='fixed';
-    else if(r<0.62)kind='grow';
-    else kind='reduce';
-    var p=genOne(kind,spec.n,rng,rng()<0.5?spec.kMin:spec.kMax);
+    var kb=spec.kMin+(span?Math.floor(rng()*(span+1)):0);
+    var p=genOne(spec.n,kb,rng);
     if(!p)continue;
-    if(p.k<spec.kMin||p.k>spec.kMax)continue;
-    p.seedUsed=sd;p.custom=null;return p;
+    p.k=kb;p.seedUsed=sd;p.custom=null;
+    if(p.min<=p.k&&p.k>=spec.kMin&&p.k<=spec.kMax)out=p;
   }
-  /* 兜底：固定 k=kMin，保证一定有题 */
-  for(var att2=0;att2<400;att2++){
-    var rng2=mulberry32(((sd*104729)^((att2+1)*7919))>>>0);
-    var p2=genOne('fixed',spec.n,rng2,spec.kMin);
-    if(p2&&p2.k>=spec.kMin&&p2.k<=spec.kMax){p2.seedUsed=sd;p2.custom=null;ST.fix++;return p2}
-  }
-  return {n:spec.n,k:1,init:applyMask(spec.n,fill(1,spec.n*spec.n),1),sol:(function(){var a=fill(0,spec.n*spec.n);a[0]=1;return a})(),min:1,count:1,frees:0,picks:[0],seedUsed:sd,custom:null};
+  if(out)return out;
+  /* 兜底：按一格逆推（最优 1 步，必然可解） */
+  var n2=spec.n,N2=n2*n2,initF=applyMask(n2,fill(1,N2),lumMask(n2,0,0));
+  var gF=gf2Solve(n2,initF);ST.fix++;
+  return {n:n2,k:spec.kMin,init:initF,sol:gF.sol,min:gF.min,count:gF.count,frees:gF.frees,picks:[],seedUsed:sd,custom:null};
 }
 
 /* ---------- 难度切换 ---------- */
@@ -549,7 +595,7 @@ function selftest(){
   var pass=0,samples=[],lines=[],tbl=[];
   for(var v=1;v<=5;v++){
     var spec=LV_TABLE[v];
-    var p=genPuzzle(1000+v*7919);
+    var p=genPuzzle(1000+v*7919,v);
     var ok=true,why=[];
     if(!p){ok=false;why.push('生成失败')}
     else{
