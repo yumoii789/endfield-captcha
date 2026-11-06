@@ -134,6 +134,15 @@ window.addEventListener('message',function(e){
   var d=e.data||{};
   if((d.type==='pz-solved'||d.type==='pz-failed')&&resultResolve){var f=resultResolve;resultResolve=null;f(d)}
 });
+var PZFRAME=document.getElementById('frame');
+if(PZFRAME)PZFRAME.addEventListener('load',function(){
+  try{
+    var d=PZFRAME.contentDocument;
+    if(!d||d.__sfxTap)return;
+    d.__sfxTap=1;
+    d.addEventListener('pointerdown',function(){if(window.SFX)SFX.click()},{passive:true});
+  }catch(e){}
+});
 function waitResult(){return new Promise(function(r){resultResolve=r})}
 function logStats(rec){var a=readJSON('endland-stats',[]);a.push(rec);writeJSON('endland-stats',a)}
 function logMatch(rec){var a=readJSON('endland-matchlog',[]);a.push(rec);writeJSON('endland-matchlog',a)}

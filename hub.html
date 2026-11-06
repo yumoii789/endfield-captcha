@@ -121,6 +121,16 @@ var GAMES=[
 var LVN=['','简单','容易','中等','较难','困难'];
 var KEY='endland-hub-progress';
 function $id(s){return document.getElementById(s)}
+// 同源 iframe 内的一次触摸 → 父页合成短音（覆盖全部关卡，无需改游戏页）
+var PZFRAME=$id('frame');
+if(PZFRAME)PZFRAME.addEventListener('load',function(){
+  try{
+    var d=PZFRAME.contentDocument;
+    if(!d||d.__sfxTap)return;
+    d.__sfxTap=1;
+    d.addEventListener('pointerdown',function(){if(window.SFX)SFX.click()},{passive:true});
+  }catch(e){}
+});
 function loadProg(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return {}}}
 function saveProg(p){try{localStorage.setItem(KEY,JSON.stringify(p))}catch(e){}}
 function logStats(rec){try{var a=JSON.parse(localStorage.getItem('endland-stats')||'[]');a.push(rec);localStorage.setItem('endland-stats',JSON.stringify(a))}catch(e){}}
