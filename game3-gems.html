@@ -765,8 +765,11 @@ function selftest(){
 (function boot(){
   var stage=parseInt(qs.get('stage')||'',10),lv=parseInt(qs.get('lv')||'',10),target=null;
   if(!isNaN(stage)&&stage>=1){target=levelById(stage)}
-  else if(!isNaN(lv)&&lv>=1&&lv<=12){target=levelById(lv)}
-  if(!target&&!isNaN(lv)&&lv>12)target=levelById(lv); /* ?lv>12：无此关卡号则忽略，按默认第一关 */
+  else if(!isNaN(lv)&&lv>=1&&lv<=5){ /* ?lv=1..5 = 难度档位，与其余 8 关统一（terminal 只传 lv，此前会被当成关卡号） */
+    var tier=allLevels().filter(function(L){return L.lv===lv});
+    if(tier.length)target=tier[Math.floor(Math.random()*tier.length)];
+  }
+  else if(!isNaN(lv)&&lv>=6)target=levelById(lv); /* ?lv>=6 仍按关卡号，向后兼容旧链接；无此号则回退第一关 */
   if(target){curLv=target.lv||1;bootIdx=allLevels().indexOf(target);startLevelObj(target,true)}
   else{curLv=1;startLevel(0,true)}
   renderTabs();
