@@ -945,6 +945,7 @@ if(qs.get('direct')==='1'){
     if(!b)return;
     if(muted)b.textContent='🔇';
     b.addEventListener('click',function(){try{localStorage.setItem('endland-mute',muted?'on':'off')}catch(e){}});
+window.addEventListener('storage',function(e){if(e.key==='endland-mute'){muted=(e.newValue==='on');var mb2=document.getElementById('btnMute');if(mb2)mb2.textContent=muted?'🔇':'🔊';}});
   }catch(e){}
 })();
 </script>
