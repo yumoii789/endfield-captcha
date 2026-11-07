@@ -3,7 +3,7 @@
 > 目的：验证"玩家真的能玩通"这条链路，而不是只调用内部函数。全部为**真实鼠标点击**（CDP Input.dispatchMouseEvent），先静音（公共场所禁止外放）。
 > 路径：hub 真实入口（点卡片 → 开始校验）→ iframe 内真实点击 → 游戏自判通关 → 真实 postMessage → hub 写回进度/标题/统计。
 
-## 一、已完成（4/9）
+## 一、已完成（5/9）
 
 | 关卡 | 解字段来源 | 目标数 | 真实点击 | 通关校验 | hub 回写 |
 |---|---|---|---|---|---|
@@ -20,16 +20,33 @@
 | game4-camping | dataset `x/y` | 容器 `#grid` |
 | game3-gems | dataset `x/y` | 容器 `#grid` |
 
-## 三、待完成（5/9）与已知要点
+## 三、未完成（4/9）与已知要点
 
 | 关卡 | 拟用解法 | 已知要点 |
 |---|---|---|
 | game1-circuit | `pz.tiles[i].k`（疑似每格需旋转次数） | 每次点击顺时针 90°，需验证 k 语义 |
 | game3-gems | `bestSol` 落点序列 | **当前未通过**：8 个落点全命中但只有 3 次移动被接受（moves=3, solved=false）→ 交互是"先点棋子再点落点"，序列需重排；自检显示 25 关全部可解，**不能据此判定游戏缺陷** |
 | game6-code | `pz.secret`（符号索引数组） | 需点自绘键盘输入后提交 |
-| game8-targets | `pz.rules` + `pz.cells`（每格属性） | 需按规则筛出合格格再点击 |
-| game9-slide | `pz.path`（80 步） | 需确认点击语义与是否逆序回放 |
 | puzzle2 | `pz.grid` + `pieces` | 拖拽类，需构造 pointer 拖拽序列（最难） |
+
+## 三之二、game9-slide：自动化通关受限（**非游戏缺陷**）
+
+结论：**页面交互与逻辑无缺陷**，自动化未通过是测试输入受限。证据：
+
+1. 单次真实点击**完全生效**：事件轨迹 `pointerdown@num → pointerup@tile movable dragging → click@tile movable`，`moves` 0→1。
+2. 连续合成点击自第 3 次起**卡在固定位置**（连续 7 步都指向位置 7 且不生效）。
+3. 归因：页面的 `pointerdown` 里调用 `el.setPointerCapture(e.pointerId)`；CDP 合成 pointer 事件的 pointerId 复用且捕获不自动释放 → 后续 `cellFromEvent(e)` 拿到被捕获的旧元素，若它恰好是空位（`data-empty==='1'`）就返回 null → 移动不生效。**这是测试工件**。
+4. game9 自身的逻辑正确性已由 selftest 覆盖：`lv1–lv5 PASS · BFS最短=20 · 最短解≤k ✔ · 逆序回放判定=通过`。
+
+**不要据此改游戏**；若将来要自动化 game9，需要改用真实触摸输入或先绕过 pointer capture。
+
+### 读取 game9 实时状态的三次踩坑（都不可靠）
+
+| 数据源 | 问题 |
+|---|---|
+| `pz.board` | **不是实时状态**（doMove 改的是全局 `board`） |
+| 全局 `board` | 与 `pz.board` 引用不同；用它判定的序列执行到中途即错位 |
+| DOM 的 `data-v` | 移动后更新不完全（曾读出两个 0）；且**空位必须靠 `data-empty==='1'` 判定**，位置 0 的元素根本没有 `data-v`（`parseInt` 得 NaN） |
 
 ## 四、读取回写的时序坑（重要）
 
