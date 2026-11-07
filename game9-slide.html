@@ -82,6 +82,7 @@ form{padding:10px 22px 22px}
 .tile.pop{animation:pop .16s ease-out}
 .tile.dragging{opacity:.55}
 .board.solved .tile{border-color:rgba(61,220,143,.45);background:linear-gradient(180deg,#1e3a2c,#172c22)}
+@media (max-height:700px){.board{width:min(84vw,56vh)}}
 @keyframes pop{from{transform:scale(.86)}to{transform:scale(1)}}
 @keyframes boardFlash{0%{box-shadow:0 0 0 rgba(61,220,143,0)}35%{box-shadow:0 0 46px rgba(61,220,143,.6)}100%{box-shadow:0 0 0 rgba(61,220,143,0)}}
 .mfoot{display:flex;justify-content:space-between;align-items:center;padding:10px 20px 18px;gap:10px;flex-wrap:wrap}
