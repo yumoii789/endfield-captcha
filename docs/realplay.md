@@ -3,7 +3,7 @@
 > 目的：验证"玩家真的能玩通"这条链路，而不是只调用内部函数。全部为**真实鼠标点击**（CDP Input.dispatchMouseEvent），先静音（公共场所禁止外放）。
 > 路径：hub 真实入口（点卡片 → 开始校验）→ iframe 内真实点击 → 游戏自判通关 → 真实 postMessage → hub 写回进度/标题/统计。
 
-## 一、已完成（8/9）
+## 一、已完成（9/9）
 
 | 关卡 | 解字段来源 | 目标数 | 真实点击 | 通关校验 | hub 回写 |
 |---|---|---|---|---|---|
@@ -15,6 +15,7 @@
 | V-40058 game6-code | `pz.secret` → `.key[data-sym]` + `#btnSubmit` | 4 键 + 1 提交 | 5 | `solvedFlag=true` | `{lv:1,stars:3}` · stats moves=1 secs=3.5 pass=true |
 | V-40056 game3-gems | `bestSol` 落点序列（点**目标落点**即可） | 8 | 8 | `solvedFlag=true` | `{lv:1,stars:3}` · stats moves=8 secs=5.7 pass=true |
 | V-40054 puzzle2 | **自研求解器**（形状精确覆盖 **+ 行列颜色计数**） | 7 | 7 | `solved=true` `illegal=0` `placed=7` | `{lv:1,stars:3}` · stats **ts=2026-11-07T03:24:35.597Z** moves=7 secs=7.2 pass=true |
+| V-40061 game9-slide | **自研 BFS**（3×3 从实时 `board` 反向/正向搜索，目标判定复用页面 `isSolved`） | 24 | 24 | `solved=true` `moves=24`（=最优 `ref`） | `{lv:1,stars:3}` · stats **ts=2026-11-07T06:08:20.166Z** moves=24 secs=5.76 pass=true |
 
 ## 二、各关定位方式（踩过的坑，供后续复用）
 
@@ -25,11 +26,11 @@
 | game4-camping | dataset `x/y` | 容器 `#grid` |
 | game3-gems | `.spot` 的 dataset `x/y` | 点击**目标落点**即可，不需要先点棋子（点棋子只是高亮提示）；`bestSol` 是落点序列，不是宝石位置 |
 
-## 三、未完成（1/9）
+## 三、未完成（0/9）
 
-| 关卡 | 状态 | 已知要点 |
-|---|---|---|
-| V-40061 game9-slide | 真实点击通道受限（**非缺陷**，见 §三之二） | 逻辑正确性已由 selftest 覆盖；要自动化须换真实触摸输入或绕过 pointer capture |
+九关全部完成真实点击通关回归（每关都以"游戏自判通关 → 真实 postMessage → hub 写回进度/统计"闭环验证）。
+
+> 修正记录：game9-slide 曾被误判为"非游戏缺陷 / 测试工件"（见 §三之二 的更正），实际是**真实 P0 缺陷**，已修复。
 
 （已解决的历史条目：game1 的 `k` 语义＝该格当前 mask，点 `(4-k)%4` 次归零；game3 的交互是"点目标落点"，先前 moves=3 是落点序列含义理解错误；game6 需点自绘键盘再提交；puzzle2 无需拖拽——是**点击 + 旋转/翻面**类。）
 
@@ -45,16 +46,20 @@
 - game6-code：填满 4 位输入后，**提交按钮位置发生变化**；用事先取好的坐标点击 → 提交无效（表现为 `guesses=0`、`solved=false`，看着像"提交没生效"）。改为**点击前重新读取按钮坐标**并校验 `document.elementFromPoint(x,y)` 落在 iframe 上（`topHit.id==='frame'`）后，一次通关。
 - 结论：任何"先读坐标、后多次交互"的脚本都要在**每次点击前重取坐标**；一次性坐标只适用于布局绝对不变的静态目标。
 
-## 三之二、game9-slide：自动化通关受限（**非游戏缺陷**）
+## 三之二、game9-slide：**真实 P0 缺陷（已修复）** —— 以及一次误判的更正
 
-结论：**页面交互与逻辑无缺陷**，自动化未通过是测试输入受限。证据：
+**症状（用户可见）**：点击任意可移动方块后，**被移动的方块从画面上消失**，而新的空格位置冒出一个**幽灵 "0" 方块**；虚线空位仍留在旧位置。随后那个消失的方块**点不动**（它所在格的 `data-empty='1'` 被 `cellFromEvent` 拒绝）→ 第一步之后游戏实际上无法继续。
 
-1. 单次真实点击**完全生效**：事件轨迹 `pointerdown@num → pointerup@tile movable dragging → click@tile movable`，`moves` 0→1。
-2. 连续合成点击自第 3 次起**卡在固定位置**（连续 7 步都指向位置 7 且不生效）。
-3. 归因：页面的 `pointerdown` 里调用 `el.setPointerCapture(e.pointerId)`；CDP 合成 pointer 事件的 pointerId 复用且捕获不自动释放 → 后续 `cellFromEvent(e)` 拿到被捕获的旧元素，若它恰好是空位（`data-empty==='1'`）就返回 null → 移动不生效。**这是测试工件**。
-4. game9 自身的逻辑正确性已由 selftest 覆盖：`lv1–lv5 PASS · BFS最短=20 · 最短解≤k ✔ · 逆序回放判定=通过`。
+**证据链**：
+1. 状态不一致：`board=[2,4,5,7,1,6,8,0,3]`（逻辑正确、唯一 0 在位置 7），而 DOM 是 `位置7="0|0"`、`位置8="0|1"` —— 真正空格没被标记为空，反倒是持有方块 3 的位置被标成空并清空了内容。
+2. 视觉确认：`shots/g9_before.png`（方块 3 在右下邻位、右下角虚线空位）vs `shots/g9_after1.png`（**3 消失**、原空格处显示 "0"）。
+3. 行为确认：修复前真实点击序列只有前 5 步生效，之后`empty=true` 导致点击被拒；修复后同一脚本 24 步（=最优 `ref=24`）全部生效并通关。
 
-**不要据此改游戏**；若将来要自动化 game9，需要改用真实触摸输入或先绕过 pointer capture。
+**根因**：`doMove()` 里两处 DOM 更新把"移动前空格 `z`"与"移动后空格 `j`"写反了。`applyMove(a,n,j)` 的定义是 `a[z]=a[j]; a[j]=0`，所以移动后**空格在 `j`**、方块落在 `z`；而原代码给 `z` 打上空标记、给 `j` 写 `data-v=board[j]`——`board[j]` 在 `applyMove` 之后**恒为 0**，于是渲染出幽灵 0。修复即两处对调（并让 `pop` 动画作用在落点 `z`）。
+
+**为什么之前误判为"测试工件"**：我当时只验证了"**单次**点击生效（moves 0→1）"，又把连续点击失败归因于 `setPointerCapture` + CDP pointerId 复用。单次点击恰好用的是初始渲染（DOM 尚未被污染），所以看不出问题；而"卡在固定位置 7"正是 `data-empty` 被误标的同一个格子。**教训：单次交互成功不构成输入链路健康的证据；必须逐步比对 DOM 与内部状态的不变量，并连点足够多步。** 当时的原始归因记录已删除，以免后人按错误结论跳过这个缺陷。
+
+**修复后复验**：DOM 与 `board` 逐步一致（`clear_g9_touch2.mjs` 每步比对，24/24 匹配）；selftest `lv1–lv5 PASS · 汇总 5/5 100%`；真实通关 stats `ts=2026-11-07T06:08:20.166Z stars=3 moves=24 pass=true`。
 
 ### 读取 game9 实时状态的三次踩坑（都不可靠）
 
@@ -82,4 +87,7 @@
 
 ## 七、脚本位置
 
-`_verify/endfield-captcha/clear_g5.mjs`（单关）、`clear_multi2.mjs`（多关，含各关定位分派）、`clear_p2.mjs`（puzzle2：函数源码内联求解器 + 按 placed 增量校验落位）、`clear_g9*.mjs`（game9 受限尝试）。
+- `clear_g5.mjs`（单关）、`clear_multi2.mjs`（多关，含各关定位分派）
+- `clear_p2.mjs`（puzzle2：把求解器当函数源码内联进页面 + 按 `placed` 增量校验落位）
+- `clear_g9_touch2.mjs`（game9：触摸事件 + **逐步比对 DOM↔board**）、`clear_g9_touch.mjs`（首版）、`g9vis.mjs`（点击前后截图取证）、`g9self.mjs`（自检 + 读 stats）
+- `shots/g9_before.png`、`shots/g9_after1.png`（缺陷取证截图）

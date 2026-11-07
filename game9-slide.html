@@ -465,10 +465,11 @@ function doMove(j,src){
   mEl.textContent='步数 '+moves;
   mEl.className=moves>Math.ceil(pz.ref*1.5)?'over':'';
   var cells=$id('board').children,el;
-  for(i=0;i<cells.length;i++){el=cells[i];if(tileIndex(el)===z){el.setAttribute('data-empty','1');el.setAttribute('data-v','0');el.innerHTML='';el.style.background='#0a0e12';el.style.border='1px dashed rgba(255,177,0,.18)';break}}
-  for(i=0;i<cells.length;i++){el=cells[i];if(tileIndex(el)===j){el.setAttribute('data-empty','0');el.setAttribute('data-v',board[j]);el.innerHTML='<span class="frag">'+fragSVG(board[j])+'</span><span class="num">'+board[j]+'</span>';el.style.background='';el.style.border='';break}}
+  /* 空格此时在 j（applyMove 之后），方块落到了原空格 z：两者曾写反，导致方块消失+幽灵 0 且不可点 */
+  for(i=0;i<cells.length;i++){el=cells[i];if(tileIndex(el)===j){el.setAttribute('data-empty','1');el.setAttribute('data-v','0');el.innerHTML='';el.style.background='#0a0e12';el.style.border='1px dashed rgba(255,177,0,.18)';break}}
+  for(i=0;i<cells.length;i++){el=cells[i];if(tileIndex(el)===z){el.setAttribute('data-empty','0');el.setAttribute('data-v',board[z]);el.innerHTML='<span class="frag">'+fragSVG(board[z])+'</span><span class="num">'+board[z]+'</span>';el.style.background='';el.style.border='';break}}
   var moved=null;
-  for(i=0;i<cells.length;i++)if(tileIndex(cells[i])===j){moved=cells[i];break}
+  for(i=0;i<cells.length;i++)if(tileIndex(cells[i])===z){moved=cells[i];break}
   if(moved){moved.classList.remove('pop');void moved.offsetWidth;moved.classList.add('pop')}
   tone(src==='drag'?300:380+Math.random()*60,.06,'square',.045);
   paintMovable();
