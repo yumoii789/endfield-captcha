@@ -291,16 +291,15 @@ function levelById(id){var a=allLevels();for(var i=0;i<a.length;i++)if(a[i].id==
 function starsFor(steps,best){
   if(best<0)return 1;
   if(steps<=best)return 3;
-  var SM=[2,2,2,1,1][Math.min(5,Math.max(1,curLv))-1];
-  if(steps<=best+SM)return 2;
+  if(steps<=best+SM_LV())return 2;
   return 1;
 }
 function starStr(n){var s='';for(var i=0;i<5;i++)s+=(i<Math.max(1,Math.min(3,n))?'★':'☆');return s}
-/* 星级规则文案：3★≤最优 / 2★≤最优+2 / 1★通关 */
+/* 星级规则文案：3★≤最优且失误≤MCAP / 2★≤最优+SM_LV / 1★通关 */
 function starRuleOf(steps,best){
   if(best<0)return '通关';
-  if(steps<=best)return '★3 达最优';
-  if(steps<=best+2)return '★2 超出最优 '+(steps-best)+' 步';
+  if(steps<=best&&lastMistakes<=MCAP[curLv-1])return '★3 达最优';
+  if(steps<=best+SM_LV())return '★2 超出最优 '+(steps-best)+' 步';
   return '★1 通关（超最优 '+(steps-best)+' 步）';
 }
 function lvName(d){return ['简单','容易','中等','较难','困难'][d-1]||('V'+d)}
@@ -369,8 +368,8 @@ function solve(L){
 
 /* ================= 状态 ================= */
 var cur=null,bestSol=[],bestSteps=-1,limit=0,steps=0,started=false,solvedFlag=false,deadFlag=false;
-var curLv=1,lastStars=0,SOLVED_IDS={};
-var busy=false,t0=0,timerId=null,muted=false,verified=false,checking=false,curIdx=0,lastSecs=0;
+var curLv=1,lastStars=0,lastMistakes=0,SOLVED_IDS={};
+var busy=false,t0=0,timerId=null,muted=false,verified=false,checking=false,curIdx=0,lastSecs=0,rejTaps=0;
 var toastT=null,hintT=null,bootIdx=-1;
 
 /* ================= 音效 ================= */
@@ -510,7 +509,7 @@ function startLevelObj(L,silent){
   bestSol=r.moves.slice();
   bestSteps=r.best;
   limit=r.best+(LV_MARGIN[curLv]||2);
-  steps=0;started=false;solvedFlag=false;deadFlag=false;busy=false;
+  steps=0;started=false;solvedFlag=false;deadFlag=false;busy=false;rejTaps=0;
   clearTimeout(hintT);hintT=null;
   clearInterval(timerId);
   $id('grid').classList.remove('solved');
@@ -600,11 +599,14 @@ function tap(x,y){
   var onPiece=(x===cur.px&&y===cur.py);
   if(onPiece&&started){sndPick();hintAll();return}
   if(qs.get('debug')==='1')console.warn('[GT3] 非法落点 ('+x+','+y+') 已忽略');
+  rejTaps++;
   var sp=spotAt(x,y);
   if(sp){sp.classList.remove('shake');void sp.offsetWidth;sp.classList.add('shake')}
   tone(120,.08,'sawtooth',.03);
 }
 
+var MCAP=[2,2,1,1,0];/* 3★失误上限（被拒绝落点次数），V1..V5 */
+function SM_LV(){return [2,2,2,1,1][Math.min(5,Math.max(1,curLv))-1]}/* 2★松弛（超最优步数），V1..V5 */
 /* ================= 结束流程 ================= */
 function onSolved(){
   solvedFlag=true;
@@ -612,9 +614,10 @@ function onSolved(){
   var secs=(performance.now()-t0)/1000;lastSecs=secs;
   $id('grid').classList.add('solved');
   updHud();
-  lastStars=starsFor(steps,bestSteps);
+  var mistakes=rejTaps;lastMistakes=mistakes;
+  lastStars=(bestSteps>=0&&steps<=bestSteps&&mistakes<=MCAP[curLv-1])?3:Math.min(2,starsFor(steps,bestSteps));
   SOLVED_IDS[cur.id]=lastStars;
-  $id('stampStats').innerHTML='LV '+pad2(cur.id)+' '+cur.name+' · 难度 V'+cur.lv+'('+lvName(cur.lv)+') · '+starStr(lastStars)+'<br>步数 '+steps+'/'+limit+'（最优 '+bestSteps+'，'+starRuleOf(steps,bestSteps)+'） · 用时 '+secs.toFixed(1)+'s<br>'+QUIPS[Math.floor(Math.random()*QUIPS.length)];
+  $id('stampStats').innerHTML='LV '+pad2(cur.id)+' '+cur.name+' · 难度 V'+cur.lv+'('+lvName(cur.lv)+') · '+starStr(lastStars)+'<br>步数 '+steps+'/'+limit+'（最优 '+bestSteps+'，'+starRuleOf(steps,bestSteps)+'） · 失误 '+mistakes+' · 用时 '+secs.toFixed(1)+'s<br>'+QUIPS[Math.floor(Math.random()*QUIPS.length)];
   $id('stamp').hidden=false;
   var fx=document.createElement('div');fx.className='flashfx';document.body.appendChild(fx);
   setTimeout(function(){if(fx.parentNode)fx.parentNode.removeChild(fx)},800);
@@ -652,7 +655,7 @@ function closeAndVerify(){
   $id('loginBtn').disabled=false;
   $id('formNote').textContent='身份已确认，欢迎回来，操作员。';
   toast('验证通过 · HUMAN VERIFIED');
-  try{ if(window.parent&&window.parent!==window)window.parent.postMessage({type:'pz-solved',device:'V-40056',game:'gems',level:cur.id,lv:cur.lv,diff:'V'+cur.lv,stars:lastStars,starsStr:starStr(lastStars),moves:steps,secs:Math.round(lastSecs*10)/10,limit:limit,best:bestSteps},'*'); }catch(e){}
+  try{ if(window.parent&&window.parent!==window)window.parent.postMessage({type:'pz-solved',device:'V-40056',game:'gems',level:cur.id,lv:cur.lv,diff:'V'+cur.lv,stars:lastStars,starsStr:starStr(lastStars),moves:steps,mistakes:lastMistakes,secs:Math.round(lastSecs*10)/10,limit:limit,best:bestSteps},'*'); }catch(e){}
 }
 function toast(msg){
   var t=$id('toast');t.textContent=msg;t.hidden=false;

@@ -131,8 +131,7 @@ function render(){
       if(e.target.classList.contains('go')){
         var lv=selLv[x.dev]||1;
         $id('fTitle').textContent='设备 '+x.dev+' · '+x.name+' · 难度 V'+lv+' · 接入中';
-        var url=x.page+'?direct=1&lv='+lv;
-        if(x.game==='gems')url+='&stage='+(lv*5-4);
+        var url=x.page+'?direct=1&lv='+lv; /* game3 已与其余 8 关统一：?lv=1..5=难度档位（阶段内随机选关），无需 stage 特判 */
         $id('frame').src=url;
         $id('mask').hidden=false;
         $id('btnNext').hidden=true;
