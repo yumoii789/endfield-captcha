@@ -190,7 +190,7 @@ var lvRaw=qs.get('lv');
 var LV=clampLv(lvRaw===null||lvRaw===''?1:lvRaw);
 
 /* ---------- 状态 ---------- */
-var pz=null,lit=null,clicks=[],moves=0,t0=0,timerId=null,solvedFlag=false,muted=false;
+var pz=null,lit=null,clicks=[],moves=0,t0=0,timerId=null,solvedFlag=false,muted=false,lastMistakes=0;
 var ST={genRetry:0,genReject:0,fix:0};
 var customLevels=[],queuedLevel=null,solvedStats=null;
 function readCustomLevels(){
@@ -480,7 +480,7 @@ function newChallenge(){
   pz=genPuzzle(seed);
   lit=pz.init.slice();
   clicks=fill(0,pz.n*pz.n);
-  moves=0;
+  moves=0;lastMistakes=0;
   $id('stamp').hidden=true;
   buildBoard();
   renderGuide();renderParamLine();updateCoach();
@@ -502,15 +502,17 @@ function toggle(i){
   tone(320+Math.random()*70,.07,'square',.04);
   if(allLit(lit))onSolved();
 }
+var MCAP=[2,2,1,1,0];/* 3★失误上限（超出最短解 pz.min 的浪费抖动次数），V1..V5 */
 function onSolved(){
   solvedFlag=true;
   clearInterval(timerId);
   var secs=(performance.now()-t0)/1000;
-  var stars=starsFor(moves,pz.k);
+  var mistakes=pz.min>=0?Math.max(0,moves-pz.min):0;lastMistakes=mistakes;
+  var stars=(moves<=pz.k&&mistakes<=MCAP[LV-1])?3:Math.min(2,starsFor(moves,pz.k));
   $id('board').classList.add('win');
   solvedStats={moves:moves,secs:secs,stars:stars,lv:LV};
   $id('stampStats').innerHTML='难度 V'+LV+' · <span class="stars">'+starStr(stars)+'</span> · 抖动 '+moves+' 次（目标 '+pz.k+
-    '） · 用时 '+secs.toFixed(1)+'s<br>'+QUIPS[Math.floor(Math.random()*QUIPS.length)];
+    '，最短解 '+pz.min+'） · 失误 '+mistakes+' · 用时 '+secs.toFixed(1)+'s<br>'+QUIPS[Math.floor(Math.random()*QUIPS.length)];
   $id('stamp').hidden=false;
   chime();
   postSolved(stars,moves,secs);
@@ -522,7 +524,7 @@ function onSolved(){
 function postSolved(stars,mv,secs){
   try{
     if(window.parent&&window.parent!==window){
-      window.parent.postMessage({type:'pz-solved',device:'V-40057',game:'lights',lv:LV,stars:stars,moves:mv,secs:Math.round(secs)},'*');
+      window.parent.postMessage({type:'pz-solved',device:'V-40057',game:'lights',lv:LV,stars:stars,moves:mv,mistakes:lastMistakes,secs:Math.round(secs)},'*');
     }
   }catch(e){}
 }
