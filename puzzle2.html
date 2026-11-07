@@ -1070,6 +1070,17 @@ $id('loginForm').addEventListener('submit',function(e){e.preventDefault();if(ver
   /* 预热音频上下文（用户手势后自动恢复） */
   window.addEventListener('pointerdown',function once(){window.removeEventListener('pointerdown',once);try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){}},{once:true});
 })();
+
+/* 静音持久化：九关共享同一个键 endland-mute（跨关、跨刷新记住用户选择；默认仍为有声） */
+(function(){
+  try{
+    if(localStorage.getItem('endland-mute')==='on')muted=true;
+    var b=document.getElementById('btnMute');
+    if(!b)return;
+    if(muted)b.textContent='🔇';
+    b.addEventListener('click',function(){try{localStorage.setItem('endland-mute',muted?'on':'off')}catch(e){}});
+  }catch(e){}
+})();
 </script>
 </body>
 </html>

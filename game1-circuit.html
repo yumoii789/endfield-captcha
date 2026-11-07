@@ -483,6 +483,17 @@ if(qs.get('selftest')==='1'){
 
 /* ---------- 合集页直通模式 ---------- */
 if(qs.get('direct')==='1'){setTimeout(function(){ $id('captchaBox').click(); }, 150);}
+
+/* 静音持久化：九关共享同一个键 endland-mute（跨关、跨刷新记住用户选择；默认仍为有声） */
+(function(){
+  try{
+    if(localStorage.getItem('endland-mute')==='on')muted=true;
+    var b=document.getElementById('btnMute');
+    if(!b)return;
+    if(muted)b.textContent='🔇';
+    b.addEventListener('click',function(){try{localStorage.setItem('endland-mute',muted?'on':'off')}catch(e){}});
+  }catch(e){}
+})();
 </script>
 </body>
 </html>
