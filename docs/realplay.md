@@ -92,3 +92,4 @@
 - `clear_g9_touch2.mjs`（game9：触摸事件 + **逐步比对 DOM↔board**）、`clear_g9_touch.mjs`（首版）、`g9vis.mjs`（点击前后截图取证）、`g9self.mjs`（自检 + 读 stats）
 - `shots/g9_before.png`、`shots/g9_after1.png`（缺陷取证截图）
 - `audit_dom.mjs` / `audit_dom2.mjs` / `audit_dom3.mjs`（渲染↔状态一致性审计，方法与本轮结论见 `docs/dom-consistency.md`）
+- `shortfit2.mjs` / `g5parts.mjs` / `g5check.mjs` / `g5win.mjs`（短视口量测、高度分解分解、手机视口核对、手机视口真实点击通关；见 `docs/layout-viewport.md`）
