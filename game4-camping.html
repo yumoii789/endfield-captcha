@@ -385,7 +385,7 @@ function tentAt(x,y){
 function buildGrid(){
   var g=$id('grid');g.innerHTML='';
   var cols=N_()+1;
-  g.style.gridTemplateColumns='repeat('+N_()+',1fr) auto';
+  g.style.gridTemplateColumns='repeat('+(N_()+2)+',1fr)';
   g.style.gridAutoFlow='row';
   function at(sel,row,col){var el=document.createElement('div');el.className=sel;el.style.gridRow=row;el.style.gridColumn=col;return el}
   var x,y,el;
