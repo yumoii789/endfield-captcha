@@ -3,7 +3,7 @@
 > 目的：验证"玩家真的能玩通"这条链路，而不是只调用内部函数。全部为**真实鼠标点击**（CDP Input.dispatchMouseEvent），先静音（公共场所禁止外放）。
 > 路径：hub 真实入口（点卡片 → 开始校验）→ iframe 内真实点击 → 游戏自判通关 → 真实 postMessage → hub 写回进度/标题/统计。
 
-## 一、已完成（3/9）
+## 一、已完成（4/9）
 
 | 关卡 | 解字段来源 | 目标数 | 真实点击 | 通关校验 | hub 回写 |
 |---|---|---|---|---|---|
@@ -20,7 +20,7 @@
 | game4-camping | dataset `x/y` | 容器 `#grid` |
 | game3-gems | dataset `x/y` | 容器 `#grid` |
 
-## 三、待完成（6/9）与已知要点
+## 三、待完成（5/9）与已知要点
 
 | 关卡 | 拟用解法 | 已知要点 |
 |---|---|---|
@@ -31,6 +31,14 @@
 | game9-slide | `pz.path`（80 步） | 需确认点击语义与是否逆序回放 |
 | puzzle2 | `pz.grid` + `pieces` | 拖拽类，需构造 pointer 拖拽序列（最难） |
 
-## 四、脚本位置
+## 四、读取回写的时序坑（重要）
+
+部分关卡的通关消息**不是点击瞬间发出**，而在结算动画之后：
+
+- game1-circuit：`onSolved()` 后 `setTimeout(closeAndVerify,1800)`，消息由 `closeAndVerify` 发出 → 校验读数需 **≥3.5s**，否则会误判为"没有回写"（我第一次就踩了）。
+
+结论：所有真实通关脚本在最后一次点击后应等待 ≥4 秒再读 hub 进度与 stats。
+
+## 五、脚本位置
 
 `_verify/endfield-captcha/clear_g5.mjs`（单关）、`clear_multi2.mjs`（多关，含各关定位分派）。
