@@ -53,7 +53,7 @@ window.parent.postMessage({type:'pz-failed', device, lv, moves}, '*');
 | `endland-matchlog` | 匹配记录 | terminal |
 | `endland-hub-progress` | 各设备进度与星级 | hub |
 | `endland-levels-*` | 各关自定义关卡队列 | 各关 |
-| `endland-mute` | **九关共享静音**（`'on'`=静音；缺省/其他=有声） | 各关 btnMute |
+| `endland-mute` | **全局共享静音**（`'on'`=静音；缺省/其他=有声） | hub 的 `#muteAll` + 各关 btnMute（双向实时同步） |
 
 ## 五、音效约定
 
@@ -61,3 +61,11 @@ window.parent.postMessage({type:'pz-failed', device, lv, moves}, '*');
 自 2026-11 起：静音选择**持久化到 `endland-mute`**，在一关静音后打开其他关会自动继承；**默认仍为有声**（不改变既有观感）。
 
 > 禁止再加"父页音效层"：曾给 hub/terminal 加过 iframe 点击音与结算音，与关卡内建音效叠成双响、并形成第二套互不相通的静音，已撤回。
+
+### 全局开关（第二轮）
+
+hub 提供**唯一入口的全局开关** `#muteAll`（右下角固定角标），与九关各自的 `#btnMute` 共用同一个 `endland-mute` 键，并用 `storage` 事件**实时双向同步**：父页写入 → iframe 内页面立即跟随；子页写入 → hub 图标立即跟随。同源文档之间浏览器会自动派发 `storage`，因此**不需要新增 iframe 消息协议**。
+
+- **实现坑（必记）**：hub 的开关必须是 `body` 的**直接子级**，且 `z-index` 高于 `.mask`（`.mask` 为 `z-index:50`）。放在 `.wrap`（`z-index:1`，自成层叠上下文）内时，即使自身写 `z-index:130` 也会被遮罩压住 → **开着一局时点不到全局开关**（验收项"模态打开后正向同步"曾因此失败）。
+- 直连打开单个设备页（`?direct=1` 或单独访问）时，页内 `#btnMute` 依然可用（读写同一键）。
+- 九页的同步监听统一为 `window.addEventListener('storage', …)`，插在各自静音持久化块之后；验收脚本 `_verify/endfield-captcha/muteglobal.mjs`（9 页合成事件单测 + hub/iframe 双向真实点击，13 项全绿）。
