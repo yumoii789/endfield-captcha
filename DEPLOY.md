@@ -5,7 +5,9 @@
 - **线上地址**：https://yumoii789.github.io/endfield-captcha/ （仓库 `yumoii789/endfield-captcha`，公开，Pages source = `main` / 根目录）
 - **入口行为**：`/` → `index.html` meta 刷新 → `terminal.html`；`/hub.html` 为九关卡片总览；`/admin.html` 后台（admin / 123456，需先过人机验证）。
 - **线上验收（真实 CDP 点击，11/11 PASS）**：根路径跳转 https 正常 · 终端注册建档（localStorage 在 https 下可用）· hub 九张卡片 · hub→iframe 内游戏加载 · **线上真实通关**（灯光矩阵 `pz-solved stars=3 moves=2`）· hub 写回统计 `pass:true` · game9 独立直开 · admin 人机验证解锁 · 登录进入控制台（六菜单，标题切换正确）· 登出后提示为 `msg hint`（提示样式，非错误）。
-- **注意**：本机网络的 git 智能 HTTP 端点不可达（`Recv failure: Connection was reset`），故线上内容经 **GitHub Git Data API** 上传（脚本 `_verify/endfield-captcha/push_via_api.mjs`、`sync_via_api.mjs`）。远端历史与本地**不共享祖先**，日后从本地正常 `git push` 会被拒（需 `--force`，或以本地为准重建远端）。
+- **注意**：本机网络的 git 智能 HTTP 端点不可达（`Recv failure: Connection was reset`，重试 4 次均失败），故线上内容经 **GitHub Git Data API** 上传。
+- **远端历史已与本地完全对齐**：以 `rebuild_history.mjs` 逐条重放本地 40 次提交（保留作者、提交时间与消息），重建后**每个提交的 SHA 与本地逐一相同**（`c98f48ed` … `2f2f7be8`）——git 内容寻址使然。因此不再需要 `--force`；日后在任何能连通 `github.com:443` 的网络下正常 `git push` 即可。
+- 相关脚本（位于 `_verify/endfield-captcha/`，不随仓库发布）：`rebuild_history.mjs`（逐条重放全部提交，幂等且 SHA 稳定，**推荐**）、`push_via_api.mjs`（首次铺设）、`sync_via_api.mjs`（快照式同步，会产生新 SHA）。
 
 ## GitHub Pages（推荐）
 
