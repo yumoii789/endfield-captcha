@@ -706,6 +706,29 @@ function refreshSelection(){
   $id('btnRot').disabled=!sel;$id('btnFlip').disabled=!sel;$id('btnDeselect').disabled=!sel;
   renderPlaced();
 }
+/* 视口尺寸变化（手机竖↔横切换）时重算格子尺寸。cellSize() 只在新一局时算一次，
+   若先在横屏载入（innerWidth>640 走桌面分支 → 30px）再转竖屏，会退回"格子偏小"的老问题。
+   只在本该用的尺寸与当前不同时才重建 DOM，其余情况不动作。 */
+var __relayoutW=window.innerWidth;
+function relayoutGrid(){
+  if(!pz)return;
+  var cs=cellSize();
+  if(cs===CS)return;
+  CS=cs;
+  buildGrid();
+  refreshSelection();
+  refreshCounts();
+}
+window.addEventListener('resize',function(){
+  if(window.innerWidth===__relayoutW)return;
+  __relayoutW=window.innerWidth;
+  clearTimeout(window.__relayoutT);
+  window.__relayoutT=setTimeout(relayoutGrid,180);
+});
+window.addEventListener('orientationchange',function(){
+  clearTimeout(window.__relayoutT);
+  window.__relayoutT=setTimeout(relayoutGrid,260);
+});
 function clearHover(){
   var cs=$id('grid').querySelectorAll('.cell'),i;
   for(i=0;i<cs.length;i++)cs[i].classList.remove('can','no');
