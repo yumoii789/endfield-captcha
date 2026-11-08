@@ -97,7 +97,7 @@
 - `g5band.mjs`（game5：各档采样 `{k,min}` 分布，判定容忍带在哪些档位存在）、`g5probe2.mjs`（容忍带局的纯失误路径，期望星级随 MCAP 变）
 - `touch_smoke.mjs`（九关触摸点击到达性 + 触摸完整通关）、`g9touch.mjs`（game9 触摸拖拽通关）、`g9touchdiag.mjs`（触摸事件计数与几何诊断，用于排除探针自身问题）
 - `vpsweep.mjs`（九关 × 4 手机视口的横向溢出/纵向内滚扫描，定位越界元素）、`p2clip.mjs` / `p2why.mjs` / `p2verify.mjs`（puzzle2 棋盘裁切取证、计算样式与修复前后几何核对）、`vpsweep_shell.mjs`（terminal/hub/admin 入口页同款扫描 + 控件遮挡命中测试）、`admin_land.mjs`（横屏下登录键可达性取证）
-- `phone_clear.mjs`（手机视口 390×844 + 触摸事件下六关真实通关）、`shapes.mjs`（dump 各关解字段的运行时形状，供写计划前先验证）
+- `phone_clear.mjs`（手机视口 390×844 + 触摸事件下六关真实通关）、`shapes.mjs`（dump 各关解字段的运行时形状，供写计划前先验证）、`selftest_all.mjs`（逐关跑 `?selftest=1` 并捕获 console，作为改动后的不变量回归）
 
 ## 八、C 轮：失误门控的真实点击复验（当前 HEAD，2026-11-07）
 
@@ -212,6 +212,29 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 
 1. **先 dump 形状再写计划**：`JSON.stringify({keys:Object.keys(pz),sample:…})` 一次调用胜过三次猜测。类型不匹配在 JS 里往往**静默失败**（`undefined`、`NaN`、严格比较 false），不会抛错。
 2. **"部分执行"是探针缺陷的信号，不是部分成功**：game6 显示"实际触摸 1 次/未定位 4"，若只看"有动作发生"就会误判为"这关需要更多步骤"。计数与计划不符时，先怀疑定位代码。
+
+## 十一、九关内置自检回归（C 轮 + puzzle2 修复后全绿）
+
+前述各节用**外部探针**验证真实交互；本节跑的是**项目自带的不变量套件**（各关 `?selftest=1`），用于确认全部改动没有破坏各关自身的生成/可解性约束。
+
+**方法**：`selftest_all.mjs` —— 逐关加载 `?selftest=1`，捕获 `Runtime.consoleAPICalled` 输出（不依赖 DOM 结果区）。
+
+| 关卡 | 自检结论（原文摘要） |
+|---|---|
+| game1-circuit | `五档各 60 局（V1:60 V2:60 V3:60 V4:60 V5:60）全部通过可解性检测；可解性检测失败 0 次` |
+| puzzle2 | `generated:300, solveReject:0, colorized:true, avgPieces:8.78`（按档列出 cols/rows/piecesMin） |
+| game3-gems | `25 关全部可解：是；难度分布 V1:5 V2:5 V3:5 V4:5 V5:5；搜索超限 0` |
+| game4-camping | `五档共生成 300 局 · 解配置通过判定器 300 局 · 失败 0 局；生成重试 3 次；可解性校验拒绝 0 次` |
+| game5-lights | `lv1–lv5 PASS` 5/5（K 区间与最优步数逐档核对） |
+| game6-code | `lv1–lv5 PASS` 5/5（`any-code worst ≤ 预算` 逐档成立） |
+| game7-nonogram | `lv1–lv5 PASS` 5/5（唯一解确认、答案自身即合法解、全空/全满均不误判） |
+| game8-targets | `5/5 100.0% · 共 15 局 · 校验通过 15 · 生成重试 0` |
+| game9-slide | `汇总 5/5 100.0%`（空位=1 重复=0 越界=0、最短解 ≤ k、逆序回放判定通过） |
+
+全日志 **0 处 FAIL**（各关的"失败/拒绝/超限"计数均为 0）。
+
+**一处交叉印证**：game5 自检的 lv4 行为 `k∈[8,10] · 生成 k=10 · 最优 7 步`，与 §八之三 独立测得的"V4 才出现 `k>min` 容忍带"完全一致——两条互不相关的路径得到同一结论。
+
 
 
 
