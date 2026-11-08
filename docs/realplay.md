@@ -96,6 +96,7 @@
 - `g9probe.mjs`（game9：3×3 BFS 最优解 / 4×4 反向重放 + 成对冗余，A/B/B′ 三场景读 postMessage 与印章）
 - `g5band.mjs`（game5：各档采样 `{k,min}` 分布，判定容忍带在哪些档位存在）、`g5probe2.mjs`（容忍带局的纯失误路径，期望星级随 MCAP 变）
 - `touch_smoke.mjs`（九关触摸点击到达性 + 触摸完整通关）、`g9touch.mjs`（game9 触摸拖拽通关）、`g9touchdiag.mjs`（触摸事件计数与几何诊断，用于排除探针自身问题）
+- `vpsweep.mjs`（九关 × 4 手机视口的横向溢出/纵向内滚扫描，定位越界元素）、`p2clip.mjs` / `p2why.mjs` / `p2verify.mjs`（puzzle2 棋盘裁切取证、计算样式与修复前后几何核对）
 
 ## 八、C 轮：失误门控的真实点击复验（当前 HEAD，2026-11-07）
 

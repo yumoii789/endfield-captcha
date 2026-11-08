@@ -152,7 +152,7 @@ form{padding:10px 22px 22px}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .scanlines{position:fixed;inset:0;pointer-events:none;z-index:99;background-image:linear-gradient(rgba(255,255,255,.016) 1px,transparent 1px);background-size:100% 3px}
-@media (max-width:640px){.mfoot{flex-wrap:wrap;gap:8px}.mtip{font-size:12px}.stats{font-size:11px;gap:8px}.grid{width:92vw}.card{padding:14px}}
+@media (max-width:640px){.mfoot{flex-wrap:wrap;gap:8px}.mtip{font-size:12px}.stats{font-size:11px;gap:8px}.grid{max-width:92vw}.card{padding:14px}}
 .lvbtns button,.ghost{min-height:34px}
 .head h1{font-size:clamp(1.4rem,3.5vw,2rem);letter-spacing:.02em}
 </style>
@@ -548,6 +548,15 @@ function fallbackPuzzle(sd){
 function cellSize(){
   var c=core();
   var cs=c&&c.CELL?c.CELL:30;
+  /* 手机窄屏：轨道是内联固定像素，而 @media(max-width:640px) 只写了 .grid{width:92vw}，
+     会把棋盘框拉宽而格子仍是 30px（点击目标偏小、框内大片留白、窄机还会横向溢出）。
+     这里按可用宽度反算能填满 92vw 的格子尺寸，扣掉行提示列 26 + 块间距 6 + 网格内边距 12
+     + 边框 2 + 列间距 (cols-1)*4。宽视口（>640px）不进入此分支，桌面观感不变。 */
+  if(pz&&window.innerWidth<=640){
+    var avail=window.innerWidth*0.92-26-6-12-2-(pz.cols-1)*4;
+    var fit=Math.floor(avail/pz.cols);
+    if(fit>cs)cs=fit;
+  }
   return cs;
 }
 function buildGrid(){
