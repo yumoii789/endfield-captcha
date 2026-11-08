@@ -1,5 +1,12 @@
 # 部署指南 — 访客协议 VISITOR PROTOCOL
 
+## 已部署（2026-11-08）
+
+- **线上地址**：https://yumoii789.github.io/endfield-captcha/ （仓库 `yumoii789/endfield-captcha`，公开，Pages source = `main` / 根目录）
+- **入口行为**：`/` → `index.html` meta 刷新 → `terminal.html`；`/hub.html` 为九关卡片总览；`/admin.html` 后台（admin / 123456，需先过人机验证）。
+- **线上验收（真实 CDP 点击，11/11 PASS）**：根路径跳转 https 正常 · 终端注册建档（localStorage 在 https 下可用）· hub 九张卡片 · hub→iframe 内游戏加载 · **线上真实通关**（灯光矩阵 `pz-solved stars=3 moves=2`）· hub 写回统计 `pass:true` · game9 独立直开 · admin 人机验证解锁 · 登录进入控制台（六菜单，标题切换正确）· 登出后提示为 `msg hint`（提示样式，非错误）。
+- **注意**：本机网络的 git 智能 HTTP 端点不可达（`Recv failure: Connection was reset`），故线上内容经 **GitHub Git Data API** 上传（脚本 `_verify/endfield-captcha/push_via_api.mjs`、`sync_via_api.mjs`）。远端历史与本地**不共享祖先**，日后从本地正常 `git push` 会被拒（需 `--force`，或以本地为准重建远端）。
+
 ## GitHub Pages（推荐）
 
 1. 在仓库根目录（或子目录）放入本套件全部文件，**不要**上传 `_gt_srv.js`（本地测试服务器，部署不需要）。
