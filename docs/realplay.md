@@ -95,6 +95,7 @@
 - `shortfit2.mjs` / `g5parts.mjs` / `g5check.mjs` / `g5win.mjs`（短视口量测、高度分解分解、手机视口核对、手机视口真实点击通关；见 `docs/layout-viewport.md`）
 - `g9probe.mjs`（game9：3×3 BFS 最优解 / 4×4 反向重放 + 成对冗余，A/B/B′ 三场景读 postMessage 与印章）
 - `g5band.mjs`（game5：各档采样 `{k,min}` 分布，判定容忍带在哪些档位存在）、`g5probe2.mjs`（容忍带局的纯失误路径，期望星级随 MCAP 变）
+- `touch_smoke.mjs`（九关触摸点击到达性 + 触摸完整通关）、`g9touch.mjs`（game9 触摸拖拽通关）、`g9touchdiag.mjs`（触摸事件计数与几何诊断，用于排除探针自身问题）
 
 ## 八、C 轮：失误门控的真实点击复验（当前 HEAD，2026-11-07）
 
@@ -139,4 +140,43 @@ game9-slide（三场景，含最优/冗余2/冗余4）：
 - **更正**：此前 `g5probe2` 默认跑 V2，报 `SKIP: 12 局内无 k>=min+2（容忍带在生成分布内不可达）`——「不可达」这个结论是**错的**，它只是不在 V1–V3 出现。改跑 V4 后第 0 局即命中。
 - **决定性验证（V4）**：`k=10, min=7` 局，先浪费 2 步再按 `sol` 解 → `moves=9<=k`（效率项**通过**）、`mistakes=2`；`MCAP[3]=1` 使门控**拦下** → 结算 **2★**（若无门控，按原判据本是 3★）。印章：`难度 V4 · ★★☆ · 抖动 9 次（目标 10，最短解 7） · 失误 2`。
 - **结论**：game5 的失误门控在 V1–V3 被效率判据蕴含（`min===k` ⇒ 3★ 只在 `moves=min` 时成立），但在 **V4 起真正生效**，是有效判据而非冗余项。
+
+## 九、触摸路径复验（手机视口 390×844，触摸事件仿真）
+
+> 起因：此前所有"真实点击"都用 `Input.dispatchMouseEvent`（鼠标），而真机走的是 pointer/touch。这是唯一无法由桌面替代、又能在无头环境里逼近的轴——真机测试仍需用户完成。
+
+**方法**：`Emulation.setDeviceMetricsOverride(390×844, dsf=3, mobile)` + `Emulation.setTouchEmulationEnabled{maxTouchPoints:1,configuration:"mobile"}`，手势用 `Input.dispatchTouchEvent`（touchStart/touchMove/touchEnd）。脚本：`touch_smoke.mjs`、`g9touch.mjs`、`g9touchdiag.mjs`。
+
+### 九之一、九关触摸点击到达性：9/9 PASS
+
+逐关打开 `?direct=1&lv=1`，在可交互单元上装捕获监听后真实触摸点一下，三个事件各计一次：
+
+| 关卡 | 目标元素 | pointerdown / pointerup / click |
+|---|---|---|
+| game1-circuit | `[data-i]` | 1 / 1 / 1 |
+| puzzle2 | `.piece[data-pid]` | 1 / 1 / 1 |
+| game3-gems | `.spot[data-x][data-y]` | 1 / 1 / 1 |
+| game4-camping | `#grid [data-x]` | 1 / 1 / 1 |
+| game5-lights | `#board .cell` | 1 / 1 / 1 |
+| game6-code | `.key[data-sym]` | 1 / 1 / 1 |
+| game7-nonogram | `[id^="c-"]` | 1 / 1 / 1 |
+| game8-targets | `[data-idx]` | 1 / 1 / 1 |
+| game9-slide | `#board .tile` | 1 / 1 / 1 |
+
+九关均声明了 `touch-action:manipulation`（消除 300ms 延迟、允许点击），触摸事件链路完整。
+
+### 九之二、触摸完整通关（端到端）
+
+| 场景 | 手势 | 结果 |
+|---|---|---|
+| game5-lights（经 hub iframe，触摸点开卡片） | 触摸点击 `sol` 单元 | **PASS** `pz-solved stars=3 moves=2 mistakes=0`，印章完整 |
+| game9-slide（经 hub iframe，**拖拽式**） | 触摸滑动 20 次（每次：瓦片中心 → 相邻空格中心） | **PASS** 20/20 滑动全部生效、`moves=20=ref`、`stars=3 mistakes=0`、印章「滑动 20 次 · 失误 0 · 参考 20 步」 |
+
+game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none}`（game9-slide.html:72）；若缺此项，浏览器会把手势当滚动并抛 `pointercancel`，拖拽即失效。此项已核实存在。
+
+### 九之三、两个探针教训（都曾伪装成"游戏缺陷"）
+
+1. **就绪判据必须包含"版面稳定"**：首次跑触摸拖拽时前 4/18 次滑动失效，看着像"开局第一秒点不动"。加仪器后真因是：`pz` 已存在且 `moves===0`，但 iframe 版面尚未排完，`getBoundingClientRect()` 返回**退化值**（相邻两格返回同一坐标 8.79/85.3），触点落在棋盘外。改为"单元 rect 宽>20 且首尾单元坐标可区分"后，**20/20 全部生效**。教训：`pz` 存在 ≠ 可交互；判据要包含几何有效性。
+2. **自定义事件计数器的键名要与事件名一致**：首版写成 `{down:0,up:0,click:0}` 却累加 `__tap[k]`（k 为 `pointerdown`），得到 `undefined++` → `NaN` → `JSON.stringify` 输出 `null`，结果**八关全部显示"未触发"**，而同一份数据里 `click:1` 已经证明事件到达。教训：读数出现 `null`/`NaN` 时先怀疑度量代码，别先怀疑被测对象。
+
 
