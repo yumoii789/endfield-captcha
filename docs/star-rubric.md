@@ -51,6 +51,8 @@
 | game1-circuit | 拨错固定块 + 超最优旋转 `max(0,moves-best)` | game1-circuit.html:392-393 |
 | game3-gems | 被拒绝/坠毁的落点次数 | game3-gems.html:617-618 |
 | game5-lights | 超最短解的浪费步 `max(0,moves-pz.min)` | game5-lights.html:510-511 |
+
+> game5 补充：多余按压必须成对（同格两次是恒等操作），故 `moves-min` **恒为偶数**；且生成器精确采样 `cosetMin===k`，使 V1–V3 恒有 `min===k`（此时门控被效率判据蕴含）。门控**真正生效于 V4**（`kMin=8` 超过 4×4 可达上限 7，出现 `k>min`）：实测 `k=10,min=7,moves=9` 时效率项通过而 `失误2>MCAP[3]=1` → 2★。
 | game6-code | 猜错次数 `max(0,提交数-1)` | game6-code.html:744-745 |
 | game9-slide | 超最短路径步数 `max(0,moves-ref)` | game9-slide.html:486-487 |
 
