@@ -20,10 +20,12 @@
 
 ```js
 // 成功（全部扁平，缺字段会导致父页把星级兜底成 1、步数用时显示为 '—'）
-window.parent.postMessage({type:'pz-solved', device, game, lv, stars, moves, secs}, '*');
+window.parent.postMessage({type:'pz-solved', device, game, lv, stars, moves, secs, mistakes}, '*');
 // 失败
 window.parent.postMessage({type:'pz-failed', device, lv, moves}, '*');
 ```
+
+`mistakes`（可选，C 轮新增）：本关失误次数。**父页当前不读取它**（hub.html / terminal.html 均未改动），它随 payload 上行供统计与后续扩展；缺失不影响父页的星级兜底。各关失误语义互不相同，见 `docs/star-rubric.md` §四。
 
 注意：仅当 `window.parent !== window`（即被 iframe 嵌入）时才发送；顶层直接打开时不发。
 

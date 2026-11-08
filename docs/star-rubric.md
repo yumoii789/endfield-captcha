@@ -14,9 +14,9 @@
 | V-40058 | game6-code | `used<=ceil(budget/2)` | `used<=budget-1` | C 预算 |
 | V-40059 | game7-nonogram | `errors===0` | 容差表 `[2,2,1,1,0]`（game7-nonogram.html:692） | A 失误计数 |
 | V-40060 | game8-targets | `fails===0` | 容差表 `[1,1,1,0,0]`（game8-targets.html:396，本就比同族严） | A 失误计数 |
-| V-40061 | game9-slide | `moves<=ceil(ref*1.2)` | `moves<=ceil(ref*1.5)` | B 效率比值 |
+| V-40061 | game9-slide | `moves<=ceil(ref*1.2)` **且** `失误<=MCAP[lv-1]`（MCAP=`[2,2,1,1,0]`，game9-slide.html:485-487） | `moves<=ceil(ref*1.5)`（失误=超参考步数 `max(0,moves-ref)`） | B 效率比值 + 失误门控 |
 
-**说明**：B/C 族（game1/game5/game6/game9）的参照量（best / k / budget / ref）本身随档位放大，梯度已内建，故按「全部保留」不动。
+**说明**：B/C 族（game1/game5/game6/game9）的参照量（best / k / budget / ref）本身随档位放大，梯度已内建，故按「全部保留」不动；game9 额外叠加失误门控（见 §四）。
 
 ## 二、本次改动：让 A 族与 D 族的容差也随档位收紧
 
@@ -42,6 +42,16 @@
 
 方法：临时同源 iframe harness 承载目标页（使 `window.parent!==window` 成立），在子页内调用其自身通关处理函数，从父页捕获 `pz-solved` 的真实 payload 读取 stars。
 
-## 四、未做（需另行确认）
+## 四、失误计数与 3★ 门控（C 轮已落地，C-T1–C-T5）
 
-「效率 + 失误」双条件（3★ = 成绩 ≤1.2×参考量 且 失误 ≤2）可让九关 3★ 真正等价，但 game1/game3/game5/game6/game9 **没有失误计数**，需新增计数与提示 UI（5 关功能开发），且会放宽这三关现有的 3★ 门槛。用户已选择「保留各关判据 + 适配梯度」，故不做。
+原「未做」的双条件方案已按用户确认口径（A 口径）分关落地：每关只统计**该关自己的错误语义**，3★ = 原效率判据 **且** `失误<=MCAP[lv-1]`（`MCAP=[2,2,1,1,0]`，各关同表）；印章显示「失误 N」，`pz-solved` postMessage 增加可选 `mistakes` 字段（hub/terminal 无需改动）。
+
+| 关卡 | 失误语义 | 判据处 |
+|---|---|---|
+| game1-circuit | 拨错固定块 + 超最优旋转 `max(0,moves-best)` | game1-circuit.html:392-393 |
+| game3-gems | 被拒绝/坠毁的落点次数 | game3-gems.html:617-618 |
+| game5-lights | 超最短解的浪费步 `max(0,moves-pz.min)` | game5-lights.html:510-511 |
+| game6-code | 猜错次数 `max(0,提交数-1)` | game6-code.html:744-745 |
+| game9-slide | 超最短路径步数 `max(0,moves-ref)` | game9-slide.html:486-487 |
+
+**实测证据（game9 真实点击，CDP）**：V1 三场景 = A 最优 `ref:24 moves:24` 3★/失误0、B 冗余2 `moves:26` 3★/失误2、B′ 冗余4 `moves:26` 2★/失误4；V4/V5（4×4，`ref:200/300`）= A 3★/失误0，B（+2）与 B′（+4）均 2★。失误门控与 V1–V5 梯度生效。
