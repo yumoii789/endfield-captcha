@@ -96,6 +96,7 @@ node _gt_srv.js
 | `dom-consistency.md` | 渲染↔状态一致性审计（零知识 oracle：增量 DOM vs 整体重绘） |
 | `worldbible.md` | 世界观设定（校验设备、第 39 号事故等） |
 | `new-puzzles-proposal.md` | 新玩法提案 |
+| `realdevice-checklist.md` | 真机点检清单：只有实机能判的项（手感/帧率/发热/系统级行为）+ 期望值表 + 记录模板 |
 
 ## 目录结构
 
@@ -116,7 +117,7 @@ endfield-captcha/
 ├─ terminal.html         版本 B 验证终端
 ├─ admin.html            管理后台
 ├─ _gt_srv.js            本地静态服务器（node _gt_srv.js，端口 8099）
-└─ docs/                 维护与验收文档 9 篇（见上方「文档索引」）
+└─ docs/                 维护与验收文档 10 篇（见上方「文档索引」）
 ```
 
 ## 部署（GitHub Pages）
