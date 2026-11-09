@@ -342,6 +342,24 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 
 探针：`admin_rest.mjs`…`admin_rest6.mjs`、`admin_diag.mjs`（定位模态被关）、`admin_selfcheck.mjs`（修复后回归）。本轮我自己的探针坑：注入表达式里夹了真换行、选择器猜错（真实是 `input[type=number]` 与 `.msg`，不是 `#number`/`.errline`）、CDP 鼠标事件不合成 pointer 事件。
 
+## 十九、dom-consistency 审计的复核重跑（2026-11-09）
+
+把 `docs/dom-consistency.md` 的每条断言跑成机器检查，并重跑它自己的 oracle。
+
+**静态核对（与文档表逐行对上）**：重绘入口定义齐全——game1 `refresh`:315、puzzle2 `renderPlaced`:596、game3 `render`:431、game4 `refresh`:452、game5 `paintBoard`:414、game6 `paintSlots`:575、game7 `refreshAll`:604、game8 `refresh`:350；机制断言也成立——game3 `HINT_SHOW=6000` 的定时 `hintAll()`（:462/:473 两处），game7 `refreshAll()` **全仓只有一处调用**（:678 `buildGrid();refreshAll();`，与「正常游玩路径不经过它」一致）。
+
+**重跑结果**
+
+| 脚本 | 复现内容 |
+|---|---|
+| `audit_dom.mjs` | 8 关总表：game1/puzzle2/game5/game8 「有效・✓一致・敏感自检过」；game3 ✗（`spot origin` ↔ `spot origin legal hint`）与 game7 ✗（`cell fill wrong` ↔ `cell fill`）——正是文档 §二 已定性的两处 class-only 差异，逐字复现；game4/game6 仍显示「⚠无效(点击未见DOM变化)」，与文档「有效性来自修正靶点后的补测」一致 |
+| `audit_dom3.mjs` | game4、game6 修正靶点/容器后：`点击后变化=true · 入口=ok · 结构一致=true · 整串一致=true` ✔ |
+| `clear_g9_touch2.mjs` | game9 逐步比对：22 步全程 `匹配=true`，终态 `solved:true · moves=22=ref · stars=3 · mistakes=0`，回传父页 `{lv:1,stars:3}` ✔ |
+
+**本轮修正的一处文档错误**：`docs/dom-consistency.md` §二 表里 game9 的重绘入口写作 `renderBoard`——**该函数在 game9-slide.html 中不存在**。真实的整体重建入口是 `buildBoard()`（:319，`b.innerHTML=''` 后按 `board` 数组重建），增量入口是 `paintMovable()`（:357）。已更正，并在该文档 §三 前补一句说明：game9 那行的证据是**状态级**逐步比对（页面 `board` 数组 vs 模拟 board），而非本文 §一 的 DOM 增量/重绘对比。
+
+**结论**：该审计的结论仍然成立（8 关无内容/结构级渲染缺陷，两处 class-only 差异属设计内瞬态；game9 修复后逐步全匹配），仅入口名一处笔误已修。
+
 ## 十六、`pz-failed` 失败分支闭环核验（2026-11-09：首次端到端实测）
 
 `docs/conventions.md` §二 把失败消息定为 `{type:'pz-failed', device, lv, moves}`，并规定「仅当 window.parent !== window 时才发送」。此前只有 `pz-solved` 有端到端证据，失败分支从未实测。

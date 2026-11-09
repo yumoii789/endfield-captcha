@@ -28,7 +28,7 @@
 | game6-code | `#slots` | `paintSlots` | 3/3 | 有效（修正容器后） | ✓ 一致 | 过 |
 | game7-nonogram | `#grid` | `refreshAll` | 3/3 | 有效 | △ 仅 class 不同（1 格） | 过 |
 | game8-targets | `[data-idx]` 父节点 | `refresh` | 3/3 | 有效 | ✓ 一致 | 过 |
-| game9-slide | `#board` | `renderBoard` | 24/24 | 有效 | ✓ 一致（修复后；逐步比对全部匹配） | 过 |
+| game9-slide | `#board` | `buildBoard`（整体重建，game9-slide.html:319；增量入口是 `paintMovable()`） | 24/24 | 有效 | ✓ 一致（修复后；逐步比对全部匹配） | 过 |
 
 **结论：其余 8 关未发现 game9 同类（内容/结构级）渲染缺陷。** 两处 class-only 差异均已定位到具体机制，判定为设计内的瞬态高亮，不需要改动：
 
@@ -38,6 +38,8 @@
    `wrong`/`bad` 是"填错"的反馈（点击时加上，定时器只摘 `bad`，`wrong` 常驻）；而 `paintCell()` 只按填充状态重建 class，`refreshAll()` 因此不会还原 `wrong`。但 `refreshAll()` 的调用点只有初始化/换关（`buildGrid();refreshAll();`），**正常游玩路径不经过它**，所以玩家不会看到错误标记被抹掉。属于"重绘不完整"的隐患而非当前缺陷——若将来新增"重绘中途状态"的入口，需要同时补 `wrong` 的重算。
 
 ## 三、复现
+
+> 2026-11-09 复核：上表除 game9 一行的入口名外均与代码一致。game9 那行的证据来自 `clear_g9_touch2.mjs`——它做的是**状态级**逐步比对（页面 `board` 数组 vs 模拟 board），不是本文 §一 的 DOM 增量/重绘对比；文档早期把入口名写成了并不存在的 `renderBoard`，已更正为 `buildBoard`。
 
 ```bash
 cd _verify/endfield-captcha
