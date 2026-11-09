@@ -426,6 +426,45 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 
 node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new --mute-audio --remote-debugging-port=9222；探针全部位于 _verify/endfield-captcha/（不随仓库发布）；远端同步用 node --use-system-ca rebuild_history.mjs，且必须在仓库目录内执行。
 
+## 二十二、横屏「页脚不可达」缺陷的发现与修复（2026-11-09）
+
+### 缺陷
+
+横屏 844×390 下，三关的关卡面板（固定层 #mask 内的 .modal）比视口还高、却又滚不动，页脚控件整块落在视口外且无任何滚动路径可达：
+
+| 关卡 | 面板高度（V3 / V5） | .modal 规则 | 不可达控件（修复前实测） |
+|---|---|---|---|
+| game1-circuit | 575 / 575 | 无高度上限 + overflow:hidden | V1–V5 难度按钮 @447、换一个 ↻ @447（6 项全 out） |
+| game3-gems | 535 / 535 | 同上 | 换一关 ↻ @423 |
+| game8-targets | 661 / **683** | 同上 | 提交核验 @492、放弃 @492、静音 @492 |
+
+关键点：页面虽然「可滚」（game1 82px / game3 104px），但面板在 position:fixed 的 #mask 里，页面滚动根本不带动它；#mask 自身 overflow-y:visible、.modal 又是 overflow:hidden ——三处都不提供滚动路径，所以这些控件是真的点不到。（game8 的提交按钮因「选够数量即自动提交」而影响较小，game1 的难度切换与 game3 的换关则是实打实的功能丧失。）
+
+### 修复
+
+对照健康页：puzzle2 / game6 / admin 的 .modal 都写了 max-height:96vh;overflow-y:auto，且规则里没有 overflow:hidden —— 所以它们的页脚永远能滚到。按同一模板给三关补规则：
+
+1. .modal 增加 max-height:96vh;overflow-y:auto；
+2. 把规则**末尾**的 overflow:hidden 改成 overflow-x:hidden。
+
+> 第 2 步不可省：CSS 同规则内后者胜，末尾的 overflow:hidden 会把前面写的 overflow-y:auto 覆盖掉。我的第一版补丁就漏了这一步——面板被压到 374 但计算值仍是 overflow-y:hidden，探针里「滚到底后命中」是程序化设 scrollTop 造成的**假绿**；靠 getComputedStyle 复核 overflow-y 才抓到。
+
+### 复核（修复后）
+
+横屏 844×390，V3 与 V5 两档：三关 overflow-y 计算值均为 auto、**用户可滚**（scrollMax：game1 201 / game3 161 / game8 287）；滚到底后 V1–V5、换一个 ↻、换一关 ↻、放弃、提交核验**全部命中自身（:hit）**。
+
+竖屏 390×844 零回归：三关 pageScroll=0、contentFits=true（内容未超高，不产生滚动条）；游戏自检 game1「五档各 60 局全部通过、可解性检测失败 0 次」、game8「[G8-TEST] 自测全部通过」、game3 0 失败 0 异常。
+
+### 未改但记录在案
+
+- game4 / game7 / game9 的 .modal 同样没有高度上限，当前内容不超高（V5 时 game7 439、game4 443、game9 374）所以无碍；内容一长会重演同类问题，届时按同一条模板补（YAGNI，先不动）。
+- game7 的棋盘在 V5 时底行超出 81px，靠 .nono 自带的内部滚动兜住（设计内）；puzzle2 面板可滚、页脚需滚到底（设计内）；game5 的换一个超 11px 但页面可滚 61px（可达）。
+- docs/layout-viewport.md §二 已补一条判定：横屏除了「横向溢出=0」，还要保证**页脚与难度控件在可滚动容器内可达**——原口径只测横向溢出与页面内滚，所以漏掉了这一类。
+
+探针：measure_cells.mjs / measure_fold.mjs（两朝向的格子与折叠线测量）、submit_reach.mjs / landscape_reach2.mjs / landscape_reach3.mjs（可达性与仿真模式对照）、modal_reach.mjs / modal_matrix.mjs / modal_v5.mjs / g8_clip.mjs（面板几何与不可达清单）、modal_fix_verify.mjs / modal_fix_verify2.mjs（修复前后复核）、modal_fix_selftest.mjs（自检回归）。
+
+node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new --mute-audio --remote-debugging-port=9222；探针全部位于 _verify/endfield-captcha/（不随仓库发布）；远端同步用 node --use-system-ca rebuild_history.mjs，且必须在仓库目录内执行。
+
 
 ## 十六、`pz-failed` 失败分支闭环核验（2026-11-09：首次端到端实测）
 
