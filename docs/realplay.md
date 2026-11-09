@@ -463,6 +463,23 @@ node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new -
 
 探针：measure_cells.mjs / measure_fold.mjs（两朝向的格子与折叠线测量）、submit_reach.mjs / landscape_reach2.mjs / landscape_reach3.mjs（可达性与仿真模式对照）、modal_reach.mjs / modal_matrix.mjs / modal_v5.mjs / g8_clip.mjs（面板几何与不可达清单）、modal_fix_verify.mjs / modal_fix_verify2.mjs（修复前后复核）、modal_fix_selftest.mjs（自检回归）。
 
+## 二十三、控件可达性最终扫描：两朝向 × 九关 × 五档 = 90/90（2026-11-09）
+
+修复 game1/game3/game8 的横屏页脚之后，按**同一口径**把两个朝向整体扫一遍，作为横竖屏的最终结论。
+
+**判据（比早期版本严）**：对每关的 V1–V5 难度按钮、提交 / 换一个 / 换一关 / 放弃 等页脚控件逐个判定 —— 先在「滚动条归零」状态下看中心点是否命中自身；若不命中，**仅在容器真的用户可滚**时（`getComputedStyle` 的 `overflow-y` ∈ {auto, scroll}）滚到底再判一次；仍不命中则把页面滚到底再判一次。三次都不命中才判「不可达」。这条判据覆盖了「页面可滚但面板在 fixed 层里」这种早期漏掉的情形。
+
+| 视口 | 扫描次数 | 有不可达控件的组合 | 结论 |
+|---|---|---|---|
+| 竖屏 390×844（dpr3，触摸仿真） | 九关 × 五档 = 45 | **0** | 45/45 全绿 |
+| 横屏 844×390（dpr3，触摸仿真） | 九关 × 五档 = 45 | **0** | 45/45 全绿 |
+
+每关五档逐条均为 `ok`。探针：`landscape_final.mjs`（横屏）、`portrait_final.mjs`（竖屏，同一脚本换视口）；两者都在 `?direct=1&lv=N` 下加载，等页面稳定后逐项做 `elementFromPoint` 命中测试。
+
+**口径说明（与早期结论的差别）**：早先记录的「横屏 7/9 免滚动」测的是**棋盘与格子**是否可达；本次测的是**页脚控件**是否可达。两个口径合起来才是完整结论：横屏下 game1/game3/game8 的面板需要少量内滚（已修，见 §二十二）、puzzle2 面板需滚到底、game7 的棋盘靠 `.nono` 内部滚动 —— 但**没有任何一个控件是不可达的**。
+
+**未覆盖**：真机触摸手感（尺寸/帧率/发热）仍需人工在手机上跑；本套证据只覆盖 CDP 触摸仿真。
+
 node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new --mute-audio --remote-debugging-port=9222；探针全部位于 _verify/endfield-captcha/（不随仓库发布）；远端同步用 node --use-system-ca rebuild_history.mjs，且必须在仓库目录内执行。
 
 
