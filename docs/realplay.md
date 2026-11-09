@@ -317,6 +317,31 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 
 探针：`hooks3.mjs`（stage）、`fastcheck.mjs`（fast 计时）、`pausecheck.mjs`（pause）、`termreset.mjs` / `termwait2.mjs` / `termwait3.mjs`（reset 与 wait，含 150ms 高频采样抓 1.5s 超时窗口）。
 
+## 十八、admin 写面扫尾：发现并修复「危险区两步确认走不完」（2026-11-09）
+
+**缺陷（已修）**：三个危险操作（清空统计 / 重置配置 / 全部清空）用 `confirmTwice` 做两步确认，但**第二步模态刚打开就被关掉**，导致「执行」永远点不到、操作永远不执行。
+
+- 代码链：`showModal` 开头就 `closeModal()`（admin.html:570）；`showModal` 的按钮处理器在 `bd.onClick()` 未返回 `true` 时会再 `closeModal()`（:586-590）。而 `confirmTwice` 第一步「继续」的处理器里调用了第二段 `showModal(...)` 却没返回 `true`（:1965-1971）⇒ 第二段模态被立刻关闭。
+- 实测证据（修复前）：点「继续」后 DOM 内已无模态、`执行` 按钮 NOT_FOUND，`endland-stats` 哨兵值原封不动 ⇒ 三个按钮全是死路。
+- 修复：在「继续」处理器末尾 `return true;`（admin.html:1971-1972，附说明注释）。
+- 修复后实测：`继续` → `执行` 均命中且真的执行——**清空统计**（删除 `endland-stats`/`endland-matchlog`）、**重置配置**（`endland-admin-cfg` 删除后被 `loadCfg()` 立即重建为默认：`globalDist=20,20,20,20,20`）、**全部清空**（清空后仅剩 `endland-admin-cfg`（默认）与 `endland-hub-progress`，凭据/关卡/统计/用户键全删）。
+- 影响面：`confirmTwice` 仅被这三个按钮调用（admin.html:1896 / 1911 / 1928）。
+
+**本轮补齐的写面实测**
+
+| 写面 | 驱动方式 | 证据 |
+|---|---|---|
+| 难度 · 全局概率 | 键盘方向键调 `.ph` 手柄（`role="slider"`，admin.html:925-963） | 20,20,20,20,20 → **24,16,20,20,20**，面板 Σ 仍显示「100% · 合法」，`endland-admin-cfg.globalDist` 随之落库 |
+| 难度 · 关卡覆盖 | 25 个 `input[type=number]`（5 行 × 5 段）填 `[30,30,20,10,10]` → 点首行「保存覆盖」 | `levelDist = {"circuit":{"1":[30,30,20,10,10]}}`（非默认值） |
+| 帐户 · 改凭据 | `#acCur` 当前密码 + `#acP1`/`#acP2` 新密码 → 保存凭据 | 当前密码错 → `.msg`「当前密码不正确」且不写；正确 → `endland-admin-cred.pass=probe123456` + 「✓ 已保存。帐号 admin…」；再用「恢复默认 admin / 123456」走两步模态恢复成功 |
+| 危险区 · 三连 | 清空统计 / 重置配置 / 全部清空（各走两步模态） | 见上方修复后实测 |
+
+**未验证项（如实记下）**：全局概率条的**拖拽**路径——处理器链已触发（`pointerdown`→`pointermove`→`pointerup` 后弹出「全局概率已保存（Σ=100%）」，即 `end()` 里的 `saveCfg()` 执行了），但本探针环境里 `.pbar` 量到宽度 0（该面板容器 `display:none`，CSS 本身是正常块级 flex），坐标→百分比映射未能验证。键盘路径已完整验证数值写入。
+
+**回归**：`admin.html?selftest=1` → 15 条 `[ADMIN-TEST]`、0 异常、0 失败（`rendered menus` 全 `ok:true`）；`?selftest=1&pause=1` 仍停在登录门禁。
+
+探针：`admin_rest.mjs`…`admin_rest6.mjs`、`admin_diag.mjs`（定位模态被关）、`admin_selfcheck.mjs`（修复后回归）。本轮我自己的探针坑：注入表达式里夹了真换行、选择器猜错（真实是 `input[type=number]` 与 `.msg`，不是 `#number`/`.errline`）、CDP 鼠标事件不合成 pointer 事件。
+
 ## 十六、`pz-failed` 失败分支闭环核验（2026-11-09：首次端到端实测）
 
 `docs/conventions.md` §二 把失败消息定为 `{type:'pz-failed', device, lv, moves}`，并规定「仅当 window.parent !== window 时才发送」。此前只有 `pz-solved` 有端到端证据，失败分支从未实测。

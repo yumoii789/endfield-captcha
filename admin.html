@@ -1968,6 +1968,8 @@ function confirmTwice(title, what, run) {
         body: '<p class="small">最后确认：真的要执行「<b>' + esc(title) + '</b>」吗？</p>',
         buttons: [{ label: '放弃' }, { label: '执行', cls: 'danger', onClick: function () { run(); } }]
       });
+    /* 第二段模态已由 showModal 替换打开；这里必须返回 true，否则外层处理器会立刻 closeModal() 把它关掉，导致「执行」永远点不到（已实测） */
+    return true;
     } }]
   });
 }
