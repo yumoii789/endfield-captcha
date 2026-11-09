@@ -97,7 +97,7 @@
 - `g5band.mjs`（game5：各档采样 `{k,min}` 分布，判定容忍带在哪些档位存在）、`g5probe2.mjs`（容忍带局的纯失误路径，期望星级随 MCAP 变）
 - `touch_smoke.mjs`（九关触摸点击到达性 + 触摸完整通关）、`g9touch.mjs`（game9 触摸拖拽通关）、`g9touchdiag.mjs`（触摸事件计数与几何诊断，用于排除探针自身问题）
 - `vpsweep.mjs`（九关 × 4 手机视口的横向溢出/纵向内滚扫描，定位越界元素）、`p2clip.mjs` / `p2why.mjs` / `p2verify.mjs`（puzzle2 棋盘裁切取证、计算样式与修复前后几何核对）、`vpsweep_shell.mjs`（terminal/hub/admin 入口页同款扫描 + 控件遮挡命中测试）、`admin_land.mjs`（横屏下登录键可达性取证）
-- `phone_clear.mjs`（手机视口 390×844 + 触摸事件下六关真实通关）、`shapes.mjs`（dump 各关解字段的运行时形状，供写计划前先验证）、`selftest_all.mjs`（逐关跑 `?selftest=1` 并捕获 console，作为改动后的不变量回归）、`p2relayout.mjs` / `p2relayout2.mjs`（puzzle2 旋转后尺寸重算与状态保留、旋转后继续放置）、`boardvis.mjs`（九关棋盘/交互区是否落在首屏内，竖屏与横屏对照）、`scrollreach.mjs`（滚动后逐个命中测试，用于区分"点不到"与"要先滚一下"）、`consoleclean.mjs`（线上逐页捕获异常与 console error，两方向扫描）、`where.mjs` / `parts.mjs` / `dumppanel.mjs`（单元素定位、高度分解、面板内部构成）、`termjourney.mjs`（主线流程真实通关：清档→注册→匹配→在终端 iframe 内真玩抽到的关卡→读回写）、`hubcards.mjs`（hub 九卡逐张点开并用各关自身状态信号确认就绪）、`adminmenus.mjs`（admin 人机验证+登录+六菜单逐个切换）、`seedcheck.mjs`（`?seed` 复现性逐关实测）、`rootredir.mjs`（根路径跳转与 https 下 localStorage 可写）
+- `phone_clear.mjs`（手机视口 390×844 + 触摸事件下六关真实通关）、`shapes.mjs`（dump 各关解字段的运行时形状，供写计划前先验证）、`selftest_all.mjs`（逐关跑 `?selftest=1` 并捕获 console，作为改动后的不变量回归）、`p2relayout.mjs` / `p2relayout2.mjs`（puzzle2 旋转后尺寸重算与状态保留、旋转后继续放置）、`boardvis.mjs`（九关棋盘/交互区是否落在首屏内，竖屏与横屏对照）、`scrollreach.mjs`（滚动后逐个命中测试，用于区分"点不到"与"要先滚一下"）、`consoleclean.mjs`（线上逐页捕获异常与 console error，两方向扫描）、`where.mjs` / `parts.mjs` / `dumppanel.mjs`（单元素定位、高度分解、面板内部构成）、`termjourney.mjs`（主线流程真实通关：清档→注册→匹配→在终端 iframe 内真玩抽到的关卡→读回写）、`hubcards.mjs`（hub 九卡逐张点开并用各关自身状态信号确认就绪）、`adminmenus.mjs`（admin 人机验证+登录+六菜单逐个切换）、`seedcheck.mjs`（`?seed` 复现性逐关实测）、`rootredir.mjs`（根路径跳转与 https 下 localStorage 可写）、`diffbtns.mjs`（页内 V1–V5 难度按钮逐档点击：档位变量 + 新题面双断言）
 
 ## 八、C 轮：失误门控的真实点击复验（当前 HEAD，2026-11-07）
 
@@ -254,6 +254,27 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 **附带印证**：`matchlog` 的 `lv` 与抽到的档位一致（V5/V4），说明历史上"终端流程里 `?lv=` 失效、难度永远 V1"的坑确实已修（见 `docs/difficulty-axis.md`）。
 
 **探针限制（如实记录）**：终端收到 `pz-solved` 后先 `logStats`、再打印成功文字、随即 `location.href` 跳到 `hub.html`；跳转后 CDP 的执行上下文销毁，故探针读 `#screen` 常得到空串。**功能性完成由 `pass:true` 与 `lv` 正确性证明**，不依赖那段可见文字。
+
+## 十三、页内难度切换按钮实测（此前只用过 `?lv=`，按钮从未被点过）
+
+`level-spec.md` §四 声明"挑战界面顶部加难度选择：V1–V5 五个切换按钮（当前高亮），**切换即按新难度重开一局**"。此前所有探针都靠 URL 的 `?lv=` 设档，**这些按钮本身从未被验证**——若某关按钮失效，用户就无法在页内换档。
+
+**方法**：`diffbtns.mjs` —— 390×844 触摸，逐关加载 `?direct=1&lv=1`，然后**依次点击 V1→V5 五个按钮**（每次点击前重取坐标、必要时滚入视口），每次断言两件事：① 该关的档位变量等于所点档位；② 题面签名与上一次不同（即真的重开了一局）。
+
+| 关卡 | 按钮定位 | 结果 |
+|---|---|---|
+| game1-circuit | `.lvbtns button`（第 N 个） | 5/5 |
+| puzzle2 | `#lvBar .lvbtn[data-lv]` | 5/5 |
+| game3-gems | `#tabs .tab`（第 N 个） | 5/5 |
+| game4-camping | `#diffBar .diffbtn[data-lv]` | 5/5 |
+| game5-lights | 同上 | 5/5 |
+| game6-code | 同上 | 5/5 |
+| game7-nonogram | 同上 | 5/5 |
+| game8-targets | `.diffbtn`（第 N 个） | 5/5 |
+| game9-slide | `#diffBar .diffbtn[data-lv]` | 5/5 |
+
+**合计 9 关 × 5 档 = 45/45 起效**（每档均为"档位变量✔ + 新题面✔"）。题面签名取各关自身状态（game1 每块旋转数、puzzle2 块列表、game3 关卡 id、game4 帐篷坐标、game5 init+k、game6 secret、game7 尺寸+答案、game8 尺寸+目标数、game9 盘面大小+参考步数）。
+
 
 
 
