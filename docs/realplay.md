@@ -317,6 +317,27 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 
 探针：`hooks3.mjs`（stage）、`fastcheck.mjs`（fast 计时）、`pausecheck.mjs`（pause）、`termreset.mjs` / `termwait2.mjs` / `termwait3.mjs`（reset 与 wait，含 150ms 高频采样抓 1.5s 超时窗口）。
 
+## 十六、`pz-failed` 失败分支闭环核验（2026-11-09：首次端到端实测）
+
+`docs/conventions.md` §二 把失败消息定为 `{type:'pz-failed', device, lv, moves}`，并规定「仅当 window.parent !== window 时才发送」。此前只有 `pz-solved` 有端到端证据，失败分支从未实测。
+
+**静态核对（全仓 13 个发送点）**：`pz-solved` 九关都发；`pz-failed` 由四关发——game3 `onDead()`（game3-gems.html:634）、game6 提交耗尽（game6-code.html:777）、game7 错误阈值（game7-nonogram.html:713）、game8 误点 2 次（game8-targets.html:423）。**13 个发送点全部位于 `window.parent && window.parent!==window` 判断之内**，顶层直开不发，与文档一致。消费方两处：hub.html:169-172（写统计 + toast）、terminal.html:141（结算进「通关失败」分支）。
+
+**端到端实测**（`failclose.mjs`：以 hub.html 为父页，注入同源探针 iframe，调用各关自己的失败出口）：
+
+| 关卡 | 父页收到的 payload | hub 反应 |
+|---|---|---|
+| game8-targets | `{type:'pz-failed',device:'V-40060',lv:3,moves:0}` | toast「设备 V-40060 本轮未通过 — 再试一次？」· `endland-stats` 新增 `{stars:0,pass:false}` |
+| game3-gems | `{type:'pz-failed',device:'V-40056',lv:3,moves:0}` | toast「设备 V-40056 本轮未通过 — 再试一次？」· 同上 |
+
+（`moves:0` 是探针直接调失败出口、没先做误点所致；误点路径的步数语义见 `docs/star-rubric.md` §四。）
+
+**结论：契约成立，无缺陷。** 两点观察（不构成缺陷，未改代码）：
+
+- 五关（game1 / puzzle2 / game4 / game5 / game9）不发 `pz-failed`——它们没有失败态（可一直重试），不是漏接线。
+- game6 / game7 的失败 payload 额外带了 `game` 字段（契约只要求 device/lv/moves）；而 hub 在失败分支固定写 `game:''`（hub.html:170），即父页不读失败消息里的 `game`。
+
+
 
 
 
