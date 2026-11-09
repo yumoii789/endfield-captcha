@@ -35,8 +35,13 @@ bash /d/mo/dshweb/deploy-wizard.sh
   - V-40059 game7 **V4**：32 次触摸通关，`stats {game:"nonogram",stars:3,moves:32,pass:true}`
   
   说明：终端在 `settleResult` 收到真实 `pz-solved` 后调用 `logStats` 写入 `pass:true`，随后打印「通关成功 / 用户通关数据 / 身份验证成功」并跳转 `hub.html`（正因立即跳转，探针难以在其前抓到那段可见文字；功能性完成由 `pass:true` 与 `lv` 正确性证明）。
-- [ ] `hub.html` 9 张设备卡片全部可点击
-- [ ] `admin.html` admin/123456 登录 → 六个菜单切换正常
+- [x] `hub.html` 9 张设备卡片全部可点击
+  —— **线上 9/9 逐张真点**（`hubcards.mjs`）：每张卡点开后，用**该关自己的游戏状态信号**确认已就绪，而非只看 DOM 存在：
+  `V-40053 pz.tiles` · `V-40054 pz.pieces` · `V-40055 pz.sol` · `V-40056 bestSteps+cur+49 个 .spot` · `V-40057 pz.sol` · `V-40058 pz.secret` · `V-40059 pz.answer` · `V-40060 pz.targetCount` · `V-40061 pz.ref+board`。
+  注：hub 传的是 `?direct=1&lv=N`（hub.html:134）；game3 的 `?direct=1` 语义是"延时后自动点人机验证框"（game3-gems.html:784），故其就绪信号是 `bestSteps/cur` 而非 `pz`。
+- [x] `admin.html` admin/123456 登录 → 六个菜单切换正常
+  —— **线上 6/6**（`adminmenus.mjs`）：人机验证勾选 → 真实键入 admin/123456 → 登录键由 disabled 变可用 → 进入控制台（`who=admin`），六个菜单逐个点击后 `#pgTitle` 与菜单名一致：状态 / 难度 / 关卡管理 / 帐户 / 统计 / 高级。
+  注：**每次点击前必须重取坐标**——首轮未重取时后 3 个菜单点不动（表现为 3/6），实为坐标过期/落在视口外，非产品缺陷。
 - [ ] 浏览器地址栏为 https（localStorage 在 http 下会被部分浏览器拒绝）
 
 ## 备选：Cloudflare Pages / Netlify
