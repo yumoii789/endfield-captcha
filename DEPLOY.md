@@ -27,7 +27,8 @@ bash /d/mo/dshweb/deploy-wizard.sh
 向导分 4 阶段自动完成：网页建空仓库（附地址）→ `remote add` + `push`（首次弹 GitHub 授权，点一次 Authorize）→ 指路开启 Pages → 打开站点复验。中断可重跑，已记住仓库地址。
 
 ### 部署后复验清单（必做）
-- [ ] 首页 `/` 或 `/index.html` 跳转到验证终端
+- [x] 首页 `/` 或 `/index.html` 跳转到验证终端
+  —— 线上实测（`rootredir.mjs`）：`/` → `/endfield-captcha/terminal.html`（标题「访客协议 VISITOR PROTOCOL · 人机验证终端」）；`/index.html` 同样跳转。均为 https。
 - [x] 终端注册 → 匹配 → 随机打开一个游戏 → 通关 → 回到身份验证成功
   —— **已用真实触摸在线上跑通 3 次**（`termjourney.mjs`，`?debug=1` 仅加速打字）：
   - V-40057 game5 **V5**：12 次触摸通关，`matchlog {game:"lights",id:"V-40057-lv5",lv:5}`、`stats {stars:3,moves:12,pass:true}`
@@ -42,7 +43,8 @@ bash /d/mo/dshweb/deploy-wizard.sh
 - [x] `admin.html` admin/123456 登录 → 六个菜单切换正常
   —— **线上 6/6**（`adminmenus.mjs`）：人机验证勾选 → 真实键入 admin/123456 → 登录键由 disabled 变可用 → 进入控制台（`who=admin`），六个菜单逐个点击后 `#pgTitle` 与菜单名一致：状态 / 难度 / 关卡管理 / 帐户 / 统计 / 高级。
   注：**每次点击前必须重取坐标**——首轮未重取时后 3 个菜单点不动（表现为 3/6），实为坐标过期/落在视口外，非产品缺陷。
-- [ ] 浏览器地址栏为 https（localStorage 在 http 下会被部分浏览器拒绝）
+- [x] 浏览器地址栏为 https（localStorage 在 http 下会被部分浏览器拒绝）
+  —— 线上所有被验收页面 `location.protocol` 均为 `https:`；并在 https 下实测 `localStorage.setItem/getItem` 可读写（`OK:1`）。
 
 ## 备选：Cloudflare Pages / Netlify
 - 直接拖拽 `endfield-captcha` 文件夹到 Dashboard 的部署入口即可，同样跳过 `_gt_srv.js`。
