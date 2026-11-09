@@ -297,6 +297,27 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 
 遗留（只改文档、未动代码）：`LEVELS_META` 仅定义于 game3/game4/game6/game8/game9，game1/puzzle2/game5/game7 没有；当前没有任何页面消费它（管理后台未接入），故本轮把 `docs/level-spec.md` 的表述改成实况，未给四关补该变量。
 
+## 十五、钩子契约逐项行为核验（2026-11-09：`?stage` / `?fast` / `?pause` / `?reset` / `?wait`）
+
+`docs/conventions.md` 的钩子表此前只有 `?lv`/`?seed`/`?selftest`/`?export` 真正实测过；本轮把余下五项逐条跑到行为层。
+
+| 钩子 | 文档口径 | 实现位置 | 行为证据 | 结论 |
+|---|---|---|---|---|
+| `?stage=N` | 仅 game3：关卡号，优先于 `?lv` | game3-gems.html:772-779 | 导出 id 形如 `'gems-'+L.id+'-'+随机四位`（game3-gems.html:742）：`?stage=1`→`gems-1-*`、`?stage=3`→`gems-3-*`、`?stage=3&lv=1`→`gems-3-*`（中段是关卡号，故优先级成立） | ✔ |
+| `?fast=1` | 仅 game8：跳过动画/加速 | game8-targets.html:184/410/549/572 | `#mask` 显形耗时：常规 600/620ms，`?fast=1` **39/42ms** | ✔（修复后） |
+| `?pause=1` | 仅 admin：自测时停在登录门禁 | admin.html:2228-2237 | `admin.html?selftest=1&pause=1` → console 出现 `[ADMIN-TEST] pause=1：停留登录界面…`（2 条），登录界面仍在 | ✔ |
+| `?reset=1` | 仅 terminal：清空 `endland-user` | terminal.html:151-152 | 播种 `{name:'哨兵乙'}` 后带 reset 打开：打印「档案已清除，重新注册」、localStorage 不再含哨兵乙、随后按输入重建档案（含「探针」） | ✔ |
+| `?wait=N` | 仅 terminal：结果等待超时（默认 600000） | terminal.html:61/143 | `?wait=2500`：iframe 出现后 **+2.3s** 打印「设备无响应（等待超时），连接已中止」→ 数据行 → 失败台词 → 跳 hub | ✔ |
+
+**本轮修掉的缺陷（game8）**：`?direct=1&fast=1` 下面板永不显形。原因：直通分支在 `box.onclick` 接线（game8-targets.html:561）**之前**同步执行 `$id('captchaBox').click()`，而 FAST 走的正是这条同步路径，点击落空；非 FAST 路径因为 `setTimeout(…,150)` 反而正常。已改成 FAST 也延到下一轮事件循环（`setTimeout(…,0)`）并留注释：实测 42ms vs 修复前「3s 内从不显形」。
+
+**已确认不是缺陷**：`mistakes` 字段。`docs/conventions.md:28` 明写「父页当前不读取它（hub.html / terminal.html 均未改动）」，与实现一致——terminal.html 内没有任何 `mistakes` 引用（grep 只命中一句台词里的「失误」二字）。
+
+**待定（只记录，未改代码）**：terminal 在失败/超时后仍会打印「身份验证成功」并跳转 hub（terminal.html:198-209 无条件执行），与上一行「设备无响应（等待超时），连接已中止」口径相冲。属产品口径问题，交你定夺。
+
+探针：`hooks3.mjs`（stage）、`fastcheck.mjs`（fast 计时）、`pausecheck.mjs`（pause）、`termreset.mjs` / `termwait2.mjs` / `termwait3.mjs`（reset 与 wait，含 150ms 高频采样抓 1.5s 超时窗口）。
+
+
 
 
 

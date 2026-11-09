@@ -546,7 +546,9 @@ function bootChallenge(){
   onReady();
 }
 if(qs.get('direct')==='1'){
-  if(FAST)$id('captchaBox').click();else setTimeout(function(){ $id('captchaBox').click() },150);
+  /* FAST 也必须延到下一轮事件循环：点击处理器在下方（box.onclick）才接线，
+     同步 click 会落空，导致 ?direct=1&fast=1 时面板永不显形（已实测）。 */
+  if(FAST)setTimeout(function(){ $id('captchaBox').click() },0);else setTimeout(function(){ $id('captchaBox').click() },150);
 }else if(qs.get('selftest')==='1'){
   var okAll=selftest();
   console.log(okAll?'[G8-TEST] 自测全部通过':'[G8-TEST] 自测存在失败项');

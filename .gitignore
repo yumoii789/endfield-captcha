@@ -3,3 +3,5 @@ gitsetup.exe
 开发记录/
 _gt_srv.out
 *.out
+*sync*.log
+D*modshweb*
