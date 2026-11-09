@@ -8,6 +8,7 @@
 - **注意**：本机网络的 git 智能 HTTP 端点不可达（`Recv failure: Connection was reset`，重试 4 次均失败），故线上内容经 **GitHub Git Data API** 上传。
 - **远端历史已与本地完全对齐**：以 `rebuild_history.mjs` 逐条重放本地提交（保留作者、提交时间与消息），重建后**每个提交的 SHA 与本地逐一相同**——git 内容寻址使然。因此不再需要 `--force`；日后在任何能连通 `github.com:443` 的网络下正常 `git push` 即可。
 - **重放的两个坑（都已实测）**：① 脚本靠进程 cwd 调 `git`，必须在仓库目录内执行（`cd endfield-captcha && node …/rebuild_history.mjs`），否则报 `not a git repository`；② 若报 `UNABLE_TO_VERIFY_LEAF_SIGNATURE`（网络侧证书链偶发不完整），改用 `node --use-system-ca …/rebuild_history.mjs` 走系统根证书即可。
+- **重放的第三个坑（2026-11-09 实测）**：本机是经本地代理出网的，代理一旦挂掉，`api.github.com` / `github.com` 会变成 `ECONNREFUSED 127.0.0.1:443`（而 `*.github.io` 仍 200，所以**线上站点看着正常、只是推不上去**）。此时本地提交照常做，等代理恢复后用同一条命令重跑即可（重放幂等、SHA 稳定，不会产生分叉）。判定方法：`curl -m 12 -o /dev/null -w "%{http_code}" https://api.github.com`（000 即为不通）。
 - 相关脚本（位于 `_verify/endfield-captcha/`，不随仓库发布）：`rebuild_history.mjs`（逐条重放全部提交，幂等且 SHA 稳定，**推荐**）、`push_via_api.mjs`（首次铺设）、`sync_via_api.mjs`（快照式同步，会产生新 SHA）。
 
 ## GitHub Pages（推荐）
