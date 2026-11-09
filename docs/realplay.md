@@ -97,7 +97,7 @@
 - `g5band.mjs`（game5：各档采样 `{k,min}` 分布，判定容忍带在哪些档位存在）、`g5probe2.mjs`（容忍带局的纯失误路径，期望星级随 MCAP 变）
 - `touch_smoke.mjs`（九关触摸点击到达性 + 触摸完整通关）、`g9touch.mjs`（game9 触摸拖拽通关）、`g9touchdiag.mjs`（触摸事件计数与几何诊断，用于排除探针自身问题）
 - `vpsweep.mjs`（九关 × 4 手机视口的横向溢出/纵向内滚扫描，定位越界元素）、`p2clip.mjs` / `p2why.mjs` / `p2verify.mjs`（puzzle2 棋盘裁切取证、计算样式与修复前后几何核对）、`vpsweep_shell.mjs`（terminal/hub/admin 入口页同款扫描 + 控件遮挡命中测试）、`admin_land.mjs`（横屏下登录键可达性取证）
-- `phone_clear.mjs`（手机视口 390×844 + 触摸事件下六关真实通关）、`shapes.mjs`（dump 各关解字段的运行时形状，供写计划前先验证）、`selftest_all.mjs`（逐关跑 `?selftest=1` 并捕获 console，作为改动后的不变量回归）、`p2relayout.mjs` / `p2relayout2.mjs`（puzzle2 旋转后尺寸重算与状态保留、旋转后继续放置）、`boardvis.mjs`（九关棋盘/交互区是否落在首屏内，竖屏与横屏对照）、`scrollreach.mjs`（滚动后逐个命中测试，用于区分"点不到"与"要先滚一下"）、`consoleclean.mjs`（线上逐页捕获异常与 console error，两方向扫描）、`where.mjs` / `parts.mjs` / `dumppanel.mjs`（单元素定位、高度分解、面板内部构成）
+- `phone_clear.mjs`（手机视口 390×844 + 触摸事件下六关真实通关）、`shapes.mjs`（dump 各关解字段的运行时形状，供写计划前先验证）、`selftest_all.mjs`（逐关跑 `?selftest=1` 并捕获 console，作为改动后的不变量回归）、`p2relayout.mjs` / `p2relayout2.mjs`（puzzle2 旋转后尺寸重算与状态保留、旋转后继续放置）、`boardvis.mjs`（九关棋盘/交互区是否落在首屏内，竖屏与横屏对照）、`scrollreach.mjs`（滚动后逐个命中测试，用于区分"点不到"与"要先滚一下"）、`consoleclean.mjs`（线上逐页捕获异常与 console error，两方向扫描）、`where.mjs` / `parts.mjs` / `dumppanel.mjs`（单元素定位、高度分解、面板内部构成）、`termjourney.mjs`（主线流程真实通关：清档→注册→匹配→在终端 iframe 内真玩抽到的关卡→读回写）
 
 ## 八、C 轮：失误门控的真实点击复验（当前 HEAD，2026-11-07）
 
@@ -236,6 +236,25 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 全日志 **0 处 FAIL**（各关的"失败/拒绝/超限"计数均为 0）。
 
 **一处交叉印证**：game5 自检的 lv4 行为 `k∈[8,10] · 生成 k=10 · 最优 7 步`，与 §八之三 独立测得的"V4 才出现 `k>min` 容忍带"完全一致——两条互不相关的路径得到同一结论。
+
+## 十二、主线流程（终端身份验证）真实通关复验
+
+前述各节验证的是"各关能玩"；本节验证**项目的主线框架**——终端抽题 → 真实游玩 → 回写。此前该流程只有 **合成消息**验证（`termwin.mjs` 用 `eval` 直接 `postMessage`），DEPLOY.md 清单第 2 项因此长期未勾选。
+
+**方法**：`termjourney.mjs` —— 清空档案 → 线上 `terminal.html` 注册 → 等匹配 → 在其 `#frame` iframe 内**用触摸事件真玩随机抽到的那一关** → 读 `endland-matchlog` 与 `endland-stats`。抽到无内置真解法的关（puzzle2）或 iframe 未就绪时自动重抽。
+
+**线上实测（3 次真实通关）**：
+
+| 抽到的设备/难度 | 触摸次数 | matchlog | stats |
+|---|---|---|---|
+| V-40057 game5 **V5** | 12 | `{game:"lights",id:"V-40057-lv5",lv:5}` | `{stars:3,moves:12,pass:true}` |
+| V-40057 game5 **V4** | 7 | `{id:"V-40057-lv4",lv:4}` | `{stars:3,moves:7,pass:true}` |
+| V-40059 game7 **V4** | 32 | `{game:"nonogram",id:"V-40059-lv4",lv:4}` | `{game:"nonogram",stars:3,moves:32,pass:true}` |
+
+**附带印证**：`matchlog` 的 `lv` 与抽到的档位一致（V5/V4），说明历史上"终端流程里 `?lv=` 失效、难度永远 V1"的坑确实已修（见 `docs/difficulty-axis.md`）。
+
+**探针限制（如实记录）**：终端收到 `pz-solved` 后先 `logStats`、再打印成功文字、随即 `location.href` 跳到 `hub.html`；跳转后 CDP 的执行上下文销毁，故探针读 `#screen` 常得到空串。**功能性完成由 `pass:true` 与 `lv` 正确性证明**，不依赖那段可见文字。
+
 
 
 

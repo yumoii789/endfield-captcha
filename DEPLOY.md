@@ -28,7 +28,13 @@ bash /d/mo/dshweb/deploy-wizard.sh
 
 ### 部署后复验清单（必做）
 - [ ] 首页 `/` 或 `/index.html` 跳转到验证终端
-- [ ] 终端注册 → 匹配 → 随机打开一个游戏 → 通关 → 回到身份验证成功
+- [x] 终端注册 → 匹配 → 随机打开一个游戏 → 通关 → 回到身份验证成功
+  —— **已用真实触摸在线上跑通 3 次**（`termjourney.mjs`，`?debug=1` 仅加速打字）：
+  - V-40057 game5 **V5**：12 次触摸通关，`matchlog {game:"lights",id:"V-40057-lv5",lv:5}`、`stats {stars:3,moves:12,pass:true}`
+  - V-40057 game5 **V4**：7 次触摸通关，`stats {stars:3,moves:7,pass:true}`
+  - V-40059 game7 **V4**：32 次触摸通关，`stats {game:"nonogram",stars:3,moves:32,pass:true}`
+  
+  说明：终端在 `settleResult` 收到真实 `pz-solved` 后调用 `logStats` 写入 `pass:true`，随后打印「通关成功 / 用户通关数据 / 身份验证成功」并跳转 `hub.html`（正因立即跳转，探针难以在其前抓到那段可见文字；功能性完成由 `pass:true` 与 `lv` 正确性证明）。
 - [ ] `hub.html` 9 张设备卡片全部可点击
 - [ ] `admin.html` admin/123456 登录 → 六个菜单切换正常
 - [ ] 浏览器地址栏为 https（localStorage 在 http 下会被部分浏览器拒绝）
