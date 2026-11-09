@@ -335,7 +335,37 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 **结论：契约成立，无缺陷。** 两点观察（不构成缺陷，未改代码）：
 
 - 五关（game1 / puzzle2 / game4 / game5 / game9）不发 `pz-failed`——它们没有失败态（可一直重试），不是漏接线。
-- game6 / game7 的失败 payload 额外带了 `game` 字段（契约只要求 device/lv/moves）；而 hub 在失败分支固定写 `game:''`（hub.html:170），即父页不读失败消息里的 `game`。
+- game6 / game7 的失败 payload 额外带了 `game` 字段（契约只要求 device/lv/moves）；- game6 / game7 的失败 payload 额外带了 `game` 字段（契约只要求 device/lv/moves）；而 hub 在失败分支固定写 `game:''`（hub.html:170），即父页不读失败消息里的 `game`。
+
+## 十七、admin 写操作闭环核验（2026-11-09：写入 → 落库 → 刷新回读 → 消费方生效）
+
+admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有真实消费方**的写面跑到闭环；登录门禁按真实流程过（点 `#lgGate` → 口令 `CRED_DEFAULT` admin/123456，admin.html:381）。
+
+**① 高级面板 · redirect（消费方：terminal）**
+
+| 步骤 | 证据 |
+|---|---|
+| 写入 | 点「保存 redirect」→ toast「已保存 redirect = https://example.com/probe-xyz」 |
+| 落库 | `endland-admin-cfg` 含 `probe-xyz` |
+| 刷新回读 | 重载后台仍直入（取 sessionStorage 会话），`#adRedirect` 回读值与写入值一致 |
+| 消费方生效 | terminal（`?selftest=1`）走外链分支：渲染 `a.jbtn` =「前往 https://example.com/probe-xyz」+ href 正确，且不自动跳转（与 terminal.html:200-204 一致） |
+| 反向回写 | 同一次 terminal 访问后 `endland-admin-cfg` 新增 `visitByDate`（terminal.html:148） |
+| 收尾 | redirect 已还原为 `hub.html` |
+
+**② 关卡管理面板 · 自定义关卡（消费方：九关的 `readCustomLevels`）**
+
+- **两侧同键**：game5 自检写入 5 条（`{n:5, id:lights-1-sample5xc9, hasInit:true}`）后，admin 面板的游戏按钮计数为「灯光矩阵 5 / V-40057」（其余为 源石电路 0 / 方块拼装 0 / 宝石神偷 0 / 露营达人 0，另有若干关因此前自检留有数据）——admin 读到的是游戏写的那份。
+- **合法写入落库**：点「写入样例（走同一校验）」→ `endland-levels-lights` 5 → 6，新条 id `lights-mw912cng-xy`。
+- **非法写入被拦**：点「写入一个非法样例」→ 校验行原文「✕ 校验未通过（1/1 条），未写入任何数据：· 第 1 条：lv 必须是 1–5 的整数（实际：9）；缺少 params 或 hand（关卡定义体）」，条数不变。
+- **真上传通道**：用 `DOM.setFileInputFiles` 往 `#upFile`（admin.html:1323）喂入「game5 导出格式」的 JSON（由自检样例改造，含 `params.initial`）→ 游戏端 `[GT-INIT]` 的 `custom` 计数从 5 变 6。
+- **游戏真播这条自定义关**：`game5-lights.html?lv=3` 页面内 `pz.custom = 'lights-3-samplegg6j'`，`#paramLine` 显示「参数 V3 · 网格 4×4 · 抖动上限 k=5-7 · 满星 ≤3 步满星 · 本题 k=6 · **自定义关卡 lights-3-samplegg6j**」。
+
+**结论：两条写面闭环成立，无缺陷。** 一处**约定**说明（不是缺陷）：admin 的「合法样例」是通用生成型参数（`params:{n:…}`），而 game5 只采用带 `params.initial` 的自定义关（game5 `pickQueuedLevel`），所以样例会被读入、不会被 game5 采用；文档规定的流程是「拿该关 `?export=1` 的 JSON 上传」，该流程本轮已实测可用（`pz.custom` 即证据）。
+
+**尚未实测的写面（如实记下）**：难度面板「保存全局概率 / 保存覆盖」（admin.html:1035 一路）、帐户面板改凭据（:1580）、高级面板危险区「清空统计 / 重置配置 / 全部清空」（:1897/:2088）。
+
+探针：`admin_write.mjs`（redirect 闭环）、`admin_levels_write.mjs`（样例写入 + 非法拦截）、`admin_upload.mjs` / `admin_upload2.mjs`（`#upFile` 真上传 + `pz.custom` 判定）、`admin_levels_inv2.mjs`（面板计数与游戏写入一致性）。本轮我自己的两个探针坑：正则里 `\n` 被展开成真换行导致浏览器端语法错误、一处括号不平衡——都属探针问题，不是产品问题。
+
 
 
 
