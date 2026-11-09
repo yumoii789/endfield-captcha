@@ -229,3 +229,10 @@
 **竖屏零回归（逐项相同）**：game4 `394–636`、game6 `503–543`、game3 `357–659`、game9 `396–706`、game5 `403–717` 改动前后完全一致——所有新规则都只在 `max-height:520px` 生效。
 
 **自动化注意**：`phone_clear.mjs` / `clear_p2.mjs` 不滚动，故 game7 与 puzzle2 的横屏"失败"是探针行为而非产品缺陷；判读时须区分"点不到"与"要先滚一下"。
+
+### 八之四、加载期异常与 console 报错扫描（线上，两方向全清）
+
+**方法**：`consoleclean.mjs` —— 在**线上站点**逐页加载 `?direct=1&lv=1`，捕获 `Runtime.exceptionThrown` 与 `Runtime.consoleAPICalled(type=error)`。
+
+**结果：12 个页面 × 2 种方向（390×844 竖 / 844×390 横）= 24 次加载，全部 clean**（0 异常、0 console error）：hub、terminal、admin、game1、puzzle2、game3、game4、game5、game6、game7、game8、game9。
+
