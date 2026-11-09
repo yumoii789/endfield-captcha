@@ -385,6 +385,48 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 
 **我自己的工具坑（两次踩到，记此备查）**：`grep` 工具上限 250 条匹配，我先后因截断误判「game8/game9 不显示设备号」与「§5.1 只列 7 台」——两次都是假象；用窄模式或分次 grep 才能得到完整结论。
 
+## 二十一、交付摘要（2026-11-09 · 本会话）
+
+范围：九关拼图验证套件「访客协议」（hub → iframe 关卡 → terminal → admin）。本会话在既有基线上做「文档承诺 vs 实测」的逐条核验与修复。
+
+### 修掉的真缺陷（4 处，均有修复前后证据）
+
+1. **game9 滑块 P0 渲染**：doMove 把移动前后的空格写反 → 方块消失 + 幽灵 0 + 消失方块不可点；selftest 全绿却可复现，逐步比对定位到首步分歧。
+2. **?export=1 断线（提交 fd3b6bc）**：game5 的 bootChallenge() 漏调 onReady()（该函数成死代码）；game4/game7 的「验证成功」回调不调 onReady()；game9 的 ?direct=1 分支漏导出。修后 4 关 × 2 条入口路径共 8/8 都打 INIT+EXPORT、字段齐全。
+3. **game8 ?direct=1&fast=1 面板永不显形（提交 b5dcdc6）**：直通分支在 box.onclick 接线之前同步 click()，而 FAST 走的正是这条同步路径。修后 42ms，常规路径 620ms。
+4. **admin 危险区两步确认走不完（提交 d25a73e）**：confirmTwice 打开第二段 showModal 后未返回 true，被外层 closeModal() 立刻关掉 ⇒ 清空统计 / 重置配置 / 全部清空三个按钮全是死路。修前实测：点「继续」后 DOM 内已无模态、执行按钮 NOT_FOUND、哨兵数据未被清。
+
+本会话更早已修复并验证：puzzle2 手机竖屏格子尺寸反算（含旋转后重排）、game5/game4/game6 横屏元素不可达（棋盘或提交按钮落到折叠线以下）、game3/game9 横屏留白压缩。
+
+### 本会话完成的契约核验（全部有实测证据）
+
+1. 导出契约：九关 ?export=1（?direct=1 与普通进入两条路径）→ 9/9，game/id/lv/name/desc/play/params/enabled 齐全、0 异常（§十四）。
+2. 钩子契约：?stage / ?fast / ?pause / ?reset / ?wait 五项逐条行为核验通过（§十五）。
+3. postMessage 契约：pz-solved 九关都发、pz-failed 四关发（game3/6/7/8）；13 个发送点全部在父窗判断内；以 hub 为父页实测失败分支闭环（toast + stars:0/pass:false 落库）（§十六）。
+4. admin 写面：redirect、自定义关卡上传/样例写入/非法拦截、难度全局分布（键盘手柄）、关卡覆盖、改凭据、危险区三连——全部落到 localStorage，有消费方的都在 terminal/游戏端生效（§十七/§十八）。
+5. 文档一致性：dom-consistency 的 oracle 重跑复现（8 关总表 + game4/game6 修正靶点 + game9 逐步全匹配），修正 1 处入口名笔误（renderBoard → buildBoard）（§十九）；worldbible 的设备号/现状名/色板/文案库逐条核对并标注（§二十）。
+
+### 合计验收数字
+
+九关导出契约 9/9 · 九关内置自检零失败 9/9 · 九关 × 五档难度按钮 45/45 · 竖屏触摸通关 9/9 · 12 页 × 两朝向 0 异常 · admin 自检 15 行 0 失败 · 线上 Pages 已带全部修复。
+
+### 未决（等你定，未动代码）
+
+1. LEVELS_META 仅 game3/4/6/8/9 定义，game1/puzzle2/game5/game7 缺失（当前无任何页面消费）→ 触发条件：要接管理后台。
+2. terminal 失败/超时后仍打印「身份验证成功」并跳 hub（terminal.html:198-209 无条件执行）→ 触发条件：希望失败者被拦在门外。
+
+### 未验证 / 局限
+
+- 全局概率条的拖拽坐标映射未验（探针环境里 .pbar 量到 0 宽；键盘路径已验证数值写入）。
+- 真机触摸手感（尺寸/帧率/发热）只能人工在手机上跑；本套证据只覆盖 CDP 触摸仿真。
+- grep 工具 250 条上限让我两次误判（已记 §二十）；引用本套结论时请注意证据来源。
+- 全部结论绑定提交 350d6d1；之后若有改动，需按 fact-register 的规矩重新核对。
+
+### 运行环境（复现用）
+
+node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new --mute-audio --remote-debugging-port=9222；探针全部位于 _verify/endfield-captcha/（不随仓库发布）；远端同步用 node --use-system-ca rebuild_history.mjs，且必须在仓库目录内执行。
+
+
 ## 十六、`pz-failed` 失败分支闭环核验（2026-11-09：首次端到端实测）
 
 `docs/conventions.md` §二 把失败消息定为 `{type:'pz-failed', device, lv, moves}`，并规定「仅当 window.parent !== window 时才发送」。此前只有 `pz-solved` 有端到端证据，失败分支从未实测。
