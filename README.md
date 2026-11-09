@@ -47,6 +47,7 @@ node _gt_srv.js
 - 每局在 **V1 源码入门 → V5 深渊协议** 五档中选择；版本 B 终端按概率自动抽档。
 - 生成器为**种子化随机**并内置可解性校验：出题即验证，拒绝无解/退化题面。
 - 通关按实际难度记分、计时、计星，写入统计与匹配日志。
+- 星级按**各关自有判据 + 失误门控**评定（3★ 需同时满足效率判据与 `失误<=MCAP[档位]`），九关判据与实测见 `docs/star-rubric.md`。
 
 ## URL 参数（已按页面核实）
 
@@ -80,6 +81,22 @@ node _gt_srv.js
 - 所有存储 key 以 `endland-` 前缀（用户/配置/统计/匹配日志/凭据/各游戏关卡），本地留存。
 - 页面零外链、零字体下载、零 CDN —— 断网可用。
 
+## 文档索引（`docs/`）
+
+维护与验收文档；改代码时同步更新（尤其 `file:line` 引用——在文件前部插入行会把后面的引用推后）。
+
+| 文档 | 内容 |
+|---|---|
+| `conventions.md` | 跨页约定：设备编号、父页消息契约（含 `mistakes` 字段）、URL 钩子、localStorage 键、全局静音 |
+| `star-rubric.md` | 星级判据台账：九关各自判据 + 失误门控（`MCAP=[2,2,1,1,0]`）+ 实测证据 |
+| `difficulty-axis.md` | 难度轴语义（`?lv=` 与 game3 `?stage=` 的统一口径） |
+| `level-spec.md` | 关卡规格、关卡 JSON 格式、管理后台接口预留 |
+| `layout-viewport.md` | 视口适配台账：手机竖屏/横屏扫描、入口页、puzzle2 与 game5 的缺陷与修复 |
+| `realplay.md` | 真实通关回归台账：九关定位方式、触摸路径、手机通关矩阵、自检回归、踩坑记录 |
+| `dom-consistency.md` | 渲染↔状态一致性审计（零知识 oracle：增量 DOM vs 整体重绘） |
+| `worldbible.md` | 世界观设定（校验设备、第 39 号事故等） |
+| `new-puzzles-proposal.md` | 新玩法提案 |
+
 ## 目录结构
 
 ```
@@ -99,7 +116,7 @@ endfield-captcha/
 ├─ terminal.html         版本 B 验证终端
 ├─ admin.html            管理后台
 ├─ _gt_srv.js            本地静态服务器（node _gt_srv.js，端口 8099）
-└─ docs/                 世界观设定、关卡规格、新玩法提案
+└─ docs/                 维护与验收文档 9 篇（见上方「文档索引」）
 ```
 
 ## 部署（GitHub Pages）
