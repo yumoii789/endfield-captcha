@@ -839,6 +839,7 @@ $id('captchaBox').addEventListener('click',function(){
   setTimeout(function(){
     checking=false;
     newChallenge();
+    onReady();
     $id('mask').hidden=false;
     tone(440,.08,'triangle',.05);
   },700+Math.random()*300);

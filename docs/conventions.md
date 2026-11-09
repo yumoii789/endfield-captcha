@@ -40,7 +40,7 @@ window.parent.postMessage({type:'pz-failed', device, lv, moves}, '*');
 | `?stage=N` | 关卡号（优先于 `?lv`） | **仅 game3**（game3-gems.html:772）；hub 现在只传 `?lv=`，见 docs/difficulty-axis.md |
 | `?selftest=1` | 运行页面自带自检，结果打到 console | 全部 12 页（含 hub/terminal/admin） |
 | `?seed=N` | 复现同一题面 | **八关**（game1/puzzle2/game4/game5/game6/game7/game8/game9）；**game3 未实现**（其选关用 `Math.random()`，无种子注入） |
-| `?export=1` | 导出关卡 JSON 到 console | 九关全部 |
+| `?export=1` | 导出关卡 JSON 到 console | 九关全部（直通 `?direct=1` 与普通进入都已接线；字段 game/id/lv/name/desc/play/params/enabled，核验见 docs/realplay.md 十四） |
 | `?debug=1` | 调试输出（terminal 下同时使打字机瞬时完成） | 九关 + terminal |
 | `?fast=1` | 跳过动画/加速 | **仅 game8**（game8-targets.html:184） |
 | `?reset=1` | 清空本页存档 | **仅 terminal**（terminal.html:152，清除 `endland-user`） |

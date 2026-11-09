@@ -275,6 +275,29 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 
 **合计 9 关 × 5 档 = 45/45 起效**（每档均为"档位变量✔ + 新题面✔"）。题面签名取各关自身状态（game1 每块旋转数、puzzle2 块列表、game3 关卡 id、game4 帐篷坐标、game5 init+k、game6 secret、game7 尺寸+答案、game8 尺寸+目标数、game9 盘面大小+参考步数）。
 
+## 十四、`?export=1` 导出契约核验（2026-11-09：发现并修复 3 处断线）
+
+`docs/conventions.md` 承诺「九关全部」在 `?export=1` 时向 console 打印当前局 level JSON，但此前只核验过 5 关。
+本轮用 `_verify/endfield-captcha/exportcheck4.mjs`（CDP + `Runtime.consoleAPICalled` 捕获）把 4 个未核验关卡 × 2 条入口路径各跑一遍，字段按 game/id/lv/name/desc/play/params/enabled 核对：
+
+| 关卡 | `?direct=1&lv=3&export=1` | `?lv=3&export=1` | 字段 |
+|---|---|---|---|
+| game4 露营 | ✔ camping-3-lv3-* | ✔ | 8/8 |
+| game5 灯光 | ✔ lights-3-lv3-* | ✔ | 8/8 |
+| game7 残影 | ✔ nonogram-3-lv3-* | ✔ | 8/8 |
+| game9 滑块 | ✔ sliding-3-lv3-* | ✔ | 8/8 |
+
+三处断线同属一类：导出挂在 `onReady()` 上，而入口路径根本没走到它。
+
+1. **game5**：`bootChallenge()` 结尾漏调 `onReady()`（该函数此前在 game5 里是死代码）⇒ 任何路径都不打印 `[GT-INIT]`/`[EXPORT]`。已在 `bootChallenge()` 末尾补 `onReady();`。
+2. **game4 / game7**：`?direct=1` 只自动点人机验证框，题面由「验证成功」回调里的 `newChallenge()` 建立，而该回调不调 `onReady()` ⇒ 直通路径既无 `[G*-INIT]` 也无导出。已在两处回调的 `newChallenge();` 之后补 `onReady();`。
+3. **game9**：`onReady()` 只打 INIT；导出写在 selftest 与默认分支（game9-slide.html:728/735），`?direct=1` 分支没有 ⇒ 直通路径不导出。已在该分支补 `if(qs.get('export')==='1')doExport();`。
+
+回归（`selftest4.mjs`）：game4「五档 300 局 · 失败 0 局」、game5「全档通过 · 5/5」、game7 `[G7-TEST] lv1–lv5 PASS`、game9「汇总 5/5 100.0%」；八次导航 `exceptionThrown` 均为 0。
+
+遗留（只改文档、未动代码）：`LEVELS_META` 仅定义于 game3/game4/game6/game8/game9，game1/puzzle2/game5/game7 没有；当前没有任何页面消费它（管理后台未接入），故本轮把 `docs/level-spec.md` 的表述改成实况，未给四关补该变量。
+
+
 
 
 

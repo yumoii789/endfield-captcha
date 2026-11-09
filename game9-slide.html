@@ -720,6 +720,7 @@ function bootChallenge(runTimers){
 if(qs.get('direct')==='1'){
   setTimeout(function(){$id('captchaBox').click()},150);
   bootChallenge(false);
+  if(qs.get('export')==='1')doExport();
 }else if(qs.get('selftest')==='1'){
   try{
     var res=selftest();

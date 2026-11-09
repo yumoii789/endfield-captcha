@@ -696,6 +696,7 @@ function bootChallenge(){
   queuedLevel=pickQueuedLevel(LV);
   renderDiffBar();
   newChallenge();
+  onReady();
 }
 function onReady(){
   console.log('[GT-INIT] {lv:'+LV+',n:'+((pz&&pz.n)||LV_TABLE[LV].n)+',seed:'+seed+',custom:'+customLevels.length+'}');
