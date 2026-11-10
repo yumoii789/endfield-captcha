@@ -502,6 +502,22 @@ node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new -
 
 探针：`landscape_tap_effect.mjs`（首轮，含假阴性）、`landscape_tap_effect2.mjs`（改进指纹后的复核）。
 
+## 二十五、改动收口后的九关完整回归（2026-11-09）
+
+本轮把会话内所有改动（4 个关卡的 JS + 3 个关卡的 CSS + 若干文档）之后的九关整体跑一遍，作为收口证据。
+
+| 项 | 方法 | 结果 |
+|---|---|---|
+| 内置自检 | 九关 `?selftest=1`，统计 FAIL 行与 `exceptionThrown` | **9/9 零失败、零异常** |
+| 导出契约 | 九关 `?direct=1&lv=3&export=1`，核对 `game/id/lv/name/desc/play/params/enabled` | **9/9 字段齐全**（circuit / packing / gems / camping / lights / code / nonogram / targets / sliding） |
+| 竖屏触摸抽验 | 三个改过 CSS 的关卡（game1 / game3 / game8）在 390×844 下点棋盘中心格，比对点击前后的 DOM 指纹 | **3/3 状态确实变化** |
+
+**第三次自省（探针的指纹选型）**：首轮抽验 game1 报「DOM 签名变化=false」，看着像点击失效。实际原因是两点叠加：① game1 的旋转走**内联 CSS 变量** `--r`（`.tile svg{transform:rotate(var(--r,0deg))}`，game1-circuit.html:67），改的是 style 而不是 className；② 我的签名把字符串**截断到前 60 字符**，而中心格是第 13 个元素，变化落在截断之外。改成「读取内联样式 + 不截断（只看长度与全串比对）」后，实测点两次签名长度 301 → 302 → 303，旋转矩阵也在变 —— 点击一直是好的。
+
+> 教训（已累积三条同类）：判定「有没有变化」时，指纹要覆盖**该交互真正改写的那些属性**，并且**不要截断**；截断 + 选错属性会稳定地产生假阴性，而且方向总是「看起来像产品坏了」。
+
+探针：`final_regression.mjs`（自检 + 导出 + 触摸抽验）、`g1_tap_probe.mjs`（game1 旋转指纹复核）。
+
 node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new --mute-audio --remote-debugging-port=9222；探针全部位于 _verify/endfield-captcha/（不随仓库发布）；远端同步用 node --use-system-ca rebuild_history.mjs，且必须在仓库目录内执行。
 
 
