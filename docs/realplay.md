@@ -321,7 +321,7 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 
 **缺陷（已修）**：三个危险操作（清空统计 / 重置配置 / 全部清空）用 `confirmTwice` 做两步确认，但**第二步模态刚打开就被关掉**，导致「执行」永远点不到、操作永远不执行。
 
-- 代码链：`showModal` 开头就 `closeModal()`（admin.html:570）；`showModal` 的按钮处理器在 `bd.onClick()` 未返回 `true` 时会再 `closeModal()`（:586-590）。而 `confirmTwice` 第一步「继续」的处理器里调用了第二段 `showModal(...)` 却没返回 `true`（:1965-1971）⇒ 第二段模态被立刻关闭。
+- 代码链：`showModal` 开头就 `closeModal()`（admin.html:570）；`showModal` 的按钮处理器在 `bd.onClick()` 未返回 `true` 时会再 `closeModal()`（:586-590）。而 `confirmTwice` 第一步「继续」的处理器里调用了第二段 `showModal(...)` 却没返回 `true`（:1965-1971，**此行号写于修复前**；修复后该段为 :1965-1972，`return true;` 与说明注释在 :1971-1972）⇒ 第二段模态被立刻关闭。
 - 实测证据（修复前）：点「继续」后 DOM 内已无模态、`执行` 按钮 NOT_FOUND，`endland-stats` 哨兵值原封不动 ⇒ 三个按钮全是死路。
 - 修复：在「继续」处理器末尾 `return true;`（admin.html:1971-1972，附说明注释）。
 - 修复后实测：`继续` → `执行` 均命中且真的执行——**清空统计**（删除 `endland-stats`/`endland-matchlog`）、**重置配置**（`endland-admin-cfg` 删除后被 `loadCfg()` 立即重建为默认：`globalDist=20,20,20,20,20`）、**全部清空**（清空后仅剩 `endland-admin-cfg`（默认）与 `endland-hub-progress`，凭据/关卡/统计/用户键全删）。
@@ -346,7 +346,7 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 
 把 `docs/dom-consistency.md` 的每条断言跑成机器检查，并重跑它自己的 oracle。
 
-**静态核对（与文档表逐行对上）**：重绘入口定义齐全——game1 `refresh`:315、puzzle2 `renderPlaced`:596、game3 `render`:431、game4 `refresh`:452、game5 `paintBoard`:414、game6 `paintSlots`:575、game7 `refreshAll`:604、game8 `refresh`:350；机制断言也成立——game3 `HINT_SHOW=6000` 的定时 `hintAll()`（:462/:473 两处），game7 `refreshAll()` **全仓只有一处调用**（:678 `buildGrid();refreshAll();`，与「正常游玩路径不经过它」一致）。
+**静态核对（与文档表逐行对上）**：重绘入口定义齐全——game1 `refresh`:316、puzzle2 `renderPlaced`:597、game3 `render`:431、game4 `refresh`:452、game5 `paintBoard`:415、game6 `paintSlots`:575、game7 `refreshAll`:605、game8 `refresh`:350；机制断言也成立——game3 `HINT_SHOW=6000` 的定时 `hintAll()`（:462/:473 两处），game7 `refreshAll()` **全仓只有一处调用**（:679 `buildGrid();refreshAll();`，与「正常游玩路径不经过它」一致）。
 
 **重跑结果**
 

@@ -79,7 +79,7 @@
 
 **根因（两处冲突）**：
 
-1. `puzzle2.html:548 cellSize()` 读 `core().CELL`，但 `CELL` 在全仓库**从未被赋值**（`grep -n "CELL" puzzle2.html` 只有这一处读取）→ 恒返回 30，`buildGrid()` 于是写出**内联固定**轨道 `repeat(cols,30px)`（:565-568）与 `cellwrap` 宽高（:574）。
+1. `puzzle2.html:549 cellSize()` 读 `core().CELL`，但 `CELL` 在全仓库**从未被赋值**（`grep -n "CELL" puzzle2.html` 只有这一处读取）→ 恒返回 30，`buildGrid()` 于是写出**内联固定**轨道 `repeat(cols,30px)`（:566-569）与 `cellwrap` 宽高（:575）。
 2. 手机媒体查询 `@media (max-width:640px)` 里写了 `.grid{width:92vw}`（:155）——意图是手机上棋盘随屏放大，但内联固定轨道不会跟着变，于是只剩「框变宽、格子不变」。
 
 **修复（两处，桌面零影响）**：
