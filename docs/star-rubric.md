@@ -9,12 +9,12 @@
 | 设备 | 关卡 | 3★ 条件 | 2★ 容差（随档位） | 族 |
 |---|---|---|---|---|
 | V-40053 | game1-circuit | `moves<=best` | `moves<=ceil(best*1.5)` | B 效率比值 |
-| V-40054 | puzzle2 | `illegal===0` | 容差表 `[2,2,1,1,0]`（puzzle2.html:862） | A 失误计数 |
+| V-40054 | puzzle2 | `illegal===0` | 容差表 `[2,2,1,1,0]`（puzzle2.html:863） | A 失误计数 |
 | V-40055 | game4-camping | `badMoves===0` | 容差表 `[2,2,1,1,0]`（game4-camping.html:524） | A 失误计数 |
 | V-40056 | game3-gems | `steps<=best` | `steps<=best+SM`，SM=`[2,2,2,1,1]`（适用处 game3-gems.html:291，表定义 609） | D 档位余量 |
 | V-40057 | game5-lights | `mv<=k` | `mv<=ceil(k*1.5)` | B 效率比值 |
 | V-40058 | game6-code | `used<=ceil(budget/2)` | `used<=budget-1` | C 预算 |
-| V-40059 | game7-nonogram | `errors===0` | 容差表 `[2,2,1,1,0]`（game7-nonogram.html:692） | A 失误计数 |
+| V-40059 | game7-nonogram | `errors===0` | 容差表 `[2,2,1,1,0]`（game7-nonogram.html:693） | A 失误计数 |
 | V-40060 | game8-targets | `fails===0` | 容差表 `[1,1,1,0,0]`（game8-targets.html:396，本就比同族严） | A 失误计数 |
 | V-40061 | game9-slide | `moves<=ceil(ref*1.2)` **且** `失误<=MCAP[lv-1]`（MCAP=`[2,2,1,1,0]`，game9-slide.html:485-487） | `moves<=ceil(ref*1.5)`（失误=超参考步数 `max(0,moves-ref)`） | B 效率比值 + 失误门控 |
 
@@ -24,7 +24,7 @@
 
 原先是扁平常数（任何难度都允许错 2 次即得 2★），现改为按档位取容差：
 
-- game4-camping.html:524、game7-nonogram.html:692、puzzle2.html:862 → `[2,2,1,1,0]`
+- game4-camping.html:524、game7-nonogram.html:693、puzzle2.html:863 → `[2,2,1,1,0]`
 - game8-targets.html:396 → `[1,1,1,0,0]`（保留它本就更严的性格）
 - game3-gems.html:291 → 2★ 余量 `[2,2,2,1,1]`（原为扁平 +2）
 
@@ -50,9 +50,9 @@
 
 | 关卡 | 失误语义 | 判据处 |
 |---|---|---|
-| game1-circuit | 拨错固定块 + 超最优旋转 `max(0,moves-best)` | game1-circuit.html:392-393 |
+| game1-circuit | 拨错固定块 + 超最优旋转 `max(0,moves-best)` | game1-circuit.html:393-394 |
 | game3-gems | 被拒绝/坠毁的落点次数 | game3-gems.html:617-618 |
-| game5-lights | 超最短解的浪费步 `max(0,moves-pz.min)` | game5-lights.html:525-526 |
+| game5-lights | 超最短解的浪费步 `max(0,moves-pz.min)` | game5-lights.html:526-527 |
 
 > game5 补充：多余按压必须成对（同格两次是恒等操作），故 `moves-min` **恒为偶数**；且生成器精确采样 `cosetMin===k`，使 V1–V3 恒有 `min===k`（此时门控被效率判据蕴含）。门控**真正生效于 V4**（`kMin=8` 超过 4×4 可达上限 7，出现 `k>min`）：实测 `k=10,min=7,moves=9` 时效率项通过而 `失误2>MCAP[3]=1` → 2★。
 | game6-code | 猜错次数 `max(0,提交数-1)` | game6-code.html:744-745 |

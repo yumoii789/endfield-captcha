@@ -106,7 +106,7 @@
 
 初版修复只在**载入时**算一次尺寸，于是留下一个真实缺口：**先在横屏打开（innerWidth>640 走桌面分支 → 30px）再转竖屏**，格子仍是 30px，老问题复现——这在手机上是很常见的操作顺序。
 
-**修复**：新增 `relayoutGrid()`（puzzle2.html:712-731）——`resize`（宽度真变化时去抖 180ms）与 `orientationchange`（去抖 260ms）触发；**仅当新算出的尺寸与当前 `CS` 不同**才执行 `CS=cs; buildGrid(); refreshSelection(); refreshCounts();`（`refreshSelection()` 内部已含 `renderPlaced()`，故已放置的块会自动重绘）。
+**修复**：新增 `relayoutGrid()`（puzzle2.html:713-732）——`resize`（宽度真变化时去抖 180ms）与 `orientationchange`（去抖 260ms）触发；**仅当新算出的尺寸与当前 `CS` 不同**才执行 `CS=cs; buildGrid(); refreshSelection(); refreshCounts();`（`refreshSelection()` 内部已含 `renderPlaced()`，故已放置的块会自动重绘）。
 
 **验证（`p2relayout2.mjs`，触摸事件 + 真实放置）**：
 

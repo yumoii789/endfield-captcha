@@ -138,7 +138,7 @@ game9-slide（三场景，含最优/冗余2/冗余4）：
 ### 八之三、game5 容忍带只在 **V4 及以上** 存在（附一次误判的更正）
 
 - **分布实测**（`g5band.mjs`，各档采样 10 局）：V1 与 V3 的 `k-min` **10/10 全为 0**；V4 出现 `k-min=1`(5 次) / `=2`(4 次) / `=3`(1 次)。
-- **原因**：`genOne()` 是按目标值**精确采样**题面（`cosetMin===target` 才返回，game5-lights.html:377-391），只要该网格能走到 `k`，就必有 `min===k`。V4 的 `kMin=8` 超过了 4×4 网格的可达上限 7，于是退化成「能走到的最大步数」，才留下 `k>min` 的余量。
+- **原因**：`genOne()` 是按目标值**精确采样**题面（`cosetMin===target` 才返回，game5-lights.html:378-392），只要该网格能走到 `k`，就必有 `min===k`。V4 的 `kMin=8` 超过了 4×4 网格的可达上限 7，于是退化成「能走到的最大步数」，才留下 `k>min` 的余量。
 - **更正**：此前 `g5probe2` 默认跑 V2，报 `SKIP: 12 局内无 k>=min+2（容忍带在生成分布内不可达）`——「不可达」这个结论是**错的**，它只是不在 V1–V3 出现。改跑 V4 后第 0 局即命中。
 - **决定性验证（V4）**：`k=10, min=7` 局，先浪费 2 步再按 `sol` 解 → `moves=9<=k`（效率项**通过**）、`mistakes=2`；`MCAP[3]=1` 使门控**拦下** → 结算 **2★**（若无门控，按原判据本是 3★）。印章：`难度 V4 · ★★☆ · 抖动 9 次（目标 10，最短解 7） · 失误 2`。
 - **结论**：game5 的失误门控在 V1–V3 被效率判据蕴含（`min===k` ⇒ 3★ 只在 `moves=min` 时成立），但在 **V4 起真正生效**，是有效判据而非冗余项。
@@ -313,7 +313,7 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 
 **已确认不是缺陷**：`mistakes` 字段。`docs/conventions.md:28` 明写「父页当前不读取它（hub.html / terminal.html 均未改动）」，与实现一致——terminal.html 内没有任何 `mistakes` 引用（grep 只命中一句台词里的「失误」二字）。
 
-**待定（只记录，未改代码）**：terminal 在失败/超时后仍会打印「身份验证成功」并跳转 hub（terminal.html:198-209 无条件执行），与上一行「设备无响应（等待超时），连接已中止」口径相冲。属产品口径问题，交你定夺。
+**待定（只记录，未改代码）**：terminal 在失败/超时后仍会打印「身份验证成功」并跳转 hub（terminal.html:198-209 无条件执行），与上一行「设备无响应（等待超时），连接已中止」口径相冲。属产品口径问题，交你定夺。 **（→ 已于 2026-11-10 处理，见 §三十二。）**
 
 探针：`hooks3.mjs`（stage）、`fastcheck.mjs`（fast 计时）、`pausecheck.mjs`（pause）、`termreset.mjs` / `termwait2.mjs` / `termwait3.mjs`（reset 与 wait，含 150ms 高频采样抓 1.5s 超时窗口）。
 
@@ -593,7 +593,7 @@ README 是读者第一眼看到的东西，此前只零星改过几行，本轮�
 | 出现位置 | 名称 |
 |---|---|
 | game7 页头 `<title>`、`#mSub`、导出 JSON 的 `name`、`hub.html` 卡片、`terminal.html` 匹配表 | **图形校验** |
-| game7 自己的档位引导文案（game7-nonogram.html:200-204 五处，如「残影重建 · 教学档：…」） | **残影重建** |
+| game7 自己的档位引导文案（game7-nonogram.html:200-204 五处，如「残影重建 · 教学档：…」；**本节写于改动前，这 5 处已顺延为 :201-205**） | **残影重建** |
 | README、`docs/conventions.md`、`admin.html` 关卡菜单、`worldbible.md` 提案 | **残影重建** |
 
 即：**同一页面里页头说「图形校验」，它自己的引导文案说「残影重建」**；而 hub/terminal 卡片跟页头一致、README/admin 跟引导文案一致。这不是文档笔误，是命名口径本身没统一——**已作为待决项交给用户**（改哪一边都只是一行级改动，但选哪个名字是产品决定）。
@@ -647,6 +647,12 @@ README 里明确警告过「在文件前部插入行会把后面的引用推后�
 | `realplay.md` §十四 | game9-slide.html:728/735 | **729/736**（并补注直通分支的导出在 :723） | 本轮在 :723 插入导出调用 ⇒ 其后 +1 |
 | `realplay.md` §十五 | admin.html:2228-2237 | **2230-2239** | 本轮在 :1971 插入注释与 `return true` ⇒ 其后 +2 |
 | `realplay.md` §二十二 | game8-targets.html:561 | **563** | 本轮在 :549 插入 FAST 说明注释 ⇒ 其后 +2 |
+| `star-rubric.md` §一/§二（4 处） | puzzle2:862 / game7:692 / game1:392-393 / game5:525-526 | **863 / 693 / 393-394 / 526-527** | 本节在 game1:200、puzzle2:258、game5:179、game7:199 各插入 `LEVELS_META` ⇒ 其后 +1 |
+| `layout-viewport.md` §（puzzle2 重排） | puzzle2.html:712-731 | **713-732** | 同上（+1） |
+| `realplay.md` §（game5 采样） | game5-lights.html:377-391 | **378-392** | 同上（+1） |
+| `realplay.md` §三十一 | game7-nonogram.html:713 | **714** | 同上（+1） |
+
+本轮顺带核对（**无需改**）：`DEPLOY.md:44` 引 `hub.html:134`，实测该行正是 `var url=x.page+'?direct=1&lv='+lv;`；`realplay.md:703` 的简写 `:1580` 指向 `lsSet(LS.cred, …)` 仍正确，而 `:2088` 曾指向一句 `}`（陈旧），已换成危险区三个按钮与三处 `confirmTwice` 调用的真实行号。
 
 **未受影响的引用（核对通过）**：`star-rubric.md` 的全部九关判据引用（game1:392-393、game3:291/617-618、game4:524、game5:525-526、game6:744-745、game7:692、game8:396、game9:485-487）——它们都落在各自插入点**之前**；`difficulty-axis.md`（game1:199）、`layout-viewport.md`（game5:86 / 90-101）、`dom-consistency.md`（game9:319 `buildBoard`）也都指得中。
 
@@ -659,7 +665,7 @@ node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new -
 
 `docs/conventions.md` §二 把失败消息定为 `{type:'pz-failed', device, lv, moves}`，并规定「仅当 window.parent !== window 时才发送」。此前只有 `pz-solved` 有端到端证据，失败分支从未实测。
 
-**静态核对（全仓 13 个发送点）**：`pz-solved` 九关都发；`pz-failed` 由四关发——game3 `onDead()`（game3-gems.html:634）、game6 提交耗尽（game6-code.html:777）、game7 错误阈值（game7-nonogram.html:713）、game8 误点 2 次（game8-targets.html:423）。**13 个发送点全部位于 `window.parent && window.parent!==window` 判断之内**，顶层直开不发，与文档一致。消费方两处：hub.html:169-172（写统计 + toast）、terminal.html:141（结算进「通关失败」分支）。
+**静态核对（全仓 13 个发送点）**：`pz-solved` 九关都发；`pz-failed` 由四关发——game3 `onDead()`（game3-gems.html:634）、game6 提交耗尽（game6-code.html:777）、game7 错误阈值（game7-nonogram.html:714）、game8 误点 2 次（game8-targets.html:423）。**13 个发送点全部位于 `window.parent && window.parent!==window` 判断之内**，顶层直开不发，与文档一致。消费方两处：hub.html:169-172（写统计 + toast）、terminal.html:141（结算进「通关失败」分支）。
 
 **端到端实测**（`failclose.mjs`：以 hub.html 为父页，注入同源探针 iframe，调用各关自己的失败出口）：
 
@@ -700,7 +706,7 @@ admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有�
 
 **结论：两条写面闭环成立，无缺陷。** 一处**约定**说明（不是缺陷）：admin 的「合法样例」是通用生成型参数（`params:{n:…}`），而 game5 只采用带 `params.initial` 的自定义关（game5 `pickQueuedLevel`），所以样例会被读入、不会被 game5 采用；文档规定的流程是「拿该关 `?export=1` 的 JSON 上传」，该流程本轮已实测可用（`pz.custom` 即证据）。
 
-**尚未实测的写面（如实记下）**：难度面板「保存全局概率 / 保存覆盖」（admin.html:1035 一路）、帐户面板改凭据（:1580）、高级面板危险区「清空统计 / 重置配置 / 全部清空」（:1897/:2088）。
+**尚未实测的写面（如实记下）**：难度面板「保存全局概率 / 保存覆盖」（admin.html:1035 一路）、帐户面板改凭据（:1580）、高级面板危险区「清空统计 / 重置配置 / 全部清空」（按钮 :1895 / :1910 / :1927，调用 :1896 / :1911 / :1928）。
 
 探针：`admin_write.mjs`（redirect 闭环）、`admin_levels_write.mjs`（样例写入 + 非法拦截）、`admin_upload.mjs` / `admin_upload2.mjs`（`#upFile` 真上传 + `pz.custom` 判定）、`admin_levels_inv2.mjs`（面板计数与游戏写入一致性）。本轮我自己的两个探针坑：正则里 `\n` 被展开成真换行导致浏览器端语法错误、一处括号不平衡——都属探针问题，不是产品问题。
 
