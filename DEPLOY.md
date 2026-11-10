@@ -13,6 +13,12 @@
 - 证据链（可复跑）：① `curl -v https://github.com 2>&1 | grep Trying` → `Trying 127.0.0.1:443` → 拒绝，`git ls-remote` 29ms 同样失败；② `nslookup github.com` 直查 DNS 得真 IP `20.205.243.166`（**nslookup 不读 hosts**，两者不一致正是 hosts 重定向的特征）；③ `curl --resolve github.com:443:20.205.243.166 https://github.com` → **200**，证明链路本身通畅；④ hosts 首尾的 `# Steam++ Start` / `# Steam++ End` 标记 + 条目集合（Steam、YouTube 缩略图、huggingface、GitHub 全家、hub.docker.com、greasyfork）共同指明出处。
 - 三种解法：① **启动 Watt Toolkit 并开启网络加速**（恢复原设计，最省事；它是 GUI 程序，需机主操作）；② 从 hosts 删掉 `# Steam++ Start…End` 整段（需管理员，恢复直连；已实测直连真 IP 可达）；③ 只在本 session 内绕过——起一个仅监听本机的隧道把这两个域名钉到真实 IP，再 `git -c http.proxy=… push`（不改 hosts、不动系统设置，用完即关）。
 - 判定方法：`curl -m 12 -o /dev/null -w "%{http_code}" https://api.github.com`（000 即不通），再用 `curl -v … | grep Trying` 区分「hosts 重定向且加速器没跑」与「真实网络故障」。本地提交照常做，连通后用同一条重放命令补推即可（幂等、SHA 稳定，不会分叉）。
+- **2026-11-10 实测补记（真因比上面再细一层，也是本次成功推送的配方）**：
+  ① `Steam++.Accelerator.exe` 监听 `0.0.0.0:80/443`；它自己在跑、但上游不通时会直接返回 **502**（实测 `curl https://github.com` → 502，而非 refused）。
+  ② 这台网络下 **`github.com` 本身不可达**：即使绕过 hosts、把连接钉到它的真实 IP（`20.205.243.166`），也在 TLS 前被 `ECONNRESET`/`ETIMEDOUT`；而 **`api.github.com` 可达**（同一隧道下稳定 200）。所以 **`git push`（走 github.com）在本机不要指望**——这条正是本文件开头「git 智能 HTTP 端点不可达，故改用 Git Data API」的真正原因，与 hosts 无关。
+  ③ 本次成功推送的组合（可复用）：一个仅监听本机的 CONNECT 隧道把 `api.github.com` 钉到真实 IP，然后
+     `HTTPS_PROXY=http://127.0.0.1:8443 NODE_USE_ENV_PROXY=1 node --use-system-ca _verify/endfield-captcha/rebuild_history.mjs`（**cwd 必须在仓库目录内**）。结果：`main -> 09d67e5a`、远端 HEAD 与本地逐字符相同。
+  ④ 若 Steam++ 正在正常加速，它自己就会接这些域名，此时无需隧道——但 `github.com` 不可达这一点不变，仍走重放脚本。
 - 相关脚本（位于 `_verify/endfield-captcha/`，不随仓库发布）：`rebuild_history.mjs`（逐条重放全部提交，幂等且 SHA 稳定，**推荐**）、`push_via_api.mjs`（首次铺设）、`sync_via_api.mjs`（快照式同步，会产生新 SHA）。
 
 ## GitHub Pages（推荐）

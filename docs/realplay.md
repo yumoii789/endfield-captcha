@@ -764,7 +764,11 @@ admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有�
 
 **处置**：① 真因与三种解法已写进 `DEPLOY.md`；② 未改动 hosts、未改动任何系统设置；③ 机主可选：启动 Watt Toolkit 开加速（恢复原设计）/ 自行删掉 `# Steam++ Start…End` 整段 / 让我在本 session 内用本机隧道钉 IP 绕过。`ask_user_question` 四次超时，故按 G8 记录假设后继续。
 
-**本地状态**：工作树干净；远程仍停在 `d38dd8b`，本地领先 20 余个提交（含本轮全部文档与三项修正）。
+**已解决（同日）**：改用重放脚本原路线——起一个仅监听本机的 CONNECT 隧道把 `api.github.com` 钉到真实 IP，再 `HTTPS_PROXY=http://127.0.0.1:8443 NODE_USE_ENV_PROXY=1 node --use-system-ca _verify/endfield-captcha/rebuild_history.mjs`（cwd 在仓库内）。结果 `main -> 09d67e5a`、**远端 HEAD 与本地逐字符相同**，93 个提交全部到位。
+
+**线上复验**（Pages 重建后实测原始文件）：`README.md` 含「图形校验」2 处、含「残影重建」0 处；`game7-nonogram.html` 含「图形校验 ·」6 处且含 `LEVELS_META`；`terminal.html` 含「身份验证未通过」；`DEPLOY.md` 含 Steam++ 说明 3 处。至此三项修正与全部文档**已真实上线**。
+
+**顺带确证的边界**：`github.com` 在这台网络下**本身不可达**（绕过 hosts、钉真实 IP 也会在 TLS 前被 RST/超时），`api.github.com` 可达——所以本机永远该走 Git Data API 重放，而不是 `git push`。
 
 ### 过程事实：本 session 子代理不可用（影响后续派发方式）
 4 次派发——两份完整任务书 + 两个极小探针——在两条已授权路由（`nvidia/z-ai/glm-5.3`、`nvidia/moonshotai/kimi-k2.6`）上**全部**「failed before it finished，无收尾消息」，仓库零改动；两条路由都复现，排除路由因素，故按 R8（repeated errors）转由派发者亲自执行。另：运行时会硬拒未授权路由，白名单为 `nvidia/*`，本 Agent 自身路由不在其中，`subagent_fork`（继承父路由）同样不可用——后续若要再派发，必须显式给出白名单内的 provider/model。
