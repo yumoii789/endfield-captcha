@@ -801,6 +801,19 @@ admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有�
 
 **能证明什么 / 不能证明什么**：能证明「通关 → 发声函数被调用」与「静音 → 不调用」；**不能**证明「扬声器真的响、音量不为 0」——那仍是真机项（清单第 11 项保留，已注明机制侧已验证）。
 
+## 三十六、触屏输入框字号与两处「误读作用域」的更正（2026-11-10）
+
+**真缺口（已修）**：项目本就有防 iOS 聚焦缩放的惯用法 `@media(pointer:coarse){.inp,select.inp,textarea.inp{font-size:16px}}`（`admin.html:287`），但它**漏了两个控件**：admin 难度面板的 `.ovr .oc input[type=number]`（11.5px）与 terminal 的名字输入框 `.tl .inl`（`font:inherit` → 实测 14px）。两处都在粗指针下补成 16px。
+
+**双向验证**（探针 `coarse_input2.mjs`，用 CDP 切换 `setTouchEmulationEnabled` 让 `pointer:coarse` 真假互换）：粗指针下 admin 数字框与 terminal 名字框均为 **16px**（且名字框仍能正常输入）；切回细指针后分别回到 **11.5px / 14px**（桌面端零影响）；`exceptionThrown` 0，14 页 13 段脚本解析仍 0 失败。**注意脚本语法检查查不到 CSS**，这条结论是靠「计算值随媒体查询变化」证出来的，比静态解析更硬。
+
+**同时更正我自己的两处误读**（都属于「把作用域读大/读小」）：
+
+- 我曾说「hub / terminal / index 缺 `user-select:none`，与十关不一致」——**错**：`user-select` 在本项目是挂在**交互控件**上的（`.cell` / `.board` / `.captcha-box` / `.pbar` / `.gate`），从来不是页面级策略；hub 与 terminal 没有棋盘类控件，本就不需要。
+- 我曾担心「手机上 admin 的 216px 侧栏 + 1fr 会把内容挤到 174px」——**也错**：`@media (max-width:640px)` 已把外壳改成单列、导航改成横向滚动条，`380px` 再降两列。
+
+两次的同一个毛病：**只看了一处就推广到全局**。与 §三十三（没读 hosts 首尾注释）§三十四（没读完整规则块）是同一条纪律：**先确认作用域与出处，再下结论**。
+
 ### 过程事实：本 session 子代理不可用（影响后续派发方式）
 4 次派发——两份完整任务书 + 两个极小探针——在两条已授权路由（`nvidia/z-ai/glm-5.3`、`nvidia/moonshotai/kimi-k2.6`）上**全部**「failed before it finished，无收尾消息」，仓库零改动；两条路由都复现，排除路由因素，故按 R8（repeated errors）转由派发者亲自执行。另：运行时会硬拒未授权路由，白名单为 `nvidia/*`，本 Agent 自身路由不在其中，`subagent_fork`（继承父路由）同样不可用——后续若要再派发，必须显式给出白名单内的 provider/model。
 
