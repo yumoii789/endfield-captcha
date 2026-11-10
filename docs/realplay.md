@@ -425,7 +425,7 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 - 真机触摸手感（尺寸/帧率/发热）只能人工在手机上跑；本套证据只覆盖 CDP 触摸仿真。
 - grep 工具 250 条上限让我两次误判（已记 §二十）；引用本套结论时请注意证据来源。
 - 代码结论绑定各自那一节的提交（导出 `fd3b6bc`、game8 `b5dcdc6`、admin `d25a73e`、横屏 `d38dd8b`）；之后若有改动，需重新核对。
-- 截至本摘要更新时，有 4 个纯文档提交因**本机代理挂掉**（`api.github.com` = `000`，`github.com` 同）尚未推到远端；线上运行时代码不受影响。补推命令与判定方法见 `DEPLOY.md`「重放的三个坑」。
+- 截至本摘要更新时，有若干纯文档提交因 **hosts 屏蔽清单**（`github.com` / `api.github.com` → `127.0.0.1`，详见 `DEPLOY.md`「重放的第三个坑」）尚未推到远端；线上运行时代码不受影响。（此处原记「本机代理挂掉」，2026-11-10 查明真因后更正。）
 
 ### 运行环境（复现用）
 
@@ -754,11 +754,23 @@ admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有�
   · 探针自身的坑（记下以免重踩）：`document.body.textContent` 会把内联 `<script>` 源码算进去，关键词于是"在 0.0 秒就出现"；`innerText` 又只含可见文本。正确做法是只取**非 script/style/iframe 子元素**的 textContent。
   · **改名四处面实测（`rename_live.mjs`，真实浏览器）**：hub 9 张卡片全部显示「图形校验」且整页无「残影重建」；admin 登录后 `gName('nonogram')` = "图形校验"、`gDev('nonogram')` 仍为 "V-40059"（**`key` 未被我改动**）、关卡菜单同样只出现新名；game7 页面 `document.title` = "访客协议 VISITOR PROTOCOL · 图形校验"、`TIP_TABLE` 五条开头均为「图形校验 ·」且整页无旧名。加上端到端那次的 terminal 匹配行，改名的 4 个对外面（hub 卡片 / admin 菜单与解析函数 / game7 页头与引导文案 / terminal 匹配行）全部实测过。
 
+## 三十三、推送不通的真因：hosts 屏蔽清单（2026-11-10）
+
+此前 `DEPLOY.md` 与本文把「推不上去」归因为**本机代理挂掉**。本轮按「先证伪再下结论」把它查到底，真因完全不同：
+
+**事实**：Windows hosts 文件（最后修改 2026-11-09 16:12）含 **50 条** `127.0.0.1 <域名>` 屏蔽项，其中有约 30 个 GitHub 域名（`github.com`、`api.github.com`、`github.io`、`raw.githubusercontent.com`、`objects.githubusercontent.com`、`avatars*.githubusercontent.com`、`gist.github.com`、`pages.github.com` 等），另有 Steam 系列、`img.youtube.com`、`huggingface.co`。
+
+**证据链**：① `curl -v https://github.com` → `* Trying 127.0.0.1:443` → `Connection refused`（`git ls-remote` 同样，29ms 快速失败）；② `nslookup github.com` 直查 DNS 得真 IP `20.205.243.166`——**nslookup 不读 hosts**，两者不一致正是 hosts 屏蔽的特征；③ `curl --resolve github.com:443:20.205.243.166` → **200**，证明网络链路本身通畅；④ `codeload.github.com`（不在清单）→ 301、`yumoii789.github.io`（`github.io` 的子域，hosts 精确匹配不中）→ 200；⑤ 代理假设被证伪：`ProxyEnable=0`、无 `*_proxy` 环境变量、7890 与 443 均无监听。
+
+**处置**：这是机器级配置、且在共享设备上，我没有擅自绕过（也未改动 hosts）。已按 R-W 用 `ask_user_question` 请求机主选择（第四次超时），故按 G8 取**非侵入性假设**：不推送、不改配置，一切留在本地，并把真因与三种解法写进 `DEPLOY.md`。
+
+**本地状态**：91 提交，HEAD `b35bd64`，工作树干净；远程仍停在 `d38dd8b`，本地领先 19 个提交（含本轮全部文档与三项修正）。
+
 ### 过程事实：本 session 子代理不可用（影响后续派发方式）
 4 次派发——两份完整任务书 + 两个极小探针——在两条已授权路由（`nvidia/z-ai/glm-5.3`、`nvidia/moonshotai/kimi-k2.6`）上**全部**「failed before it finished，无收尾消息」，仓库零改动；两条路由都复现，排除路由因素，故按 R8（repeated errors）转由派发者亲自执行。另：运行时会硬拒未授权路由，白名单为 `nvidia/*`，本 Agent 自身路由不在其中，`subagent_fork`（继承父路由）同样不可用——后续若要再派发，必须显式给出白名单内的 provider/model。
 
 ### 仍只能等条件
-- 远程同步：本地领先 11+ 个 doc-only 提交，`api.github.com` 仍 000（本地代理未起），`*.github.io` 正常。
+- 远程同步：当时本地领先 11+ 个提交，`api.github.com` 仍 000；**真因不是代理**，而是 hosts 屏蔽清单（2026-11-10 查明并更正，见 §三十三 与 `DEPLOY.md`）。`*.github.io` 正常。
 - 真机触摸实测：只能由用户按 `docs/realdevice-checklist.md` 执行。
 
 

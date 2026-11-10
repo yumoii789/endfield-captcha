@@ -8,7 +8,11 @@
 - **注意**：本机网络的 git 智能 HTTP 端点不可达（`Recv failure: Connection was reset`，重试 4 次均失败），故线上内容经 **GitHub Git Data API** 上传。
 - **远端历史已与本地完全对齐**：以 `rebuild_history.mjs` 逐条重放本地提交（保留作者、提交时间与消息），重建后**每个提交的 SHA 与本地逐一相同**——git 内容寻址使然。因此不再需要 `--force`；日后在任何能连通 `github.com:443` 的网络下正常 `git push` 即可。
 - **重放的两个坑（都已实测）**：① 脚本靠进程 cwd 调 `git`，必须在仓库目录内执行（`cd endfield-captcha && node …/rebuild_history.mjs`），否则报 `not a git repository`；② 若报 `UNABLE_TO_VERIFY_LEAF_SIGNATURE`（网络侧证书链偶发不完整），改用 `node --use-system-ca …/rebuild_history.mjs` 走系统根证书即可。
-- **重放的第三个坑（2026-11-09 实测）**：本机是经本地代理出网的，代理一旦挂掉，`api.github.com` / `github.com` 会变成 `ECONNREFUSED 127.0.0.1:443`（而 `*.github.io` 仍 200，所以**线上站点看着正常、只是推不上去**）。此时本地提交照常做，等代理恢复后用同一条命令重跑即可（重放幂等、SHA 稳定，不会产生分叉）。判定方法：`curl -m 12 -o /dev/null -w "%{http_code}" https://api.github.com`（000 即为不通）。
+- **重放的第三个坑（2026-11-09 首记 · 2026-11-10 更正真因）**：本机 **hosts 文件里有一段 50 条的屏蔽清单**（最后修改 11-9 16:12），把 `github.com`、`api.github.com`、`github.io`、`raw.githubusercontent.com`、`objects.githubusercontent.com`、`avatars*.githubusercontent.com` 等约 30 个 GitHub 域名——连同 Steam 系列、`img.youtube.com`、`huggingface.co`——全部指向 `127.0.0.1`。于是任何走 getaddrinfo 的程序（git / curl）都会去连本机 443 并被立刻拒绝，表现为 `ECONNREFUSED 127.0.0.1:443`。**这与代理无关**：实测 `ProxyEnable=0`、环境里无 `*_proxy` 变量、7890 与 443 均无监听——"本机经代理出网、代理挂掉"是首记时的误诊。
+- 为什么有的域名还活着：hosts 是**精确匹配**。`codeload.github.com` 不在清单里（→ 301 可达）；`yumoii789.github.io` 是 `github.io` 的子域、不匹配（→ 200 可达）。所以**线上站点看着正常、只是推不上去**。
+- 证据链（可复跑）：`curl -v https://github.com 2>&1 | grep Trying` → `Trying 127.0.0.1:443`；`nslookup github.com` 直接查 DNS 得到真 IP `20.205.243.166`（nslookup 不读 hosts，所以两者不一致正是特征）；`curl --resolve github.com:443:20.205.243.166 https://github.com` → **200**，证明链路本身是通的。
+- 三种解法（按侵入性排序）：① 从 hosts 删掉相关行（需管理员，恢复标准路径，之后 `git push` 直接用）；② 只在本 session 绕过——起一个仅监听本机的隧道进程，把这两个域名钉到真实 IP，再用 `git -c http.proxy=… push`（不改 hosts、不动系统设置）；③ 什么都不做，本地继续提交，等能连通时用同一条重放命令补推（重放幂等、SHA 稳定，不会分叉）。**这份清单看着是有意设置的（含 Steam/YouTube/huggingface），因此不该被静默绕过——由机主决定用哪条。**
+- 本地提交照常做，解除屏蔽后用同一条命令重跑即可。判定方法：`curl -m 12 -o /dev/null -w "%{http_code}" https://api.github.com`（000 即不通），再用上条 `curl -v` 区分「hosts 屏蔽」与「真实网络故障」。
 - 相关脚本（位于 `_verify/endfield-captcha/`，不随仓库发布）：`rebuild_history.mjs`（逐条重放全部提交，幂等且 SHA 稳定，**推荐**）、`push_via_api.mjs`（首次铺设）、`sync_via_api.mjs`（快照式同步，会产生新 SHA）。
 
 ## GitHub Pages（推荐）
