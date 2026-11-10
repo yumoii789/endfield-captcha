@@ -531,6 +531,25 @@ node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new -
 
 探针：`admin_drag_verify.mjs`（真实鼠标切面板 + 合成 PointerEvent 拖拽 + 读 localStorage 与 toast）。
 
+## 二十七、发布前自洽检查：页面引用完整性 + 站点文件清单（2026-11-09）
+
+Pages 是把**仓库根目录**直接发出去的，所以「引用的东西都在、发出去的东西都有用」值得机器核一遍。
+
+**引用完整性（`refcheck.mjs` / `refcheck2.mjs`）**
+
+- **JS/HTML 里拼出来的页面路径共 21 处，指向不存在的文件 0 处**：`hub.html` → 九关（9 张卡片）、`terminal.html` → 九关 + `hub.html`、`index.html` → `terminal.html`、`admin.html` → `hub.html`。这类拼错（卡片/关卡表写错文件名）是本项目最容易出的「静默失效」，本轮确认没有。
+- **静态资源引用**：只有 `puzzle2-core.js` 一条（被 `puzzle2.html` 引用）；页面是**单文件自包含**（CSS/JS 全内联），所以没有图片/音频/字体依赖 —— 也就不存在「线上缺资源」的可能。
+  - 唯一被工具报为「失效」的 `about:blank` 是 JS 里的 `frame.src="about:blank"` 赋值，属误报。
+
+**站点文件清单（发出去的就是这些）**
+
+- 13 个 HTML：`index.html`（跳 terminal）+ `hub.html` + `terminal.html` + `admin.html` + 九关；
+- 1 个外部 JS：`puzzle2-core.js`；
+- `docs/`（10 篇维护文档）、`README.md`、`DEPLOY.md`、`.nojekyll`（Pages 需要）；
+- **不发**：`_gt_srv.js`（本地静态服务器，已在 `.gitignore` 内，本轮确认无任何页面引用它）。
+
+**结论**：发布树自洽，无失效引用、无随包死资源。
+
 node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new --mute-audio --remote-debugging-port=9222；探针全部位于 _verify/endfield-captcha/（不随仓库发布）；远端同步用 node --use-system-ca rebuild_history.mjs，且必须在仓库目录内执行。
 
 
