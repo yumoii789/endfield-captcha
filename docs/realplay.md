@@ -600,6 +600,40 @@ README 是读者第一眼看到的东西，此前只零星改过几行，本轮�
 
 **README 里尚未逐项实测的**：管理后台「统计页」的具体能力（今日/本周/本月/本年/全部五个时间窗、KPI、每日曲线、三维分布图、导出）——本轮只验过菜单能打开、写面能落库，页内的图表与导出尚未实测，如实记下。
 
+## 三十、admin 统计页与导出的逐项实测（2026-11-09/10）
+
+§二十九 挂出的最后一项（README 声称的统计页能力）本轮实测完毕。
+
+**方法**：先播种跨五个时间窗的数据——`endland-stats` 5 条（0 / 1 / 10 / 40 / 400 天前，含一条 `pass:false`）、`endland-matchlog` 4 条（0–3 天前）；再用**真实鼠标**切菜单与时间窗（`.click()` 会让面板留在 `display:none`，见 §二十六）。
+
+**① 五个时间窗的 KPI 与播种数据逐一吻合**
+
+| 窗口 | 验证次数 | 通关次数 | 通关率 | 匹配次数 | 与播种对照 |
+|---|---|---|---|---|---|
+| 今天 | 1 | 1 | 100.0% | 1 | ✔ 0 天前各 1 条 |
+| 本周 | 2 | 2 | 100.0% | 2 | ✔ 0/1 天前 |
+| 本月 | 2 | 2 | 100.0% | 4 | ✔ 10 天前那条落在上月（窗口边界正确） |
+| 本年 | 4 | 3 | 75.0% | 4 | ✔ 400 天前那条落在上一年 |
+| 全部 | 5 | 4 | 80.0% | 4 | ✔ 全部 5 条、4 条通关 |
+
+**② 图表**：统计页有 **4 个内联 SVG**（代码里是折线图 + 柱状图两个构造函数），几何元素数随窗口重绘：`29 → 31 → 47 → 185 → 189` —— 与 README 说的「每日曲线 + 游戏/星级/难度三维分布」在数量与形态上吻合。
+
+**③ 导出（三个按钮逐一实测，钩 `URL.createObjectURL` + `HTMLAnchorElement.click` 捕获）**
+
+| 按钮 | Blob | 文件名 | JSON 键 |
+|---|---|---|---|
+| 导出全部数据（JSON） | 36709 B | `endland-backup-2026-11-10.json` | `exportedAt, version, user, cfg, stats, matchlog, levels` |
+| 仅导出当前范围 stats | 302 B | `endland-stats-today-2026-11-10.json` | `range, from, generatedAt, stats` |
+| 导出汇总报告 | 506 B | `endland-report-today-2026-11-10.json` | `generatedAt, range, from, totals, byGame, byStar, byLv, byDay` |
+
+键名与代码声明（admin.html:1770-1780）完全一致；全程 `exceptionThrown` = 0。结论：README 对统计页的描述成立，§二十九 的「尚未实测」到此关闭。
+
+**第四次同类探针坑（已累积成规则）**：本轮先按精确文字找「导出」按钮——真名是三个（`导出全部数据（JSON）` / `仅导出当前范围 stats` / `导出汇总报告`），所以 NOT_FOUND；改对名字后又空捕获，因为按钮在长页面**视口之外**，真实鼠标点击落在窗口外。加 `scrollIntoView` 并在点击前断言 `inView` 后才拿到结果。
+
+> **规则（四条同源，建议后续探针都照此写）**：判定交互前先确认 ① 目标选择器与真实文案一致、② 目标在视口内、③ 指纹覆盖该交互真正改写的属性、④ 指纹不要截断。四条都踩过，且每次的表象都像「产品坏了」。
+
+探针：`admin_stats_check.mjs`（五窗口 KPI + 图表重绘）、`admin_export_check3.mjs`（三个导出按钮的 Blob/文件名/JSON 键）。
+
 node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new --mute-audio --remote-debugging-port=9222；探针全部位于 _verify/endfield-captcha/（不随仓库发布）；远端同步用 node --use-system-ca rebuild_history.mjs，且必须在仓库目录内执行。
 
 
