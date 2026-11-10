@@ -788,6 +788,19 @@ admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有�
 
 **顺带查出两条清单原本没覆盖的真机风险**（已补为清单 §三 第 19/20 项）：① 12 页都声明了 `viewport-fit=cover`，但**全仓库 0 处**使用 `safe-area-inset` → 刘海/挖孔与底部手势条可能压住页头页脚，尤其右下角固定的静音角标；② `admin.html:213` 的数字输入框 `font-size:11.5px`（<16px）→ iOS 聚焦会自动放大且常不缩回。
 
+## 三十五、通关音效与静音门的机制验证（2026-11-10）
+
+清单第 11/12 项此前只当真人机项，从没机械验证过「通关到底有没有走发声路径」。本轮补上。
+
+**静态**：九关的通关处理**全部**调用发声函数——game1 `chime()`(:399)、game3 `sndWin()`(:627)、game4(:532)、game5(:533)、game6(:754)、game7(:700)、game8(:404)、game9(:495)、puzzle2(:879)；实现统一为 WebAudio（`createOscillator` + `createGain`），静音门是 `if(muted)return;`（`game5-lights.html:445`），`muted` 初值取自 `localStorage` 的 `endland-mute === 'on'`（**缺省即有声**）。
+
+**行为**（探针 `audio_verify.mjs`：在页面脚本执行前插桩 `AudioContext.prototype.createOscillator` 计数，再真实点击解法通关 game5 V1）：
+
+- 静音键 `off`：2 次点击解题 → `solvedFlag=true`、印章显形，振荡器 **0 → 6**（通关 `chime()` 四音 + 两下点击音）⇒ 通关确实触发发声路径；
+- 静音键 `on`：同样通关，振荡器 **0 → 0** ⇒ 静音门确实拦住了发声，而不只是记住状态。
+
+**能证明什么 / 不能证明什么**：能证明「通关 → 发声函数被调用」与「静音 → 不调用」；**不能**证明「扬声器真的响、音量不为 0」——那仍是真机项（清单第 11 项保留，已注明机制侧已验证）。
+
 ### 过程事实：本 session 子代理不可用（影响后续派发方式）
 4 次派发——两份完整任务书 + 两个极小探针——在两条已授权路由（`nvidia/z-ai/glm-5.3`、`nvidia/moonshotai/kimi-k2.6`）上**全部**「failed before it finished，无收尾消息」，仓库零改动；两条路由都复现，排除路由因素，故按 R8（repeated errors）转由派发者亲自执行。另：运行时会硬拒未授权路由，白名单为 `nvidia/*`，本 Agent 自身路由不在其中，`subagent_fork`（继承父路由）同样不可用——后续若要再派发，必须显式给出白名单内的 provider/model。
 
