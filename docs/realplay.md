@@ -421,7 +421,7 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 
 ### 未验证 / 局限
 
-- 全局概率条的拖拽坐标映射未验（探针环境里 .pbar 量到 0 宽；键盘路径已验证数值写入）。
+- ~~全局概率条的拖拽坐标映射未验~~ → **已于 §二十六 验证通过**（此前量到 0 宽是面板 `display:none` 造成的测量假象）。
 - 真机触摸手感（尺寸/帧率/发热）只能人工在手机上跑；本套证据只覆盖 CDP 触摸仿真。
 - grep 工具 250 条上限让我两次误判（已记 §二十）；引用本套结论时请注意证据来源。
 - 代码结论绑定各自那一节的提交（导出 `fd3b6bc`、game8 `b5dcdc6`、admin `d25a73e`、横屏 `d38dd8b`）；之后若有改动，需重新核对。
@@ -517,6 +517,19 @@ node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new -
 > 教训（已累积三条同类）：判定「有没有变化」时，指纹要覆盖**该交互真正改写的那些属性**，并且**不要截断**；截断 + 选错属性会稳定地产生假阴性，而且方向总是「看起来像产品坏了」。
 
 探针：`final_regression.mjs`（自检 + 导出 + 触摸抽验）、`g1_tap_probe.mjs`（game1 旋转指纹复核）。
+
+## 二十六、收掉最后一个未验证项：admin 难度条拖拽（2026-11-09）
+
+§二十一 的「未验证/局限」里曾记着一条：**全局概率条的拖拽坐标映射未验**（当时探针读到 `.pbar` 宽度为 0，怀疑面板没真正显示）。本轮把它收掉。
+
+**关键发现：宽度 0 是测量artifact（面板当时 `display:none`）**。改用**真实鼠标事件**点「难度」菜单（而不是 `element.click()`）后：
+
+- 面板可见性 = `block`，`.pbar` 宽度 = **955px**（此前 0）；
+- 在分界手柄上派发 `pointerdown → pointermove → pointerup`（合成 PointerEvent，x 455 → 550）后：`endland-admin-cfg.globalDist` 由 `20,20,20,20,20` 变为 **`30.1,9.9,20,20,20`**（Σ 仍 100%），并弹出 toast「**全局概率已保存（Σ=100%）**」——即 `endPointer` 里的 `saveCfg()` 确实执行（admin.html:943-948）。
+
+**结论**：难度条的两条调节路径（键盘方向键、拖拽手柄）都已实测，且都即时落库；`pointerup` 后自动保存、`sanitizeDist` 归一化到 Σ=100 也得到复核。此前记的「拖拽未验」应改为「已验证」——教训与 §二十五 同源：**面板是否真的可见要先测（`display`/宽度），否则会把「量不到」误当成「不工作」**。
+
+探针：`admin_drag_verify.mjs`（真实鼠标切面板 + 合成 PointerEvent 拖拽 + 读 localStorage 与 toast）。
 
 node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new --mute-audio --remote-debugging-port=9222；探针全部位于 _verify/endfield-captcha/（不随仓库发布）；远端同步用 node --use-system-ca rebuild_history.mjs，且必须在仓库目录内执行。
 
