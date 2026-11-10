@@ -814,6 +814,20 @@ admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有�
 
 两次的同一个毛病：**只看了一处就推广到全局**。与 §三十三（没读 hosts 首尾注释）§三十四（没读完整规则块）是同一条纪律：**先确认作用域与出处，再下结论**。
 
+## 三十七、长按选择菜单（清单第 6 项）的计算值审计（2026-11-10）
+
+清单第 6 项要求「长按格子不应弹出系统选择菜单」。此前只当真人机项；本轮用**计算值**（`getComputedStyle().userSelect`，不是看声明）把九关棋盘与几个可点控件逐个量了一遍（探针 `userselect_probe.mjs` / `userselect_probe2.mjs`）。
+
+**量到的分布**：`user-select:none` 在本项目只声明于 `.captcha-box`（八关的人机验证框）、`.cell`（game5）、`.board`（game9）、`.gate`/`.pbar`（admin）。九关棋盘的**计算值**因此是：game5/game9 = `none`，其余七关 = `auto`；其中**只有 game6 的口令槽位含可见字符**（`.slot`，1 字符），其余各关格内是纯 SVG、无文本。
+
+**已修的只有证据支持的那一处**：`game6-code.html` 的 `.slot` 补 `user-select:none`（与 game5 `.cell` 同一做法）。其余各关格内无文本、暴露面≈0，按证据不动——不做无收益的全仓清扫。
+
+**顺带量到的更大暴露面**：hub 的 `.card`（可点大块、**93 个字符**）也是 `auto`。它与项目已禁用的 `.captcha-box` 属同类（可点方块），故一并补 `user-select:none` ✔。
+
+**按证据保留未处理**：game6 `.key`、admin `.nav button` 等 `<button>` 的计算值仍是 `auto`——长按可能选中键面文字，属浏览器行为、影响面小，留作真机判断（清单第 6 项已注明）。
+
+**验证**：修后 game6 `.slot` 计算值 = `none`；hub `.card` 计算值 = `none` 且**真实点击仍能打开关卡**；全量回归复跑 **自检 9/9 · 导出契约 9/9 · 触摸 3/3**。
+
 ### 过程事实：本 session 子代理不可用（影响后续派发方式）
 4 次派发——两份完整任务书 + 两个极小探针——在两条已授权路由（`nvidia/z-ai/glm-5.3`、`nvidia/moonshotai/kimi-k2.6`）上**全部**「failed before it finished，无收尾消息」，仓库零改动；两条路由都复现，排除路由因素，故按 R8（repeated errors）转由派发者亲自执行。另：运行时会硬拒未授权路由，白名单为 `nvidia/*`，本 Agent 自身路由不在其中，`subagent_fork`（继承父路由）同样不可用——后续若要再派发，必须显式给出白名单内的 provider/model。
 
