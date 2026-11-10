@@ -291,7 +291,7 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 
 1. **game5**：`bootChallenge()` 结尾漏调 `onReady()`（该函数此前在 game5 里是死代码）⇒ 任何路径都不打印 `[GT-INIT]`/`[EXPORT]`。已在 `bootChallenge()` 末尾补 `onReady();`。
 2. **game4 / game7**：`?direct=1` 只自动点人机验证框，题面由「验证成功」回调里的 `newChallenge()` 建立，而该回调不调 `onReady()` ⇒ 直通路径既无 `[G*-INIT]` 也无导出。已在两处回调的 `newChallenge();` 之后补 `onReady();`。
-3. **game9**：`onReady()` 只打 INIT；导出写在 selftest 与默认分支（game9-slide.html:728/735），`?direct=1` 分支没有 ⇒ 直通路径不导出。已在该分支补 `if(qs.get('export')==='1')doExport();`。
+3. **game9**：`onReady()` 只打 INIT；导出写在 selftest 与默认分支（game9-slide.html:729/736；`?direct=1` 分支的导出补在 :723），`?direct=1` 分支没有 ⇒ 直通路径不导出。已在该分支补 `if(qs.get('export')==='1')doExport();`。
 
 回归（`selftest4.mjs`）：game4「五档 300 局 · 失败 0 局」、game5「全档通过 · 5/5」、game7 `[G7-TEST] lv1–lv5 PASS`、game9「汇总 5/5 100.0%」；八次导航 `exceptionThrown` 均为 0。
 
@@ -305,11 +305,11 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 |---|---|---|---|---|
 | `?stage=N` | 仅 game3：关卡号，优先于 `?lv` | game3-gems.html:772-779 | 导出 id 形如 `'gems-'+L.id+'-'+随机四位`（game3-gems.html:742）：`?stage=1`→`gems-1-*`、`?stage=3`→`gems-3-*`、`?stage=3&lv=1`→`gems-3-*`（中段是关卡号，故优先级成立） | ✔ |
 | `?fast=1` | 仅 game8：跳过动画/加速 | game8-targets.html:184/410/549/572 | `#mask` 显形耗时：常规 600/620ms，`?fast=1` **39/42ms** | ✔（修复后） |
-| `?pause=1` | 仅 admin：自测时停在登录门禁 | admin.html:2228-2237 | `admin.html?selftest=1&pause=1` → console 出现 `[ADMIN-TEST] pause=1：停留登录界面…`（2 条），登录界面仍在 | ✔ |
+| `?pause=1` | 仅 admin：自测时停在登录门禁 | admin.html:2230-2239 | `admin.html?selftest=1&pause=1` → console 出现 `[ADMIN-TEST] pause=1：停留登录界面…`（2 条），登录界面仍在 | ✔ |
 | `?reset=1` | 仅 terminal：清空 `endland-user` | terminal.html:151-152 | 播种 `{name:'哨兵乙'}` 后带 reset 打开：打印「档案已清除，重新注册」、localStorage 不再含哨兵乙、随后按输入重建档案（含「探针」） | ✔ |
 | `?wait=N` | 仅 terminal：结果等待超时（默认 600000） | terminal.html:61/143 | `?wait=2500`：iframe 出现后 **+2.3s** 打印「设备无响应（等待超时），连接已中止」→ 数据行 → 失败台词 → 跳 hub | ✔ |
 
-**本轮修掉的缺陷（game8）**：`?direct=1&fast=1` 下面板永不显形。原因：直通分支在 `box.onclick` 接线（game8-targets.html:561）**之前**同步执行 `$id('captchaBox').click()`，而 FAST 走的正是这条同步路径，点击落空；非 FAST 路径因为 `setTimeout(…,150)` 反而正常。已改成 FAST 也延到下一轮事件循环（`setTimeout(…,0)`）并留注释：实测 42ms vs 修复前「3s 内从不显形」。
+**本轮修掉的缺陷（game8）**：`?direct=1&fast=1` 下面板永不显形。原因：直通分支在 `box.onclick` 接线（game8-targets.html:563）**之前**同步执行 `$id('captchaBox').click()`，而 FAST 走的正是这条同步路径，点击落空；非 FAST 路径因为 `setTimeout(…,150)` 反而正常。已改成 FAST 也延到下一轮事件循环（`setTimeout(…,0)`）并留注释：实测 42ms vs 修复前「3s 内从不显形」。
 
 **已确认不是缺陷**：`mistakes` 字段。`docs/conventions.md:28` 明写「父页当前不读取它（hub.html / terminal.html 均未改动）」，与实现一致——terminal.html 内没有任何 `mistakes` 引用（grep 只命中一句台词里的「失误」二字）。
 
@@ -633,6 +633,22 @@ README 是读者第一眼看到的东西，此前只零星改过几行，本轮�
 > **规则（四条同源，建议后续探针都照此写）**：判定交互前先确认 ① 目标选择器与真实文案一致、② 目标在视口内、③ 指纹覆盖该交互真正改写的属性、④ 指纹不要截断。四条都踩过，且每次的表象都像「产品坏了」。
 
 探针：`admin_stats_check.mjs`（五窗口 KPI + 图表重绘）、`admin_export_check3.mjs`（三个导出按钮的 Blob/文件名/JSON 键）。
+
+## 三十一、文档 `file:line` 引用漂移检查（2026-11-09）
+
+README 里明确警告过「在文件前部插入行会把后面的引用推后」，而本会话往 7 个游戏页与 admin 里插过行——于是通篇扫一次引用是否漂移（`citecheck.mjs`：把 docs/ 与 README/DEPLOY 里所有 `xxx.html:NNN` 引用抓出来，打印它在当前文件的对应行，人工判定是否还指得中）。
+
+**结果：本会话改动过的文件共 46 处引用，3 处漂移——全部是我自己插行造成的，已修**：
+
+| 引用处 | 原引用 | 现在应指 | 漂移原因 |
+|---|---|---|---|
+| `realplay.md` §十四 | game9-slide.html:728/735 | **729/736**（并补注直通分支的导出在 :723） | 本轮在 :723 插入导出调用 ⇒ 其后 +1 |
+| `realplay.md` §十五 | admin.html:2228-2237 | **2230-2239** | 本轮在 :1971 插入注释与 `return true` ⇒ 其后 +2 |
+| `realplay.md` §二十二 | game8-targets.html:561 | **563** | 本轮在 :549 插入 FAST 说明注释 ⇒ 其后 +2 |
+
+**未受影响的引用（核对通过）**：`star-rubric.md` 的全部九关判据引用（game1:392-393、game3:291/617-618、game4:524、game5:525-526、game6:744-745、game7:692、game8:396、game9:485-487）——它们都落在各自插入点**之前**；`difficulty-axis.md`（game1:199）、`layout-viewport.md`（game5:86 / 90-101）、`dom-consistency.md`（game9:319 `buildBoard`）也都指得中。
+
+> 教训：**插行是有代价的**——每次在文件前部插入内容，都该把该项目文档里指向「插入点之后」的 `file:line` 引用一起 +N。本轮这三处就是代价；检查本身很便宜（一个脚本 + 一次人工对照），建议以后每次改完代码都跑。
 
 node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new --mute-audio --remote-debugging-port=9222；探针全部位于 _verify/endfield-captcha/（不随仓库发布）；远端同步用 node --use-system-ca rebuild_history.mjs，且必须在仓库目录内执行。
 
