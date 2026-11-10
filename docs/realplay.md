@@ -776,6 +776,18 @@ admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有�
 - 九关 `?direct=1&lv=3&export=1`：**导出契约 9/9**，每页都产出含 `game/id/lv/name/desc/play/params/enabled` 的 INIT JSON；
 - 线上 `terminal.html` 注入 `pz-failed`：屏幕依次出现「通关失败 → 用户通关数据 → 失败吐槽 → **身份验证未通过** → 正在跳转」，**全程未出现「身份验证成功」**，`endland-stats` 末条 `pass:false`，`endland-prog`（hub 解锁键）仍为 `NULL` —— 与本地行为逐项一致。
 
+## 三十四、移动端 `100vh`/`dvh` 审计（2026-11-10，含一次我自己的误报）
+
+**起因**：清单第 8 项问「地址栏展开/收起时九关是否仍不需滚动」——这没法在 CDP 里验（仿真没有地址栏），只能静态审计。
+
+**我先误报了一次**：`grep` 用的正则 `[^;}]*100vh[^;}]*` 在**第一个分号处就截断**，我只看到 `min-height:100vh;` 而没看到紧跟其后的 `min-height:100dvh`，据此断言「13 个页面都缺 dvh 兜底」。实际上项目**早已采用 `min-height:100vh;min-height:100dvh` 成对写法**——这也正是「把 body 的 min-height 归零后高度仍是 844」的原因：生效的本来就是 `dvh`，而它在 CDP 里等于 `vh`。教训与 §三十三 同源：**别信被截断的输出，先读完整规则块再下结论**。
+
+**精确审计**（逐文件数 `100vh` 与 `100dvh` 并要求配对）：唯一缺口是 `admin.html` 三处——`#loginView:81`、`#appView:104` 的 `min-height`，以及 `.side:105` 的 `height`/`max-height`。已补成成对写法（老浏览器由前者兜底）。其余 12 页本就成对（game5 另有一处 `height:100dvh`）。
+
+**验证**：14 页 13 段内联脚本解析 0 失败；admin 实测登录页 `#loginView`、后台 `#appView` 计算值正常，六个菜单齐（状态/难度/关卡管理/帐户/统计/高级），`exceptionThrown` 0，`pageScroll=0`。注意 **dvh 的收益在 CDP 里不可见**，所以这条只能算「无回归 + 符合规范」，最终仍需清单第 8 项在真机确认。
+
+**顺带查出两条清单原本没覆盖的真机风险**（已补为清单 §三 第 19/20 项）：① 12 页都声明了 `viewport-fit=cover`，但**全仓库 0 处**使用 `safe-area-inset` → 刘海/挖孔与底部手势条可能压住页头页脚，尤其右下角固定的静音角标；② `admin.html:213` 的数字输入框 `font-size:11.5px`（<16px）→ iOS 聚焦会自动放大且常不缩回。
+
 ### 过程事实：本 session 子代理不可用（影响后续派发方式）
 4 次派发——两份完整任务书 + 两个极小探针——在两条已授权路由（`nvidia/z-ai/glm-5.3`、`nvidia/moonshotai/kimi-k2.6`）上**全部**「failed before it finished，无收尾消息」，仓库零改动；两条路由都复现，排除路由因素，故按 R8（repeated errors）转由派发者亲自执行。另：运行时会硬拒未授权路由，白名单为 `nvidia/*`，本 Agent 自身路由不在其中，`subagent_fork`（继承父路由）同样不可用——后续若要再派发，必须显式给出白名单内的 provider/model。
 
