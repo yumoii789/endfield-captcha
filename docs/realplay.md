@@ -752,6 +752,7 @@ admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有�
   · 两次 `endland-stats` 末条的 `pass` 字段分别为 `false` / `true`，与屏幕一致；两次 `endland-prog`（hub 的解锁进度键）都是 `NULL` —— **直接验证了本节处置 3 的门禁归属判断**：terminal 从不写它。
   · 顺带确认改名已进真实链路：成功那次 terminal 匹配行打印 `V-40059 — 图形校验 · 难度 V5`。
   · 探针自身的坑（记下以免重踩）：`document.body.textContent` 会把内联 `<script>` 源码算进去，关键词于是"在 0.0 秒就出现"；`innerText` 又只含可见文本。正确做法是只取**非 script/style/iframe 子元素**的 textContent。
+  · **改名四处面实测（`rename_live.mjs`，真实浏览器）**：hub 9 张卡片全部显示「图形校验」且整页无「残影重建」；admin 登录后 `gName('nonogram')` = "图形校验"、`gDev('nonogram')` 仍为 "V-40059"（**`key` 未被我改动**）、关卡菜单同样只出现新名；game7 页面 `document.title` = "访客协议 VISITOR PROTOCOL · 图形校验"、`TIP_TABLE` 五条开头均为「图形校验 ·」且整页无旧名。加上端到端那次的 terminal 匹配行，改名的 4 个对外面（hub 卡片 / admin 菜单与解析函数 / game7 页头与引导文案 / terminal 匹配行）全部实测过。
 
 ### 过程事实：本 session 子代理不可用（影响后续派发方式）
 4 次派发——两份完整任务书 + 两个极小探针——在两条已授权路由（`nvidia/z-ai/glm-5.3`、`nvidia/moonshotai/kimi-k2.6`）上**全部**「failed before it finished，无收尾消息」，仓库零改动；两条路由都复现，排除路由因素，故按 R8（repeated errors）转由派发者亲自执行。另：运行时会硬拒未授权路由，白名单为 `nvidia/*`，本 Agent 自身路由不在其中，`subagent_fork`（继承父路由）同样不可用——后续若要再派发，必须显式给出白名单内的 provider/model。
