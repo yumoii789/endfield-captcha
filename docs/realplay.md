@@ -295,7 +295,7 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 
 回归（`selftest4.mjs`）：game4「五档 300 局 · 失败 0 局」、game5「全档通过 · 5/5」、game7 `[G7-TEST] lv1–lv5 PASS`、game9「汇总 5/5 100.0%」；八次导航 `exceptionThrown` 均为 0。
 
-遗留（只改文档、未动代码）：`LEVELS_META` 仅定义于 game3/game4/game6/game8/game9，game1/puzzle2/game5/game7 没有；当前没有任何页面消费它（管理后台未接入），故本轮把 `docs/level-spec.md` 的表述改成实况，未给四关补该变量。
+遗留（只改文档、未动代码）：`LEVELS_META` 仅定义于 game3/game4/game6/game8/game9，game1/puzzle2/game5/game7 没有；当前没有任何页面消费它（管理后台未接入），故本轮把 `docs/level-spec.md` 的表述改成实况，未给四关补该变量。**（→ 已于 2026-11-10 补齐四关并回改本句所述的表述，见 §三十二。）**
 
 ## 十五、钩子契约逐项行为核验（2026-11-09：`?stage` / `?fast` / `?pause` / `?reset` / `?wait`）
 
@@ -416,8 +416,8 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 
 ### 未决（等你定，未动代码）
 
-1. LEVELS_META 仅 game3/4/6/8/9 定义，game1/puzzle2/game5/game7 缺失（当前无任何页面消费）→ 触发条件：要接管理后台。
-2. terminal 失败/超时后仍打印「身份验证成功」并跳 hub（terminal.html:198-209 无条件执行）→ 触发条件：希望失败者被拦在门外。
+1. LEVELS_META 仅 game3/4/6/8/9 定义，game1/puzzle2/game5/game7 缺失（当前无任何页面消费）→ 触发条件：要接管理后台。 **（→ 已于 2026-11-10 按推荐路径补齐四关，见 §三十二。）**
+2. terminal 失败/超时后仍打印「身份验证成功」并跳 hub（terminal.html:198-209 无条件执行）→ 触发条件：希望失败者被拦在门外。 **（→ 已于 2026-11-10 处理：terminal.html:198 改为随结果显示（pass→身份验证成功 / fail·timeout→身份验证未通过）；跳转**未改**，因 hub 的解锁门禁由 hub 自己监听 pz-solved 写入，terminal 的 pass/fail 不参与门禁。见 §三十二。）**
 
 ### 未验证 / 局限
 
@@ -598,6 +598,8 @@ README 是读者第一眼看到的东西，此前只零星改过几行，本轮�
 
 即：**同一页面里页头说「图形校验」，它自己的引导文案说「残影重建」**；而 hub/terminal 卡片跟页头一致、README/admin 跟引导文案一致。这不是文档笔误，是命名口径本身没统一——**已作为待决项交给用户**（改哪一边都只是一行级改动，但选哪个名字是产品决定）。
 
+**→ 已于 2026-11-10 处置（见 §三十二）**：统一采用**图形校验**。同时更正上表第 2 行的一处**列举错误**——本轮实测 `docs/conventions.md` 与 `worldbible.md` **并不含**「残影重建」；实际含该名的是 `README.md:41/114`、`docs/realdevice-checklist.md:24`、`admin.html:389`，另有 `docs/new-puzzles-proposal.md:26` 作为提案里的「主题包装」名保留至今。这条错误列举曾把后续审计引到并不存在的待改文件上。
+
 **README 里尚未逐项实测的**：管理后台「统计页」的具体能力（今日/本周/本月/本年/全部五个时间窗、KPI、每日曲线、三维分布图、导出）——本轮只验过菜单能打开、写面能落库，页内的图表与导出尚未实测，如实记下。
 
 ## 三十、admin 统计页与导出的逐项实测（2026-11-09/10）
@@ -701,6 +703,57 @@ admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有�
 **尚未实测的写面（如实记下）**：难度面板「保存全局概率 / 保存覆盖」（admin.html:1035 一路）、帐户面板改凭据（:1580）、高级面板危险区「清空统计 / 重置配置 / 全部清空」（:1897/:2088）。
 
 探针：`admin_write.mjs`（redirect 闭环）、`admin_levels_write.mjs`（样例写入 + 非法拦截）、`admin_upload.mjs` / `admin_upload2.mjs`（`#upFile` 真上传 + `pz.custom` 判定）、`admin_levels_inv2.mjs`（面板计数与游戏写入一致性）。本轮我自己的两个探针坑：正则里 `\n` 被展开成真换行导致浏览器端语法错误、一处括号不平衡——都属探针问题，不是产品问题。
+
+## 三十二、三项待决项的处置与本轮验收（2026-11-10）
+
+三项都在 `ask_user_question` 连续三次超时（540s / 540s / 600s）后按 G8「假设出口」执行，假设逐条登记在此，并写清什么情况下该推翻我。
+
+### 处置 1：game7 名称统一为「图形校验」（共 9 处）
+| 位置 | 改前 | 改后 |
+|---|---|---|
+| `game7-nonogram.html:201-205`（该页自己的档位引导文案 5 处） | 残影重建 · … | 图形校验 · … |
+| `README.md:41` / `README.md:114` | 残影重建 | 图形校验 |
+| `docs/realdevice-checklist.md:24` | game7 残影重建 | game7 图形校验 |
+| `admin.html:389` | name:'残影重建' | name:'图形校验'（`key:'nonogram'` 与 `dev` 一字未动） |
+
+**保留原样（不是对外名称）**：`docs/new-puzzles-proposal.md:26`（提案里的「主题包装」名）、`docs/realplay.md` 的 §二十八 与本节（审计记录本身）。实测 `grep -rn 残影重建` 全仓库仅剩这四处。
+- 推翻条件：你想改用「残影重建」当对外名 → 反向替换上述 9 处即可，其余文件不受影响。
+
+### 处置 2：补齐 4 个页面的 LEVELS_META（各页按自己的难度表形状写）
+- `game1-circuit.html:200` → `{game:'circuit',lv,n,leaf}`
+- `puzzle2.html:258` → `{game:'blocks',lv,cols,rows,piecesMax}`（该页是**数组**表，用 `LV_TABLE[k-1]` 取项）
+- `game5-lights.html:179` → `{game:'lights',lv,n,kMax,name}`
+- `game7-nonogram.html:199` → `{game:GAME_KEY,lv,w,h,d,name}`
+  · 注意：该页标识变量 `GAME_KEY` 声明在难度表**之后**（:198），所以 LEVELS_META 必须插在它之后，否则 `game` 会取到 `undefined`；其余三页用字面量，无此顺序问题。
+- 浏览器实测（`levels_live.mjs`）：9 个页面全部 `len=5`、无空值项、`exceptionThrown` 0；新增 4 页的 `game` 标识、`lv` 序 1→5、关键字段齐全，**4/4** 通过。
+- 推翻条件：不想让无人消费的导出留在代码里 → 删掉这 4 行，并把 `docs/level-spec.md:69` 改回「仅部分页面提供」。
+
+### 处置 3：terminal 失败口径（只改一句话，不动跳转）
+`terminal.html:198` 由无条件的「身份验证成功」改为随结果显示：`pass → 身份验证成功(ok)`、`fail → 身份验证未通过(bad)`、`timeout → 身份验证未通过（设备无响应）(bad)`。
+
+**跳转未改**：目标仍由 `cfg.redirect`（默认 `hub.html`）决定。依据是门禁归属——hub 的解锁进度由 **hub 自己**监听 `pz-solved` 写 `endland-prog`（`hub.html:160-168`），`pz-failed` 只写一条 `pass:false` 统计（`hub.html:169-171`），terminal 的 pass/fail 不参与门禁。所以这句话原本不代表「失败者被放行」，只代表「terminal 不拦人」，改的只是它别再说与上一句相反的话。
+- 推翻条件：你希望失败/超时者被拦在门外（不跳转）→ 那需要另加停留 + 重试入口，属新交互，本轮未做。
+
+### 本轮验收证据（都可复跑）
+- 脚本语法：14 个页面、13 段内联脚本经 `new Function` 解析，**0 失败**（`syntax_all.mjs`）。
+- terminal 分支：把 `terminal.html:188-198` 的**真实源码**抽出来喂三种输入（`term_branch.mjs`）——pass 只出现「身份验证成功」；fail/timeout 只出现「身份验证未通过」（超时带「（设备无响应）」）。端到端再跑 `terminal.html?selftest=1`：`[T-MATCH] nonogram lv2` + `[T-SOLVED] pass=true`，异常 0。
+- LEVELS_META：见处置 2（`levels_live.mjs`）。
+- 全量回归（`final_regression.mjs`）：自检零失败 **9/9**、导出契约 **9/9**、竖屏触摸抽验 **3/3**。
+  · 抽验第一次是 2/3（game1 判 false），**是探针缺陷不是回归**：该探针指纹只比 `className`，而 game1 的旋转写在内联 CSS 变量 `--r` 上。分开测「不点击只等待 900ms 的漂移」= **0 格**、「点击后的变化」= 第 12 格 `--r: 0deg → 90deg`（计算 transform 由单位阵变 90° 旋转）后确认点击确实生效（`g1_tap_split.mjs`），随后给该探针加了按文件选用的指纹（`SIGEXPR`）并复跑得到 3/3。教训与 §二十四 同源：**指纹必须覆盖交互真正改写的那个属性**。
+- **terminal 端到端（真实页面，失败/成功各一次，探针 `term_e2e3.mjs`）**：
+  · 注入 `pz-failed`（守卫只判 `d.type`，无来源校验，见 `terminal.html:139-142`）→ 屏幕按序出现「匹配成功 → 通关失败 → 用户通关数据：难度 V2 · 步数 7 → 失败吐槽 → **身份验证未通过** → 正在跳转到设定的网址」，**未**出现成功字样；console `[T-SOLVED] pass=false`。
+  · 注入 `pz-solved` → 「通关成功 → 难度 V2 · 2 星 · 步数 9 · 用时 12.5s → **身份验证成功** → 正在跳转」，**未**出现未通过字样；console `[T-SOLVED] pass=true`。
+  · 两次 `endland-stats` 末条的 `pass` 字段分别为 `false` / `true`，与屏幕一致；两次 `endland-prog`（hub 的解锁进度键）都是 `NULL` —— **直接验证了本节处置 3 的门禁归属判断**：terminal 从不写它。
+  · 顺带确认改名已进真实链路：成功那次 terminal 匹配行打印 `V-40059 — 图形校验 · 难度 V5`。
+  · 探针自身的坑（记下以免重踩）：`document.body.textContent` 会把内联 `<script>` 源码算进去，关键词于是"在 0.0 秒就出现"；`innerText` 又只含可见文本。正确做法是只取**非 script/style/iframe 子元素**的 textContent。
+
+### 过程事实：本 session 子代理不可用（影响后续派发方式）
+4 次派发——两份完整任务书 + 两个极小探针——在两条已授权路由（`nvidia/z-ai/glm-5.3`、`nvidia/moonshotai/kimi-k2.6`）上**全部**「failed before it finished，无收尾消息」，仓库零改动；两条路由都复现，排除路由因素，故按 R8（repeated errors）转由派发者亲自执行。另：运行时会硬拒未授权路由，白名单为 `nvidia/*`，本 Agent 自身路由不在其中，`subagent_fork`（继承父路由）同样不可用——后续若要再派发，必须显式给出白名单内的 provider/model。
+
+### 仍只能等条件
+- 远程同步：本地领先 11+ 个 doc-only 提交，`api.github.com` 仍 000（本地代理未起），`*.github.io` 正常。
+- 真机触摸实测：只能由用户按 `docs/realdevice-checklist.md` 执行。
+
 
 
 

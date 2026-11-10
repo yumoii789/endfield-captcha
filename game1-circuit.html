@@ -197,6 +197,7 @@ function $id(s){return document.getElementById(s)}
 /* ---------- 参数 ---------- */
 var qs=new URLSearchParams(location.search);
 var LEVELS={1:{n:4,leaf:[3,4]},2:{n:4,leaf:[5,7]},3:{n:5,leaf:[4,6]},4:{n:5,leaf:[6,8]},5:{n:6,leaf:[7,10]}};
+var LEVELS_META=[1,2,3,4,5].map(function(k){return {game:'circuit',lv:k,n:LEVELS[k].n,leaf:LEVELS[k].leaf}});
 var curLv=parseInt(qs.get('lv')||'',10); if(isNaN(curLv)||curLv<1||curLv>5)curLv=1;
 var SIZE=LEVELS[curLv].n;
 var seed=parseInt(qs.get('seed')||'',10); if(isNaN(seed)) seed=(Date.now()%1000000)|0;

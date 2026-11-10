@@ -38,7 +38,7 @@ node _gt_srv.js
 | `game4-camping.html` | V-40055 | 露营达人 | ★☆☆ | 营地布置满足全部约束 |
 | `game5-lights.html` | V-40057 | 灯光矩阵校验 | ★★★ | 点击翻转十字区域，点亮全部灯组 |
 | `game6-code.html` | V-40058 | 口令破译 | ★★★ | 按金点/银点反馈还原损坏口令 |
-| `game7-nonogram.html` | V-40059 | 残影重建 | ★★★★ | 按行列校验码涂黑格位重建影像 |
+| `game7-nonogram.html` | V-40059 | 图形校验 | ★★★★ | 按行列校验码涂黑格位重建影像 |
 | `game8-targets.html` | V-40060 | 目标点选 | ★★☆ | 点选画面中全部合规异常信号源 |
 | `game9-slide.html` | V-40061 | 滑块还原 | ★★★ | 把错位的影像碎片滑回原位 |
 
@@ -111,7 +111,7 @@ endfield-captcha/
 ├─ game4-camping.html    游戏 V4 露营达人
 ├─ game5-lights.html     游戏 V5 灯光矩阵校验
 ├─ game6-code.html       游戏 V6 口令破译
-├─ game7-nonogram.html   游戏 V7 残影重建
+├─ game7-nonogram.html   游戏 V7 图形校验
 ├─ game8-targets.html    游戏 V8 目标点选
 ├─ game9-slide.html      游戏 V9 滑块还原
 ├─ hub.html              版本 A 合集入口

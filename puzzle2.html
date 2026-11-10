@@ -255,6 +255,7 @@ var LV_TABLE=[
   {lv:4,cols:6,rows:6,hazardMin:3,hazardMax:3,piecesMin:9,piecesMax:10},
   {lv:5,cols:6,rows:7,hazardMin:3,hazardMax:4,piecesMin:10,piecesMax:11}
 ];
+var LEVELS_META=[1,2,3,4,5].map(function(k){var L=LV_TABLE[k-1];return {game:'blocks',lv:L.lv,cols:L.cols,rows:L.rows,piecesMax:L.piecesMax}});
 function clampLv(v){var n=Math.floor(Number(v));if(!isFinite(n)||n<1)return 1;return n>5?5:n}
 var lv=clampLv(qs.get('lv')!==null?qs.get('lv'):1);
 function lvParams(l){

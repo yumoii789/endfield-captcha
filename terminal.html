@@ -195,7 +195,7 @@ async function main(){
     await typeLine('> 用户通关数据：难度 V'+(res.lv!=null?res.lv:pick.lv)+' · 步数 '+(res.moves!=null?res.moves:'—'),'dim');
     await typeLine('> '+FAILQUIPS[Math.floor(Math.random()*FAILQUIPS.length)],'warn');
   }
-  await typeLine('> 身份验证成功','ok');
+  await typeLine(pass?'> 身份验证成功':'> 身份验证未通过'+(timedOut?'（设备无响应）':''),pass?'ok':'bad');
   console.log('[T-SOLVED] pass='+pass);
   var rd=cfg.redirect||'hub.html';
   if(/^https?:/i.test(rd)){

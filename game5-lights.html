@@ -176,6 +176,7 @@ var LV_TABLE={
   4:{n:4,kMin:8,kMax:10,stars:'≤4 步满星',name:'进阶'},
   5:{n:5,kMin:10,kMax:14,stars:'≤6 步满星',name:'极限'}
 };
+var LEVELS_META=[1,2,3,4,5].map(function(k){return {game:'lights',lv:k,n:LV_TABLE[k].n,kMax:LV_TABLE[k].kMax,name:LV_TABLE[k].name}});
 var GUIDES={
   1:{rule:'矩阵里 <b class="k">任一格</b> 被按下时，它<b>自己 + 上下左右</b>共 5 格的亮灭同时翻转。',
      goal:'把 V-40057 的 <b>3×3 全部 9 格</b>点亮即通过。',
