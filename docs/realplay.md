@@ -525,7 +525,7 @@ node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new -
 **关键发现：宽度 0 是测量artifact（面板当时 `display:none`）**。改用**真实鼠标事件**点「难度」菜单（而不是 `element.click()`）后：
 
 - 面板可见性 = `block`，`.pbar` 宽度 = **955px**（此前 0）；
-- 在分界手柄上派发 `pointerdown → pointermove → pointerup`（合成 PointerEvent，x 455 → 550）后：`endland-admin-cfg.globalDist` 由 `20,20,20,20,20` 变为 **`30.1,9.9,20,20,20`**（Σ 仍 100%），并弹出 toast「**全局概率已保存（Σ=100%）**」——即 `endPointer` 里的 `saveCfg()` 确实执行（admin.html:943-948）。
+- 在分界手柄上派发 `pointerdown → pointermove → pointerup`（合成 PointerEvent，x 455 → 550）后：`endland-admin-cfg.globalDist` 由 `20,20,20,20,20` 变为 **`30.1,9.9,20,20,20`**（Σ 仍 100%），并弹出 toast「**全局概率已保存（Σ=100%）**」——即 `end()` 里的 `saveCfg()` 确实执行（admin.html:943-948；此处原写作 `endPointer`，本轮更正为该页面真实函数名 `end()`，行号本就正确）。
 
 **结论**：难度条的两条调节路径（键盘方向键、拖拽手柄）都已实测，且都即时落库；`pointerup` 后自动保存、`sanitizeDist` 归一化到 Σ=100 也得到复核。此前记的「拖拽未验」应改为「已验证」——教训与 §二十五 同源：**面板是否真的可见要先测（`display`/宽度），否则会把「量不到」误当成「不工作」**。
 
