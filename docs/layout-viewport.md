@@ -232,6 +232,8 @@
 
 **自动化注意**：`phone_clear.mjs` / `clear_p2.mjs` 不滚动，故 game7 与 puzzle2 的横屏"失败"是探针行为而非产品缺陷；判读时须区分"点不到"与"要先滚一下"。
 
+> **2026-11-10 在当前提交复跑通过**：横屏 `landscape_final.mjs` 与竖屏 `portrait_final.mjs` 各扫「九关 × 五档 = 45 组合」，两边**不可达控件组合均为 0**（共 90 组合）。这一步是给本节结论打时间戳——本会话此后对 admin/terminal/hub/game6 的改动都未触及这九关的布局（唯一的 CSS 变动是 `game6` 口令槽位的 `user-select`，不影响布局）。
+
 ### 八之四、加载期异常与 console 报错扫描（线上，两方向全清）
 
 **方法**：`consoleclean.mjs` —— 在**线上站点**逐页加载 `?direct=1&lv=1`，捕获 `Runtime.exceptionThrown` 与 `Runtime.consoleAPICalled(type=error)`。
