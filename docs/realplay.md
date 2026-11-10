@@ -770,6 +770,12 @@ admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有�
 
 **顺带确证的边界**：`github.com` 在这台网络下**本身不可达**（绕过 hosts、钉真实 IP 也会在 TLS 前被 RST/超时），`api.github.com` 可达——所以本机永远该走 Git Data API 重放，而不是 `git push`。
 
+**部署后线上行为回归（同日，探针 `live_postdeploy.mjs`，直打 `https://yumoii789.github.io/endfield-captcha`）**——注意这次验的是**行为**，不是「文件里有没有那个字符串」：
+
+- 九关 `?selftest=1`：**9/9 零失败**，九个页面 `exceptionThrown` 全为 0；
+- 九关 `?direct=1&lv=3&export=1`：**导出契约 9/9**，每页都产出含 `game/id/lv/name/desc/play/params/enabled` 的 INIT JSON；
+- 线上 `terminal.html` 注入 `pz-failed`：屏幕依次出现「通关失败 → 用户通关数据 → 失败吐槽 → **身份验证未通过** → 正在跳转」，**全程未出现「身份验证成功」**，`endland-stats` 末条 `pass:false`，`endland-prog`（hub 解锁键）仍为 `NULL` —— 与本地行为逐项一致。
+
 ### 过程事实：本 session 子代理不可用（影响后续派发方式）
 4 次派发——两份完整任务书 + 两个极小探针——在两条已授权路由（`nvidia/z-ai/glm-5.3`、`nvidia/moonshotai/kimi-k2.6`）上**全部**「failed before it finished，无收尾消息」，仓库零改动；两条路由都复现，排除路由因素，故按 R8（repeated errors）转由派发者亲自执行。另：运行时会硬拒未授权路由，白名单为 `nvidia/*`，本 Agent 自身路由不在其中，`subagent_fork`（继承父路由）同样不可用——后续若要再派发，必须显式给出白名单内的 provider/model。
 
