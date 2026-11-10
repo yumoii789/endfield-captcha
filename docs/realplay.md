@@ -425,7 +425,7 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 - 真机触摸手感（尺寸/帧率/发热）只能人工在手机上跑；本套证据只覆盖 CDP 触摸仿真。
 - grep 工具 250 条上限让我两次误判（已记 §二十）；引用本套结论时请注意证据来源。
 - 代码结论绑定各自那一节的提交（导出 `fd3b6bc`、game8 `b5dcdc6`、admin `d25a73e`、横屏 `d38dd8b`）；之后若有改动，需重新核对。
-- 截至本摘要更新时，有若干纯文档提交因 **hosts 屏蔽清单**（`github.com` / `api.github.com` → `127.0.0.1`，详见 `DEPLOY.md`「重放的第三个坑」）尚未推到远端；线上运行时代码不受影响。（此处原记「本机代理挂掉」，2026-11-10 查明真因后更正。）
+- 截至本摘要更新时，有若干纯文档提交因 **Watt Toolkit（Steam++）加速器未运行**（它写进 hosts 的 `# Steam++ Start…End` 段把 `github.com` / `api.github.com` 指向 `127.0.0.1`，而其本地代理未启动）尚未推到远端；线上运行时代码不受影响。详见 `DEPLOY.md`「重放的第三个坑」与本文 §三十三。
 
 ### 运行环境（复现用）
 
@@ -754,23 +754,23 @@ admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有�
   · 探针自身的坑（记下以免重踩）：`document.body.textContent` 会把内联 `<script>` 源码算进去，关键词于是"在 0.0 秒就出现"；`innerText` 又只含可见文本。正确做法是只取**非 script/style/iframe 子元素**的 textContent。
   · **改名四处面实测（`rename_live.mjs`，真实浏览器）**：hub 9 张卡片全部显示「图形校验」且整页无「残影重建」；admin 登录后 `gName('nonogram')` = "图形校验"、`gDev('nonogram')` 仍为 "V-40059"（**`key` 未被我改动**）、关卡菜单同样只出现新名；game7 页面 `document.title` = "访客协议 VISITOR PROTOCOL · 图形校验"、`TIP_TABLE` 五条开头均为「图形校验 ·」且整页无旧名。加上端到端那次的 terminal 匹配行，改名的 4 个对外面（hub 卡片 / admin 菜单与解析函数 / game7 页头与引导文案 / terminal 匹配行）全部实测过。
 
-## 三十三、推送不通的真因：hosts 屏蔽清单（2026-11-10）
+## 三十三、推送不通的真因：Steam++（Watt Toolkit）加速器的 hosts 重定向（2026-11-10）
 
-此前 `DEPLOY.md` 与本文把「推不上去」归因为**本机代理挂掉**。本轮按「先证伪再下结论」把它查到底，真因完全不同：
+**结论**：不是网络故障，也不是谁设的屏蔽清单，而是 **Steam++（Watt Toolkit）的「网络加速」没在运行**。它把 GitHub / Steam / huggingface 等域名写进 hosts 指向 `127.0.0.1`（`# Steam++ Start…End`，共 50 条），再由它自己在 `127.0.0.1:443` 起本地代理转发；该进程不在，这些域名就一律 `ECONNREFUSED 127.0.0.1:443`。因此 `DEPLOY.md` 原先那句「本机经本地代理出网、代理挂掉」**是对的**。
 
-**事实**：Windows hosts 文件（最后修改 2026-11-09 16:12）含 **50 条** `127.0.0.1 <域名>` 屏蔽项，其中有约 30 个 GitHub 域名（`github.com`、`api.github.com`、`github.io`、`raw.githubusercontent.com`、`objects.githubusercontent.com`、`avatars*.githubusercontent.com`、`gist.github.com`、`pages.github.com` 等），另有 Steam 系列、`img.youtube.com`、`huggingface.co`。
+**证据链**：① `curl -v https://github.com` → `* Trying 127.0.0.1:443`（`git ls-remote` 29ms 同样失败）；② `nslookup github.com` 直查 DNS 得真 IP `20.205.243.166`——nslookup 不读 hosts，两者不一致正是 hosts 重定向的特征；③ `curl --resolve github.com:443:20.205.243.166` → **200**，证明链路本身通畅；④ `codeload.github.com`（不在那段）→ 301、`yumoii789.github.io`（`github.io` 的子域、精确匹配不中）→ 200；⑤ hosts 文件里的 `# Steam++ Start` / `# Steam++ End` 标记与条目集合共同指明出处；⑥ 系统 `ProxyEnable=0`、无 `*_proxy`、7890 无监听——与「Watt Toolkit 自带本地代理」这一机制并不矛盾（它不是系统代理）。
 
-**证据链**：① `curl -v https://github.com` → `* Trying 127.0.0.1:443` → `Connection refused`（`git ls-remote` 同样，29ms 快速失败）；② `nslookup github.com` 直查 DNS 得真 IP `20.205.243.166`——**nslookup 不读 hosts**，两者不一致正是 hosts 屏蔽的特征；③ `curl --resolve github.com:443:20.205.243.166` → **200**，证明网络链路本身通畅；④ `codeload.github.com`（不在清单）→ 301、`yumoii789.github.io`（`github.io` 的子域，hosts 精确匹配不中）→ 200；⑤ 代理假设被证伪：`ProxyEnable=0`、无 `*_proxy` 环境变量、7890 与 443 均无监听。
+**我在这一轮里连续更正自己两次判断**：先据现象断言「与代理无关」（对了一半——确实不是*系统*代理，但忽略了 hosts 条目的出处），随后又据条目形态误判为「有人有意设的屏蔽清单」并据此拒绝绕过。两次的同一个错误是：**没先读 hosts 文件首尾的注释就下结论**。教训与 §八 同源——下结论前先把「谁写的、什么时候写的」这类来源信息读到手。
 
-**处置**：这是机器级配置、且在共享设备上，我没有擅自绕过（也未改动 hosts）。已按 R-W 用 `ask_user_question` 请求机主选择（第四次超时），故按 G8 取**非侵入性假设**：不推送、不改配置，一切留在本地，并把真因与三种解法写进 `DEPLOY.md`。
+**处置**：① 真因与三种解法已写进 `DEPLOY.md`；② 未改动 hosts、未改动任何系统设置；③ 机主可选：启动 Watt Toolkit 开加速（恢复原设计）/ 自行删掉 `# Steam++ Start…End` 整段 / 让我在本 session 内用本机隧道钉 IP 绕过。`ask_user_question` 四次超时，故按 G8 记录假设后继续。
 
-**本地状态**：91 提交，HEAD `b35bd64`，工作树干净；远程仍停在 `d38dd8b`，本地领先 19 个提交（含本轮全部文档与三项修正）。
+**本地状态**：工作树干净；远程仍停在 `d38dd8b`，本地领先 20 余个提交（含本轮全部文档与三项修正）。
 
 ### 过程事实：本 session 子代理不可用（影响后续派发方式）
 4 次派发——两份完整任务书 + 两个极小探针——在两条已授权路由（`nvidia/z-ai/glm-5.3`、`nvidia/moonshotai/kimi-k2.6`）上**全部**「failed before it finished，无收尾消息」，仓库零改动；两条路由都复现，排除路由因素，故按 R8（repeated errors）转由派发者亲自执行。另：运行时会硬拒未授权路由，白名单为 `nvidia/*`，本 Agent 自身路由不在其中，`subagent_fork`（继承父路由）同样不可用——后续若要再派发，必须显式给出白名单内的 provider/model。
 
 ### 仍只能等条件
-- 远程同步：当时本地领先 11+ 个提交，`api.github.com` 仍 000；**真因不是代理**，而是 hosts 屏蔽清单（2026-11-10 查明并更正，见 §三十三 与 `DEPLOY.md`）。`*.github.io` 正常。
+- 远程同步：当时本地领先 11+ 个提交，`api.github.com` 仍 000；真因是 **Watt Toolkit（Steam++）加速器未运行**（hosts 重定向 + 本地代理缺位），2026-11-10 查明，见 §三十三 与 `DEPLOY.md`。`*.github.io` 正常。
 - 真机触摸实测：只能由用户按 `docs/realdevice-checklist.md` 执行。
 
 
