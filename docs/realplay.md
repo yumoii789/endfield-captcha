@@ -652,7 +652,7 @@ README 里明确警告过「在文件前部插入行会把后面的引用推后�
 | `realplay.md` §（game5 采样） | game5-lights.html:377-391 | **378-392** | 同上（+1） |
 | `realplay.md` §三十一 | game7-nonogram.html:713 | **714** | 同上（+1） |
 
-本轮顺带核对（**无需改**）：`DEPLOY.md:44` 引 `hub.html:134`，实测该行正是 `var url=x.page+'?direct=1&lv='+lv;`；`realplay.md:703` 的简写 `:1580` 指向 `lsSet(LS.cred, …)` 仍正确，而 `:2088` 曾指向一句 `}`（陈旧），已换成危险区三个按钮与三处 `confirmTwice` 调用的真实行号。
+本轮顺带核对（**无需改**）：`DEPLOY.md:44` 引 `hub.html:134`，实测该行正是 `var url=x.page+'?direct=1&lv='+lv;`；`realplay.md` 里那条「尚未实测的写面」的简写 `admin.html:1580` 指向 `lsSet(LS.cred, …)` 仍正确，而 `admin.html:2088` 曾指向一句 `}`（陈旧），已换成危险区三个按钮与三处 `confirmTwice` 调用的真实行号。
 
 **未受影响的引用（核对通过）**：`star-rubric.md` 的全部九关判据引用（game1:392-393、game3:291/617-618、game4:524、game5:525-526、game6:744-745、game7:692、game8:396、game9:485-487）——它们都落在各自插入点**之前**；`difficulty-axis.md`（game1:199）、`layout-viewport.md`（game5:86 / 90-101）、`dom-consistency.md`（game9:319 `buildBoard`）也都指得中。
 
