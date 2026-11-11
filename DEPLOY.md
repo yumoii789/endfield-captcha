@@ -30,7 +30,7 @@
 
 ### 一条命令向导（推荐）
 
-本套件本地已是完整 git 仓库（21 个文件已提交，`main` 分支）。在 **Git Bash** 中运行：
+本套件本地已是完整 git 仓库（`main` 分支；文件清单见 `git ls-files`——2026-11-10 实测 **28 个 tracked 文件**。**此处原写「21 个文件」，早已过期，故改为不写死数字**，与 `docs/conventions.md` §八「别让硬数字过期」同一条纪律）。在 **Git Bash** 中运行：
 
 ```bash
 bash /d/mo/dshweb/deploy-wizard.sh

@@ -875,6 +875,16 @@ admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有�
 
 **顺手修掉**：`term_e2e.mjs` / `term_e2e2.mjs` / `term_e2e3.mjs` / `live_postdeploy.mjs` 四个探针里读错的键名已改为 `endland-hub-progress`，避免以后再产出空洞证据。
 
+## 四十一、「文档对仓库状态的陈述」审计（2026-11-10）
+
+把「文档说仓库里有什么/有几个」这类断言核了一遍。**一条过期、四条负面结论**：
+
+- **过期（已修）**：`DEPLOY.md:33` 写「21 个文件已提交」，实测 `git ls-files` = **28** ⇒ 改为不写死数字（`git ls-files` 自查）。这正是 `conventions.md` §八 那类「硬数字会过期」的实例。
+- **负**：`_gt_srv.js`（本地测试服务器）**确实未被 tracked**（在 `.gitignore` 里）⇒ 与 `DEPLOY.md` 开头「不要上传 `_gt_srv.js`」的实际状态一致，不必改。
+- **负**：仓库里**混入 0 个探针文件**（`git ls-files | grep -cE "_verify|\.mjs$"` = 0）⇒ `_verify/` 的探针确实不随仓库发布。
+- **负**：tracked 资产里**没有本机绝对路径**（`D:\` / `/d/mo/` 只出现在 `DEPLOY.md` 自己的操作指引里）；页面里也**没有功能性 `localhost`/`127.0.0.1` 依赖**（`admin.html:368` 那处是 `file://` 协议下的提示文案「请通过 http(s) 打开（例如 http://127.0.0.1:8099/…）」，不参与功能）。
+- **负**：线上健康抽查 `index.html` / `hub.html` / `admin.html` 均 **200**。
+
 ### 过程事实：本 session 子代理不可用（影响后续派发方式）
 4 次派发——两份完整任务书 + 两个极小探针——在两条已授权路由（`nvidia/z-ai/glm-5.3`、`nvidia/moonshotai/kimi-k2.6`）上**全部**「failed before it finished，无收尾消息」，仓库零改动；两条路由都复现，排除路由因素，故按 R8（repeated errors）转由派发者亲自执行。另：运行时会硬拒未授权路由，白名单为 `nvidia/*`，本 Agent 自身路由不在其中，`subagent_fork`（继承父路由）同样不可用——后续若要再派发，必须显式给出白名单内的 provider/model。
 
