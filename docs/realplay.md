@@ -925,6 +925,19 @@ node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new -
 **结论（负面）**：两处入口在「键盘弹起」下都没有遮挡风险。**局限**：这是布局层代理——真机还要看系统在弹键盘时是否额外顶动布局（iOS 与 Android 的 `interactive-widget` 行为不同），故清单第 5 项保留，但已注明布局侧已验。
 
 
+## 四十四、同步链路上的两个环境坑：WARP 接管解析 + MSYS pkill 不可靠（2026-11-11）
+
+推提交时又栽了一次，两个坑都属于"工具静默失效"这一族：
+
+1. **`nslookup` 不再能绕过 hosts**：隧道靠它解析真实 IP。但本机 Cloudflare WARP 一旦连接就接管系统解析器（DNS 变成 `connectivity-check.warp-svc @ 127.0.2.2`），
+   于是 `nslookup api.github.com` 返回的是 hosts 里那条 `127.0.0.1`。**改用 DoH**（`doh.pub` / `dns.alidns.com` 均返回真 IP `20.205.243.168`）后解决。
+   隧道已加 DoH + 重试，并在解析失败时**显式 exit 2**——此前它是"在监听但对每个 CONNECT 回 REFUSE"，即一个静默坏掉的代理。
+2. **`pkill -f pin_tunnel.mjs` 杀不掉它**：MSYS 的 pkill 对 Windows 进程不可靠（本会话早前对 Edge 也验证过同样现象）。
+   后果是：新实例因端口占用退出 1，而**旧实例继续服务并继续 REFUSE**，让人误以为"补丁没生效"。要按 PID 杀：`netstat -ano | grep :8443` → `taskkill //F //PID <pid>`。
+
+**教训**：两次都是**"看起来在做、其实什么都没做"**；而两次的破局方法也一样——**让工具在失效时明确失败**（显式退出）、并在替换它之前先确认它真的被替换了（按 PID 杀 + 复查端口）。
+
+
 
 
 

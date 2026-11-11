@@ -19,6 +19,10 @@
   ③ 本次成功推送的组合（可复用）：一个仅监听本机的 CONNECT 隧道把 `api.github.com` 钉到真实 IP，然后
      `HTTPS_PROXY=http://127.0.0.1:8443 NODE_USE_ENV_PROXY=1 node --use-system-ca _verify/endfield-captcha/rebuild_history.mjs`（**cwd 必须在仓库目录内**）。结果：`main -> 09d67e5a`、远端 HEAD 与本地逐字符相同。
   ④ 若 Steam++ 正在正常加速，它自己就会接这些域名，此时无需隧道——但 `github.com` 不可达这一点不变，仍走重放脚本。
+- **2026-11-11 补充（解析这一环）**：隧道靠「解析真实 IP」绕过 hosts，而 **`nslookup` 不再可靠**——本机装有 Cloudflare WARP，它一连接就接管系统解析器（DNS 显示为 `connectivity-check.warp-svc @ 127.0.2.2`），
+  于是 `nslookup api.github.com` 也照答 hosts 里的 `127.0.0.1`。**改用 DoH**：`curl -s -H "accept: application/dns-json" "https://doh.pub/dns-query?type=A&name=api.github.com"`（备用 `https://dns.alidns.com/resolve?type=A&name=…`），两者都返回真 IP `20.205.243.168`。
+  隧道已改成 DoH + 重试，并在解析失败时**显式退出**——否则它会变成一个"在监听但拒绝一切"的静默坏隧道（本轮真踩了）。
+- **杀进程要按 PID**：`pkill -f pin_tunnel.mjs` 在本机**杀不掉**它（MSYS pkill 对 Windows 进程不可靠，Edge 同理）。要 `netstat -ano | grep :8443` 取 PID，再 `taskkill //F //PID <pid>`。
 - 相关脚本（位于 `_verify/endfield-captcha/`，不随仓库发布）：`rebuild_history.mjs`（逐条重放全部提交，幂等且 SHA 稳定，**推荐**）、`push_via_api.mjs`（首次铺设）、`sync_via_api.mjs`（快照式同步，会产生新 SHA）。
 
 ## GitHub Pages（推荐）
