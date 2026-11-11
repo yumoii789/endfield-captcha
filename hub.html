@@ -21,6 +21,8 @@ button:active,a:active,[role=button]:active{filter:brightness(.9)}
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
 body{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(1000px 520px at 75% -10%,rgba(255,177,0,.07),transparent 60%),var(--bg);color:var(--ink);font-family:'Segoe UI',system-ui,'Microsoft YaHei',sans-serif;padding:26px 14px}
+/* 固定角标避让底部手势条：env() 不支持时用上一行的 12px 兜底（无刘海设备 env=0，布局逐像素不变） */
+#muteAll{bottom:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px))}
 .bg{position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);background-size:42px 42px;pointer-events:none;-webkit-mask-image:radial-gradient(ellipse at center,black 25%,transparent 78%);mask-image:radial-gradient(ellipse at center,black 25%,transparent 78%)}
 .mono{font-family:var(--mono)}
 .dim{color:var(--dim)}
@@ -75,7 +77,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visibl
 <body>
 <div class="scanlines"></div>
 <div class="bg"></div>
-<button id="muteAll" type="button" title="全局音效开关（九台设备共用，随本机记忆）" style="position:fixed;right:12px;bottom:12px;z-index:200;background:#161d24;border:1px solid var(--line2,#3a4550);color:var(--ink,#d9e0e7);border-radius:6px;padding:6px 10px;font-size:13px;min-height:34px;cursor:pointer">🔊</button>
+<button id="muteAll" type="button" title="全局音效开关（九台设备共用，随本机记忆）" style="position:fixed;right:12px;z-index:200;background:#161d24;border:1px solid var(--line2,#3a4550);color:var(--ink,#d9e0e7);border-radius:6px;padding:6px 10px;font-size:13px;min-height:34px;cursor:pointer">🔊</button>
 <main class="wrap">
   <div class="head">
     <div class="logo">◈</div>
