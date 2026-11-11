@@ -896,7 +896,7 @@ node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new -
 
 ## 四十二、闸门第一次真正干活：抓到两个探针缺陷 + 自愈（2026-11-11）
 
-把验收闸门从 10 组扩到 **15 组**（新增 termbranch、terminal、rename、hubprog、hubtap），把此前散落在文档里的验收标准固化进闸门。
+把验收闸门从 10 组扩到 **16 组**（新增 termbranch、terminal、rename、hubprog、hubtap），把此前散落在文档里的验收标准固化进闸门。
 **第一次跑就红了 2 组，而两个都是探针的问题、不是产品问题**：
 
 1. **term_branch.mjs 直接崩了**：它按**硬编码行号** `lines.slice(187,198)` 从 terminal.html 抽结果分支块去跑三种输入；
