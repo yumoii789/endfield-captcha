@@ -737,7 +737,7 @@ admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有�
 ### 处置 3：terminal 失败口径（只改一句话，不动跳转）
 `terminal.html:198` 由无条件的「身份验证成功」改为随结果显示：`pass → 身份验证成功(ok)`、`fail → 身份验证未通过(bad)`、`timeout → 身份验证未通过（设备无响应）(bad)`。
 
-**跳转未改**：目标仍由 `cfg.redirect`（默认 `hub.html`）决定。依据是门禁归属——hub 的解锁进度由 **hub 自己**监听 `pz-solved` 写 `endland-prog`（`hub.html:160-168`），`pz-failed` 只写一条 `pass:false` 统计（`hub.html:169-171`），terminal 的 pass/fail 不参与门禁。所以这句话原本不代表「失败者被放行」，只代表「terminal 不拦人」，改的只是它别再说与上一句相反的话。
+**跳转未改**：目标仍由 `cfg.redirect`（默认 `hub.html`）决定。依据是门禁归属——hub 的解锁进度由 **hub 自己**监听 `pz-solved` 写 `endland-hub-progress`（键定义 `hub.html:112`、写入 `:160-168`），`pz-failed` 只写一条 `pass:false` 统计（`hub.html:169-171`），terminal 的 pass/fail 不参与门禁。所以这句话原本不代表「失败者被放行」，只代表「terminal 不拦人」，改的只是它别再说与上一句相反的话。
 - 推翻条件：你希望失败/超时者被拦在门外（不跳转）→ 那需要另加停留 + 重试入口，属新交互，本轮未做。
 
 ### 本轮验收证据（都可复跑）
@@ -749,7 +749,7 @@ admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有�
 - **terminal 端到端（真实页面，失败/成功各一次，探针 `term_e2e3.mjs`）**：
   · 注入 `pz-failed`（守卫只判 `d.type`，无来源校验，见 `terminal.html:139-142`）→ 屏幕按序出现「匹配成功 → 通关失败 → 用户通关数据：难度 V2 · 步数 7 → 失败吐槽 → **身份验证未通过** → 正在跳转到设定的网址」，**未**出现成功字样；console `[T-SOLVED] pass=false`。
   · 注入 `pz-solved` → 「通关成功 → 难度 V2 · 2 星 · 步数 9 · 用时 12.5s → **身份验证成功** → 正在跳转」，**未**出现未通过字样；console `[T-SOLVED] pass=true`。
-  · 两次 `endland-stats` 末条的 `pass` 字段分别为 `false` / `true`，与屏幕一致；两次 `endland-prog`（hub 的解锁进度键）都是 `NULL` —— **直接验证了本节处置 3 的门禁归属判断**：terminal 从不写它。
+  · 两次 `endland-stats` 末条的 `pass` 字段分别为 `false` / `true`，与屏幕一致。**门禁归属原本用 `endland-prog` 作证，但那个键名是错的（全仓库不存在该键），证据因此空洞**；2026-11-10 用真键 `endland-hub-progress` 重做并加了阳性对照，原判断成立——见 §四十。
   · 顺带确认改名已进真实链路：成功那次 terminal 匹配行打印 `V-40059 — 图形校验 · 难度 V5`。
   · 探针自身的坑（记下以免重踩）：`document.body.textContent` 会把内联 `<script>` 源码算进去，关键词于是"在 0.0 秒就出现"；`innerText` 又只含可见文本。正确做法是只取**非 script/style/iframe 子元素**的 textContent。
   · **改名四处面实测（`rename_live.mjs`，真实浏览器）**：hub 9 张卡片全部显示「图形校验」且整页无「残影重建」；admin 登录后 `gName('nonogram')` = "图形校验"、`gDev('nonogram')` 仍为 "V-40059"（**`key` 未被我改动**）、关卡菜单同样只出现新名；game7 页面 `document.title` = "访客协议 VISITOR PROTOCOL · 图形校验"、`TIP_TABLE` 五条开头均为「图形校验 ·」且整页无旧名。加上端到端那次的 terminal 匹配行，改名的 4 个对外面（hub 卡片 / admin 菜单与解析函数 / game7 页头与引导文案 / terminal 匹配行）全部实测过。
@@ -774,7 +774,7 @@ admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有�
 
 - 九关 `?selftest=1`：**9/9 零失败**，九个页面 `exceptionThrown` 全为 0；
 - 九关 `?direct=1&lv=3&export=1`：**导出契约 9/9**，每页都产出含 `game/id/lv/name/desc/play/params/enabled` 的 INIT JSON；
-- 线上 `terminal.html` 注入 `pz-failed`：屏幕依次出现「通关失败 → 用户通关数据 → 失败吐槽 → **身份验证未通过** → 正在跳转」，**全程未出现「身份验证成功」**，`endland-stats` 末条 `pass:false`，`endland-prog`（hub 解锁键）仍为 `NULL` —— 与本地行为逐项一致。
+- 线上 `terminal.html` 注入 `pz-failed`：屏幕依次出现「通关失败 → 用户通关数据 → 失败吐槽 → **身份验证未通过** → 正在跳转」，**全程未出现「身份验证成功」**，`endland-stats` 末条 `pass:false`，`endland-hub-progress`（hub 解锁键）**保持不存在**（真键复验，见 §四十）—— 与本地行为逐项一致。
 
 ## 三十四、移动端 `100vh`/`dvh` 审计（2026-11-10，含一次我自己的误报）
 
@@ -859,6 +859,21 @@ admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有�
 
 1. `clickText` 一开始要求**文本精确相等且跳过有子元素的节点**——而 admin 导航按钮的文本是「难度◧难度」（图标+名称）且含子元素，于是**一个都没匹配上**，整个探针静默无效。改用「button 文本包含标签」才对。
 2. 更隐蔽的一个：我据「导航按钮数=6」就以为进了后台，实际那是**只数了 DOM 节点、没验可见性**——`#nav button` 的 rect 全是 `0×0 @(0,0)`（`#appView` 还没显示），于是后续所有点击都落在 (0,0) 上、什么都没发生。**正确做法是断言「按钮 rect 宽度 > 1 且 `#pgTitle` 有值」**；而且 `#lgGate` 必须用**真实鼠标点击**（JS `.click()` 不触发它，与既有探针 `admin_levels_inv.mjs` 的做法一致）。教训：**「元素在 DOM 里」不等于「它在页面上」**。
+
+## 四十、一次「空洞证据」的自我更正：hub 进度键真名是 `endland-hub-progress`（2026-11-10）
+
+**发现的经过**：本轮核对键名时才发现，§三十二 / §三十三 里我用「`endland-prog` 恒为 `NULL`」来证明「terminal 不写 hub 的解锁进度」。但 hub 的进度键真名是 **`endland-hub-progress`**（`hub.html:112` `var KEY='endland-hub-progress'`），**全仓库根本不存在 `endland-prog`**——读一个不存在的键永远返回 `NULL`，所以那条证据**空洞**：既不能证明也不能否证任何事。
+
+**重做（探针 `hubprog_verify.mjs`，这次带阳性对照）**：
+
+- **阳性对照**：在 hub 页里注入 `pz-solved` → `endland-hub-progress` = `{"V-40057":{"lv":1,"stars":3}}` ⇒ 该键确实由 hub 的 `pz-solved` 路径写入，且我的读取**能检测到它**；
+- **实测**：在 terminal 页里注入同一个 `pz-solved` → `endland-hub-progress` **不存在**，而 `endland-stats` 末条为 `pass:true` ⇒ terminal 只记统计、不碰 hub 解锁进度。
+
+**结论**：原判断（terminal 的 pass/fail 不参与 hub 门禁）**成立**，现在建立在有效证据上——错的只是证据本身。
+
+**教训（与 §三十三 / §三十四 / §三十六 / §三十七 / §三十九 同源）**：**读一个键之前先确认这个键存在**；要证明「某方没有写它」，必须同时给出「另一方写它时我看得见」的**阳性对照**——否则「读到空」与「键名写错」在观测上完全一样。任何以「字段缺失 / `NULL` / 无变化」为判据的断言都有这个风险。
+
+**顺手修掉**：`term_e2e.mjs` / `term_e2e2.mjs` / `term_e2e3.mjs` / `live_postdeploy.mjs` 四个探针里读错的键名已改为 `endland-hub-progress`，避免以后再产出空洞证据。
 
 ### 过程事实：本 session 子代理不可用（影响后续派发方式）
 4 次派发——两份完整任务书 + 两个极小探针——在两条已授权路由（`nvidia/z-ai/glm-5.3`、`nvidia/moonshotai/kimi-k2.6`）上**全部**「failed before it finished，无收尾消息」，仓库零改动；两条路由都复现，排除路由因素，故按 R8（repeated errors）转由派发者亲自执行。另：运行时会硬拒未授权路由，白名单为 `nvidia/*`，本 Agent 自身路由不在其中，`subagent_fork`（继承父路由）同样不可用——后续若要再派发，必须显式给出白名单内的 provider/model。
