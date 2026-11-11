@@ -1,11 +1,5 @@
 # 跨页约定（维护必读）
 
-**一键验收闸门（2026-11-10 新增）**：`bash _verify/endfield-captcha/accept.sh [组...]`（不带参数 = 跑全部组；组名：`docs syntax regress levels geometry live audio inputs select admin`）。它按每组的**预期 verdict 字符串**判定，任一组未达即**非零退出**，可直接接在 `&& git commit` 前面当闸门；基础设施（Edge `9222` + 本地 `8099`）未就绪时该组直接判失败并写明原因。本次经它实跑并通过的组：`docs syntax levels select inputs audio`；`regress geometry live admin` 此前已各自单独跑过，可用同一条命令复跑。
-
-**这个闸门自己也被证伪过**（必须做的步骤，否则又是一个"永远说通过"的验证器）：临时移走被检查的探针 → `x levels（未达预期 verdict）` + `exit 1`；还原后 → `v levels` + `exit 0`。
-
-**两个操作坑**：① `pkill -f msedge` 在本机**杀不掉** Edge（健康检查仍 200），要停它请用 `taskkill //F //IM msedge.exe`；② 探针输出经 `| tail` 管道会把退出码换成 `tail` 的，所以**别用管道读闸门结果**——直接看它最后两行与 `$?`。
-
 > 本文件记录九关之间共享的接口与键名。改动其中任何一项都要同步全仓库，避免出现"个别关卡悄悄偏离"的情况。
 
 ## 一、设备编号映射
@@ -100,5 +94,13 @@ hub 提供**唯一入口的全局开关** `#muteAll`（右下角固定角标）�
 **符号名同样要核**：文档里反引号写的函数名/常量名，也可能根本不存在于代码。2026-11-10 本轮就查出两个幽灵符号——`layout-viewport.md` 把 puzzle2 的 `cellRect()` 写成 `cellXY`（该名字其实只存在于探针 `clear_p2.mjs` 里），`realplay.md` 把 admin 的 pointerup 处理器 `end()` 写成 `endPointer`。查法：把 docs 里所有反引号标识符抽出来，逐个在**仓库代码 + 探针**（含文件名）里找，零命中的逐个核对上下文——脚本见 `_verify/endfield-captcha/doccheck.mjs`——**一条命令跑完四类**：行号引用（含裸简写按同行最近文件名继承）、符号名、文件引用、commit SHA 可解析；当前 10 文档 / 288 文件 / 135 标识符 / 9 SHA **全绿**（白名单里只放「有据可查的合法例外」，每条写理由：更正注记里刻意引用的错名、worldbible 的未落地提案文案、后台导出产物的下载名）。只查符号的部分在 `symbolcheck.mjs`。
 
 **它现在可以当闸门**：有问题时 `doccheck` 以**非零退出**，所以 `node .../doccheck.mjs && git commit ...` 会真的拦下提交。（此前它无论发现多少问题都 `exit 0`，那条 `&&` 形同虚设——**"永远说通过"的验证器**与"撒谎的探针"是同一类毛病。）另外它会把 URL 里的端口（如 `…:8099/…`）与行号引用区分开，不会把 `:8099` 误读成 `文件:行号`。
+
+**一键验收闸门（2026-11-10 新增）**：`bash _verify/endfield-captcha/accept.sh [组...]`（不带参数 = 跑全部组；组名：`docs syntax regress levels geometry live audio inputs select admin`）。它按每组的**预期 verdict 字符串**判定，任一组未达即**非零退出**，可直接接在 `&& git commit` 前面当闸门；基础设施（Edge `9222` + 本地 `8099`）未就绪时该组直接判失败并写明原因。本次经它实跑并通过的组：`docs syntax levels select inputs audio`；`regress geometry live admin` 此前已各自单独跑过，可用同一条命令复跑。
+
+**这个闸门自己也被证伪过**（必须做的步骤，否则又是一个"永远说通过"的验证器）：临时移走被检查的探针 → `x levels（未达预期 verdict）` + `exit 1`；还原后 → `v levels` + `exit 0`。
+
+**两个操作坑**：① `pkill -f msedge` 在本机**杀不掉** Edge（健康检查仍 200），要停它请用 `taskkill //F //IM msedge.exe`；② 探针输出经 `| tail` 管道会把退出码换成 `tail` 的，所以**别用管道读闸门结果**——直接看它最后两行与 `$?`。
+
+**写脚本时别给「锚点查找」留静默默认值**：本轮我用 `grep -n "…" || echo "1:"` 找插入位置，grep 未命中时它回退成第 1 行——于是把闸门说明插到了文件标题下面。锚点找不到就该**报错退出**，而不是挑一个默认位置。这与「验证器永远说通过」同源：**静默回退 = 悄悄做错事**。
 
 顺带：文档引用的 commit SHA 也应可解析。查法 `git cat-file -t <sha>`；注意本机 git 路径含空格，`G="/d/Program Files/Git/cmd/git.exe"` 这种不带内嵌引号的写法会被空格切断、静默失败并**假装**成「SHA 不存在」——要用带内嵌引号的写法，别据无效结果下结论。
