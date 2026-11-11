@@ -575,7 +575,7 @@ README 是读者第一眼看到的东西，此前只零星改过几行，本轮�
 
 **核对通过（都有机器证据）**
 
-- 「零依赖、零外链、零字体、零 CDN、断网可用」：全部页面的 `src=` / `href=` 外链子资源 **计数 = 0** ✔（页面是单文件自包含，唯二外部文件是 `puzzle2-core.js` 与不发布的 `_gt_srv.js`）。
+- 「零依赖、零外链、零字体、零 CDN、断网可用」：全部页面的 `src=` / `href=` 外链子资源 **计数 = 0** ✔（页面是单文件自包含，唯二外部文件是 `puzzle2-core.js` 与不发布的 `_gt_srv.js`）。 **（2026-11-10 复验并收严取证：把检查从 `link/script/img` 扩到「任意属性 `="http…"` + CSS `url(http…)` + `@import`」，全仓仍为 0；所有 CSS `url()` 只有内联 SVG 片段引用 `url(#…)`。）**
 - 九关表里的**代号 ↔ 文件**映射：V-40053 / 40054 / 40056 / 40055 / 40057 / 40058 / 40059 / 40060 / 40061 与页面逐一一致 ✔（§五 与 `conventions.md` 一致）。
 - URL 钩子表：与 `conventions.md` 及本轮实测一致（`?seed` 八关、`?stage` 仅 game3、`?reset`/`?pause` 单页）✔（§十四/§十五）。
 - 目录树与 docs 篇数：10 篇 ✔，站点文件清单一致 ✔（§二十七）。
@@ -665,7 +665,7 @@ node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new -
 
 `docs/conventions.md` §二 把失败消息定为 `{type:'pz-failed', device, lv, moves}`，并规定「仅当 window.parent !== window 时才发送」。此前只有 `pz-solved` 有端到端证据，失败分支从未实测。
 
-**静态核对（全仓 13 个发送点）**：`pz-solved` 九关都发；`pz-failed` 由四关发——game3 `onDead()`（game3-gems.html:634）、game6 提交耗尽（game6-code.html:777）、game7 错误阈值（game7-nonogram.html:714）、game8 误点 2 次（game8-targets.html:423）。**13 个发送点全部位于 `window.parent && window.parent!==window` 判断之内**，顶层直开不发，与文档一致。消费方两处：hub.html:169-172（写统计 + toast）、terminal.html:141（结算进「通关失败」分支）。
+**静态核对（全仓 13 个发送点）**：`pz-solved` 九关都发；`pz-failed` 由四关发——game3 `onDead()`（game3-gems.html:634）、game6 提交耗尽（game6-code.html:777）、game7 错误阈值（game7-nonogram.html:714）、game8 误点 2 次（game8-targets.html:423）。**13 个发送点全部位于 `window.parent && window.parent!==window` 判断之内**，顶层直开不发，与文档一致。消费方两处：hub.html:169-172（写统计 + toast）、terminal.html:141（结算进「通关失败」分支）。 **（2026-11-10 复验：用独立口径数一遍——全仓 `postMessage(` 恰好 13 处，与本节的 13 个发送点一致。）**
 
 **端到端实测**（`failclose.mjs`：以 hub.html 为父页，注入同源探针 iframe，调用各关自己的失败出口）：
 
