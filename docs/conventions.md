@@ -1,5 +1,11 @@
 # 跨页约定（维护必读）
 
+**一键验收闸门（2026-11-10 新增）**：`bash _verify/endfield-captcha/accept.sh [组...]`（不带参数 = 跑全部组；组名：`docs syntax regress levels geometry live audio inputs select admin`）。它按每组的**预期 verdict 字符串**判定，任一组未达即**非零退出**，可直接接在 `&& git commit` 前面当闸门；基础设施（Edge `9222` + 本地 `8099`）未就绪时该组直接判失败并写明原因。本次经它实跑并通过的组：`docs syntax levels select inputs audio`；`regress geometry live admin` 此前已各自单独跑过，可用同一条命令复跑。
+
+**这个闸门自己也被证伪过**（必须做的步骤，否则又是一个"永远说通过"的验证器）：临时移走被检查的探针 → `x levels（未达预期 verdict）` + `exit 1`；还原后 → `v levels` + `exit 0`。
+
+**两个操作坑**：① `pkill -f msedge` 在本机**杀不掉** Edge（健康检查仍 200），要停它请用 `taskkill //F //IM msedge.exe`；② 探针输出经 `| tail` 管道会把退出码换成 `tail` 的，所以**别用管道读闸门结果**——直接看它最后两行与 `$?`。
+
 > 本文件记录九关之间共享的接口与键名。改动其中任何一项都要同步全仓库，避免出现"个别关卡悄悄偏离"的情况。
 
 ## 一、设备编号映射
