@@ -882,7 +882,7 @@ admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有�
 - **过期（已修）**：`DEPLOY.md:33` 写「21 个文件已提交」，实测 `git ls-files` = **28** ⇒ 改为不写死数字（`git ls-files` 自查）。这正是 `conventions.md` §八 那类「硬数字会过期」的实例。
 - **负**：`_gt_srv.js`（本地测试服务器）**确实未被 tracked**（在 `.gitignore` 里）⇒ 与 `DEPLOY.md` 开头「不要上传 `_gt_srv.js`」的实际状态一致，不必改。
 - **负**：仓库里**混入 0 个探针文件**（`git ls-files | grep -cE "_verify|\.mjs$"` = 0）⇒ `_verify/` 的探针确实不随仓库发布。
-- **负**：tracked 资产里**没有本机绝对路径**（`D:\` / `/d/mo/` 只出现在 `DEPLOY.md` 自己的操作指引里）；页面里也**没有功能性 `localhost`/`127.0.0.1` 依赖**（`admin.html:368` 那处是 `file://` 协议下的提示文案「请通过 http(s) 打开（例如 http://127.0.0.1:8099/…）」，不参与功能）。
+- **负**：tracked 资产里**没有本机绝对路径**（`D:\` / `/d/mo/` 只出现在 `DEPLOY.md` 自己的操作指引里）；页面里也**没有功能性 localhost / 127.0.0.1 依赖**（`admin.html:368` 那处是 `file://` 协议下的提示文案「请通过 http(s) 打开（例如 http://127.0.0.1:8099/…）」，不参与功能）。
 - **负**：线上健康抽查 `index.html` / `hub.html` / `admin.html` 均 **200**。
 
 ### 过程事实：本 session 子代理不可用（影响后续派发方式）
