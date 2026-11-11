@@ -39,6 +39,8 @@ bash /d/mo/dshweb/deploy-wizard.sh
 向导分 4 阶段自动完成：网页建空仓库（附地址）→ `remote add` + `push`（首次弹 GitHub 授权，点一次 Authorize）→ 指路开启 Pages → 打开站点复验。中断可重跑，已记住仓库地址。
 
 ### 部署后复验清单（必做）
+
+> **自动化复验（推荐先跑这个再看下面的手工清单）**：`bash _verify/endfield-captcha/accept.sh` —— 15 组检查（文档真实性 / 语法 / 终端两分支 / 改名 / hub 进度与命中区 / 九关自检与导出 / LEVELS_META / 两方向 90 组合可达性 / 线上九卡 / 音效与静音门 / 输入框字号 / 长按选择 / admin 六个写面），基础设施不可用时会自动重启 Edge 与本地 8099 并重试一次；全绿约 15 分钟。详见 `docs/conventions.md` §八。
 - [x] 首页 `/` 或 `/index.html` 跳转到验证终端
   —— 线上实测（`rootredir.mjs`）：`/` → `/endfield-captcha/terminal.html`（标题「访客协议 VISITOR PROTOCOL · 人机验证终端」）；`/index.html` 同样跳转。均为 https。
 - [x] 终端注册 → 匹配 → 随机打开一个游戏 → 通关 → 回到身份验证成功
