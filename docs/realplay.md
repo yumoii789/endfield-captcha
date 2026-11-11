@@ -317,6 +317,55 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 
 探针：`hooks3.mjs`（stage）、`fastcheck.mjs`（fast 计时）、`pausecheck.mjs`（pause）、`termreset.mjs` / `termwait2.mjs` / `termwait3.mjs`（reset 与 wait，含 150ms 高频采样抓 1.5s 超时窗口）。
 
+## 十六、`pz-failed` 失败分支闭环核验（2026-11-09：首次端到端实测）
+
+`docs/conventions.md` §二 把失败消息定为 `{type:'pz-failed', device, lv, moves}`，并规定「仅当 window.parent !== window 时才发送」。此前只有 `pz-solved` 有端到端证据，失败分支从未实测。
+
+**静态核对（全仓 13 个发送点）**：`pz-solved` 九关都发；`pz-failed` 由四关发——game3 `onDead()`（game3-gems.html:634）、game6 提交耗尽（game6-code.html:777）、game7 错误阈值（game7-nonogram.html:714）、game8 误点 2 次（game8-targets.html:423）。**13 个发送点全部位于 `window.parent && window.parent!==window` 判断之内**，顶层直开不发，与文档一致。消费方两处：hub.html:169-172（写统计 + toast）、terminal.html:141（结算进「通关失败」分支）。 **（2026-11-10 复验：用独立口径数一遍——全仓 `postMessage(` 恰好 13 处，与本节的 13 个发送点一致。）**
+
+**端到端实测**（`failclose.mjs`：以 hub.html 为父页，注入同源探针 iframe，调用各关自己的失败出口）：
+
+| 关卡 | 父页收到的 payload | hub 反应 |
+|---|---|---|
+| game8-targets | `{type:'pz-failed',device:'V-40060',lv:3,moves:0}` | toast「设备 V-40060 本轮未通过 — 再试一次？」· `endland-stats` 新增 `{stars:0,pass:false}` |
+| game3-gems | `{type:'pz-failed',device:'V-40056',lv:3,moves:0}` | toast「设备 V-40056 本轮未通过 — 再试一次？」· 同上 |
+
+（`moves:0` 是探针直接调失败出口、没先做误点所致；误点路径的步数语义见 `docs/star-rubric.md` §四。）
+
+**结论：契约成立，无缺陷。** 两点观察（不构成缺陷，未改代码）：
+
+- 五关（game1 / puzzle2 / game4 / game5 / game9）不发 `pz-failed`——它们没有失败态（可一直重试），不是漏接线。
+- game6 / game7 的失败 payload 额外带了 `game` 字段（契约只要求 device/lv/moves）；- game6 / game7 的失败 payload 额外带了 `game` 字段（契约只要求 device/lv/moves）；而 hub 在失败分支固定写 `game:''`（hub.html:170），即父页不读失败消息里的 `game`。
+
+## 十七、admin 写操作闭环核验（2026-11-09：写入 → 落库 → 刷新回读 → 消费方生效）
+
+admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有真实消费方**的写面跑到闭环；登录门禁按真实流程过（点 `#lgGate` → 口令 `CRED_DEFAULT` admin/123456，admin.html:381）。
+
+**① 高级面板 · redirect（消费方：terminal）**
+
+| 步骤 | 证据 |
+|---|---|
+| 写入 | 点「保存 redirect」→ toast「已保存 redirect = https://example.com/probe-xyz」 |
+| 落库 | `endland-admin-cfg` 含 `probe-xyz` |
+| 刷新回读 | 重载后台仍直入（取 sessionStorage 会话），`#adRedirect` 回读值与写入值一致 |
+| 消费方生效 | terminal（`?selftest=1`）走外链分支：渲染 `a.jbtn` =「前往 https://example.com/probe-xyz」+ href 正确，且不自动跳转（与 terminal.html:200-204 一致） |
+| 反向回写 | 同一次 terminal 访问后 `endland-admin-cfg` 新增 `visitByDate`（terminal.html:148） |
+| 收尾 | redirect 已还原为 `hub.html` |
+
+**② 关卡管理面板 · 自定义关卡（消费方：九关的 `readCustomLevels`）**
+
+- **两侧同键**：game5 自检写入 5 条（`{n:5, id:lights-1-sample5xc9, hasInit:true}`）后，admin 面板的游戏按钮计数为「灯光矩阵 5 / V-40057」（其余为 源石电路 0 / 方块拼装 0 / 宝石神偷 0 / 露营达人 0，另有若干关因此前自检留有数据）——admin 读到的是游戏写的那份。
+- **合法写入落库**：点「写入样例（走同一校验）」→ `endland-levels-lights` 5 → 6，新条 id `lights-mw912cng-xy`。
+- **非法写入被拦**：点「写入一个非法样例」→ 校验行原文「✕ 校验未通过（1/1 条），未写入任何数据：· 第 1 条：lv 必须是 1–5 的整数（实际：9）；缺少 params 或 hand（关卡定义体）」，条数不变。
+- **真上传通道**：用 `DOM.setFileInputFiles` 往 `#upFile`（admin.html:1323）喂入「game5 导出格式」的 JSON（由自检样例改造，含 `params.initial`）→ 游戏端 `[GT-INIT]` 的 `custom` 计数从 5 变 6。
+- **游戏真播这条自定义关**：`game5-lights.html?lv=3` 页面内 `pz.custom = 'lights-3-samplegg6j'`，`#paramLine` 显示「参数 V3 · 网格 4×4 · 抖动上限 k=5-7 · 满星 ≤3 步满星 · 本题 k=6 · **自定义关卡 lights-3-samplegg6j**」。
+
+**结论：两条写面闭环成立，无缺陷。** 一处**约定**说明（不是缺陷）：admin 的「合法样例」是通用生成型参数（`params:{n:…}`），而 game5 只采用带 `params.initial` 的自定义关（game5 `pickQueuedLevel`），所以样例会被读入、不会被 game5 采用；文档规定的流程是「拿该关 `?export=1` 的 JSON 上传」，该流程本轮已实测可用（`pz.custom` 即证据）。
+
+**~~尚未实测的写面~~ → 2026-11-10 全部实测通过**（探针 `admin_writefaces2.mjs` / `admin_ovr_edit.mjs`）：难度面板「保存全局概率 / 保存覆盖」（`admin.html:1033` / `:1104`）、帐户面板改凭据（`:1548`，需先过当前密码校验）、高级面板危险区三个按钮（按钮 `:1895` / `:1910` / `:1927`，调用 `:1896` / `:1911` / `:1928`）。逐面结果与键作用域见 §三十九。
+
+探针：`admin_write.mjs`（redirect 闭环）、`admin_levels_write.mjs`（样例写入 + 非法拦截）、`admin_upload.mjs` / `admin_upload2.mjs`（`#upFile` 真上传 + `pz.custom` 判定）、`admin_levels_inv2.mjs`（面板计数与游戏写入一致性）。本轮我自己的两个探针坑：正则里 `\n` 被展开成真换行导致浏览器端语法错误、一处括号不平衡——都属探针问题，不是产品问题。
+
 ## 十八、admin 写面扫尾：发现并修复「危险区两步确认走不完」（2026-11-09）
 
 **缺陷（已修）**：三个危险操作（清空统计 / 重置配置 / 全部清空）用 `confirmTwice` 做两步确认，但**第二步模态刚打开就被关掉**，导致「执行」永远点不到、操作永远不执行。
@@ -661,54 +710,6 @@ README 里明确警告过「在文件前部插入行会把后面的引用推后�
 node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new --mute-audio --remote-debugging-port=9222；探针全部位于 _verify/endfield-captcha/（不随仓库发布）；远端同步用 node --use-system-ca rebuild_history.mjs，且必须在仓库目录内执行。
 
 
-## 十六、`pz-failed` 失败分支闭环核验（2026-11-09：首次端到端实测）
-
-`docs/conventions.md` §二 把失败消息定为 `{type:'pz-failed', device, lv, moves}`，并规定「仅当 window.parent !== window 时才发送」。此前只有 `pz-solved` 有端到端证据，失败分支从未实测。
-
-**静态核对（全仓 13 个发送点）**：`pz-solved` 九关都发；`pz-failed` 由四关发——game3 `onDead()`（game3-gems.html:634）、game6 提交耗尽（game6-code.html:777）、game7 错误阈值（game7-nonogram.html:714）、game8 误点 2 次（game8-targets.html:423）。**13 个发送点全部位于 `window.parent && window.parent!==window` 判断之内**，顶层直开不发，与文档一致。消费方两处：hub.html:169-172（写统计 + toast）、terminal.html:141（结算进「通关失败」分支）。 **（2026-11-10 复验：用独立口径数一遍——全仓 `postMessage(` 恰好 13 处，与本节的 13 个发送点一致。）**
-
-**端到端实测**（`failclose.mjs`：以 hub.html 为父页，注入同源探针 iframe，调用各关自己的失败出口）：
-
-| 关卡 | 父页收到的 payload | hub 反应 |
-|---|---|---|
-| game8-targets | `{type:'pz-failed',device:'V-40060',lv:3,moves:0}` | toast「设备 V-40060 本轮未通过 — 再试一次？」· `endland-stats` 新增 `{stars:0,pass:false}` |
-| game3-gems | `{type:'pz-failed',device:'V-40056',lv:3,moves:0}` | toast「设备 V-40056 本轮未通过 — 再试一次？」· 同上 |
-
-（`moves:0` 是探针直接调失败出口、没先做误点所致；误点路径的步数语义见 `docs/star-rubric.md` §四。）
-
-**结论：契约成立，无缺陷。** 两点观察（不构成缺陷，未改代码）：
-
-- 五关（game1 / puzzle2 / game4 / game5 / game9）不发 `pz-failed`——它们没有失败态（可一直重试），不是漏接线。
-- game6 / game7 的失败 payload 额外带了 `game` 字段（契约只要求 device/lv/moves）；- game6 / game7 的失败 payload 额外带了 `game` 字段（契约只要求 device/lv/moves）；而 hub 在失败分支固定写 `game:''`（hub.html:170），即父页不读失败消息里的 `game`。
-
-## 十七、admin 写操作闭环核验（2026-11-09：写入 → 落库 → 刷新回读 → 消费方生效）
-
-admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有真实消费方**的写面跑到闭环；登录门禁按真实流程过（点 `#lgGate` → 口令 `CRED_DEFAULT` admin/123456，admin.html:381）。
-
-**① 高级面板 · redirect（消费方：terminal）**
-
-| 步骤 | 证据 |
-|---|---|
-| 写入 | 点「保存 redirect」→ toast「已保存 redirect = https://example.com/probe-xyz」 |
-| 落库 | `endland-admin-cfg` 含 `probe-xyz` |
-| 刷新回读 | 重载后台仍直入（取 sessionStorage 会话），`#adRedirect` 回读值与写入值一致 |
-| 消费方生效 | terminal（`?selftest=1`）走外链分支：渲染 `a.jbtn` =「前往 https://example.com/probe-xyz」+ href 正确，且不自动跳转（与 terminal.html:200-204 一致） |
-| 反向回写 | 同一次 terminal 访问后 `endland-admin-cfg` 新增 `visitByDate`（terminal.html:148） |
-| 收尾 | redirect 已还原为 `hub.html` |
-
-**② 关卡管理面板 · 自定义关卡（消费方：九关的 `readCustomLevels`）**
-
-- **两侧同键**：game5 自检写入 5 条（`{n:5, id:lights-1-sample5xc9, hasInit:true}`）后，admin 面板的游戏按钮计数为「灯光矩阵 5 / V-40057」（其余为 源石电路 0 / 方块拼装 0 / 宝石神偷 0 / 露营达人 0，另有若干关因此前自检留有数据）——admin 读到的是游戏写的那份。
-- **合法写入落库**：点「写入样例（走同一校验）」→ `endland-levels-lights` 5 → 6，新条 id `lights-mw912cng-xy`。
-- **非法写入被拦**：点「写入一个非法样例」→ 校验行原文「✕ 校验未通过（1/1 条），未写入任何数据：· 第 1 条：lv 必须是 1–5 的整数（实际：9）；缺少 params 或 hand（关卡定义体）」，条数不变。
-- **真上传通道**：用 `DOM.setFileInputFiles` 往 `#upFile`（admin.html:1323）喂入「game5 导出格式」的 JSON（由自检样例改造，含 `params.initial`）→ 游戏端 `[GT-INIT]` 的 `custom` 计数从 5 变 6。
-- **游戏真播这条自定义关**：`game5-lights.html?lv=3` 页面内 `pz.custom = 'lights-3-samplegg6j'`，`#paramLine` 显示「参数 V3 · 网格 4×4 · 抖动上限 k=5-7 · 满星 ≤3 步满星 · 本题 k=6 · **自定义关卡 lights-3-samplegg6j**」。
-
-**结论：两条写面闭环成立，无缺陷。** 一处**约定**说明（不是缺陷）：admin 的「合法样例」是通用生成型参数（`params:{n:…}`），而 game5 只采用带 `params.initial` 的自定义关（game5 `pickQueuedLevel`），所以样例会被读入、不会被 game5 采用；文档规定的流程是「拿该关 `?export=1` 的 JSON 上传」，该流程本轮已实测可用（`pz.custom` 即证据）。
-
-**~~尚未实测的写面~~ → 2026-11-10 全部实测通过**（探针 `admin_writefaces2.mjs` / `admin_ovr_edit.mjs`）：难度面板「保存全局概率 / 保存覆盖」（`admin.html:1033` / `:1104`）、帐户面板改凭据（`:1548`，需先过当前密码校验）、高级面板危险区三个按钮（按钮 `:1895` / `:1910` / `:1927`，调用 `:1896` / `:1911` / `:1928`）。逐面结果与键作用域见 §三十九。
-
-探针：`admin_write.mjs`（redirect 闭环）、`admin_levels_write.mjs`（样例写入 + 非法拦截）、`admin_upload.mjs` / `admin_upload2.mjs`（`#upFile` 真上传 + `pz.custom` 判定）、`admin_levels_inv2.mjs`（面板计数与游戏写入一致性）。本轮我自己的两个探针坑：正则里 `\n` 被展开成真换行导致浏览器端语法错误、一处括号不平衡——都属探针问题，不是产品问题。
 
 ## 三十二、三项待决项的处置与本轮验收（2026-11-10）
 
@@ -884,6 +885,7 @@ admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有�
 - **负**：仓库里**混入 0 个探针文件**（`git ls-files | grep -cE "_verify|\.mjs$"` = 0）⇒ `_verify/` 的探针确实不随仓库发布。
 - **负**：tracked 资产里**没有本机绝对路径**（`D:\` / `/d/mo/` 只出现在 `DEPLOY.md` 自己的操作指引里）；页面里也**没有功能性 localhost / 127.0.0.1 依赖**（`admin.html:368` 那处是 `file://` 协议下的提示文案「请通过 http(s) 打开（例如 http://127.0.0.1:8099/…）」，不参与功能）。
 - **负**：线上健康抽查 `index.html` / `hub.html` / `admin.html` 均 **200**。
+- **顺带整理章节顺序**：`§十六`/`§十七` 原被追加在 `§三十一` 之后（早前会话的追加痕迹），已按序号搬回 `§十五` 与 `§十八` 之间；搬迁前后章节数均为 **45**，`doccheck` 全绿。另注意到序号里**缺 `§五`**（`§四` 之后直接是 `§六`），属早期删节痕迹、不影响任何引用，故未动。
 
 ### 过程事实：本 session 子代理不可用（影响后续派发方式）
 4 次派发——两份完整任务书 + 两个极小探针——在两条已授权路由（`nvidia/z-ai/glm-5.3`、`nvidia/moonshotai/kimi-k2.6`）上**全部**「failed before it finished，无收尾消息」，仓库零改动；两条路由都复现，排除路由因素，故按 R8（repeated errors）转由派发者亲自执行。另：运行时会硬拒未授权路由，白名单为 `nvidia/*`，本 Agent 自身路由不在其中，`subagent_fork`（继承父路由）同样不可用——后续若要再派发，必须显式给出白名单内的 provider/model。
