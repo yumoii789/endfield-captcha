@@ -99,7 +99,7 @@ hub 提供**唯一入口的全局开关** `#muteAll`（右下角固定角标）�
 
 **这个闸门自己也被证伪过**（必须做的步骤，否则又是一个"永远说通过"的验证器）：临时移走被检查的探针 → `x levels（未达预期 verdict）` + `exit 1`；还原后 → `v levels` + `exit 0`。
 
-**两个操作坑**：① `pkill -f msedge` 在本机**杀不掉** Edge（健康检查仍 200），要停它请用 `taskkill //F //IM msedge.exe`；② 探针输出经 `| tail` 管道会把退出码换成 `tail` 的，所以**别用管道读闸门结果**。注意区分两类工具：`accept.sh` / `doccheck.mjs` **有非零退出**，可以看 `$?`；而**单个探针**绝大多数只以 `process.exit(0)` 结束（实测 209 支如此），它们的 `$?` 恒为 0、**必须读它的输出判定**——闸门正是靠解析输出工作的。**闸门的分组与自愈（2026-11-11 扩充）**：共 17 组 ——`docs syntax termbranch terminal rename hubprog hubtap regress levels geometry live audio inputs select admin`。**基础设施自愈**：需要 Edge/8099 的组若发现不可用，会自动重启它们并**重试该组一次**；因为本机 Edge 会自己退出，而「进程死了」与「检查失败」在输出上长得一样。**完整跑一次 = 17/17 全绿**（2026-11-11 实测，约 15 分钟；日志 `_verify/endfield-captcha/accept_full.log`）——这是目前唯一的「一条命令覆盖产品 + 文档 + 线上」的验收入口。
+**两个操作坑**：① `pkill -f msedge` 在本机**杀不掉** Edge（健康检查仍 200），要停它请用 `taskkill //F //IM msedge.exe`；② 探针输出经 `| tail` 管道会把退出码换成 `tail` 的，所以**别用管道读闸门结果**。注意区分两类工具：`accept.sh` / `doccheck.mjs` **有非零退出**，可以看 `$?`；而**单个探针**绝大多数只以 `process.exit(0)` 结束（实测 209 支如此），它们的 `$?` 恒为 0、**必须读它的输出判定**——闸门正是靠解析输出工作的。**闸门的分组与自愈（2026-11-11 扩充）**：共 17 组 ——`docs syntax termbranch terminal rename hubprog hubtap regress levels geometry live audio inputs select admin`。**基础设施自愈**：需要 Edge/8099 的组若发现不可用，会自动重启它们并**重试该组一次**；因为本机 Edge 会自己退出，而「进程死了」与「检查失败」在输出上长得一样。**完整跑一次 = 17/17 全绿**（2026-11-11 实测，约 15 分钟；日志 `_verify/endfield-captcha/accept_full3.log`（17 组时代的实测；`accept_full.log`/`accept_full2.log` 是 15/16 组时代的，仅存档））——这是目前唯一的「一条命令覆盖产品 + 文档 + 线上」的验收入口。
 
 **写脚本时别给「锚点查找」留静默默认值**：本轮我用 `grep -n "…" || echo "1:"` 找插入位置，grep 未命中时它回退成第 1 行——于是把闸门说明插到了文件标题下面。锚点找不到就该**报错退出**，而不是挑一个默认位置。这与「验证器永远说通过」同源：**静默回退 = 悄悄做错事**。
 
