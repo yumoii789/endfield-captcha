@@ -199,15 +199,21 @@ async function main(){
   await typeLine(pass?'> 身份验证成功':'> 身份验证未通过'+(timedOut?'（设备无响应）':''),pass?'ok':'bad');
   console.log('[T-SOLVED] pass='+pass);
   var rd=cfg.redirect||'hub.html';
-  if(/^https?:/i.test(rd)){
+  // 只允许「相对路径」跳转；http(s) 走外链手动确认；其余协议（javascript:/data:/vbscript: 等）一律拒绝。
+  // 理由：endland-admin-cfg 可导出/导入，redirect 是外部可写字段，不能直接当 location.href 用。
+  var rdIsHttp=/^https?:/i.test(rd);
+  var rdIsRel=!/^[a-z][a-z0-9+.-]*:/i.test(rd) && !/^\/\//.test(rd) && !/^\\/.test(rd); // 排除协议相对与反斜杠开头（避免不经确认跳站外）
+  if(rdIsHttp){
     await typeLine('> 识别完成。请点击下方按钮前往目标网址（外链需手动确认）：','dim');
     var a=document.createElement('a');a.className='jbtn';a.href=rd;a.target='_blank';a.rel='noopener';a.textContent='前往 '+rd;
     screen.appendChild(a);
-  }else{
+  }else if(rdIsRel){
     await typeLine('> 正在跳转到设定的网址…','dim');
     await sleep(SELFTEST?10:1500);
     if(SELFTEST){await typeLine('（selftest：跳转已挂起，流程验证完毕）','dim');return}
     location.href=rd;
+  }else{
+    await typeLine('> 目标网址协议不被允许，已忽略：'+rd+'（仅支持相对路径或 http/https）','warn');
   }
 }
 document.addEventListener('keydown',function(e){
