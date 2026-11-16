@@ -77,6 +77,8 @@
 
 结论：所有真实通关脚本在最后一次点击后应等待 ≥4 秒再读 hub 进度与 stats。
 
+
+> 编号说明：「五、」这一号在早期整理中被跳过（无对应节）。为不破坏后续八十余节的既有编号与全文交叉引用，自 2026-11-12 起不再重排编号，特此注记。
 ## 六、puzzle2 专章：几何拼满 ≠ 通关
 
 1. **颜色约束是硬条件**：`fbCheck()` 除了"每块都放下"还要求**每行/每列的 green/blue 计数**与 `rowHints/colHints` 全等。只做形状精确覆盖会得到"7/7 落位、`illegal=0`、看着完美"却 `solvedFlag=false` 的棋盘（我据此白跑了一轮）。每块的颜色是**块自身属性**（`piece.color`，`fbColorOf` 只认 `'blue'`，其余算 green）。
@@ -474,7 +476,7 @@ admin 的全部写入都走 `lsSet`（admin.html:444）。本轮挑两条**有�
 - 真机触摸手感（尺寸/帧率/发热）只能人工在手机上跑；本套证据只覆盖 CDP 触摸仿真。
 - grep 工具 250 条上限让我两次误判（已记 §二十）；引用本套结论时请注意证据来源。
 - 代码结论绑定各自那一节的提交（导出 `fd3b6bc`、game8 `b5dcdc6`、admin `d25a73e`、横屏 `d38dd8b`）；之后若有改动，需重新核对。
-- 截至本摘要更新时，有若干纯文档提交因 **Watt Toolkit（Steam++）加速器未运行**（它写进 hosts 的 `# Steam++ Start…End` 段把 `github.com` / `api.github.com` 指向 `127.0.0.1`，而其本地代理未启动）尚未推到远端；线上运行时代码不受影响。详见 `DEPLOY.md`「重放的第三个坑」与本文 §三十三。
+- 截至本摘要更新时，有若干纯文档提交因**本机加速器未运行**（其写入 hosts 的重定向段把 GitHub 域名指向回环地址，而其本地代理未启动）尚未推到远端；线上运行时代码不受影响。详见 `DEPLOY.md`（2026-11-12 已脱敏）与本文 §三十三。
 
 ### 运行环境（复现用）
 
@@ -755,19 +757,19 @@ node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new -
   · 探针自身的坑（记下以免重踩）：`document.body.textContent` 会把内联 `<script>` 源码算进去，关键词于是"在 0.0 秒就出现"；`innerText` 又只含可见文本。正确做法是只取**非 script/style/iframe 子元素**的 textContent。
   · **改名四处面实测（`rename_live.mjs`，真实浏览器）**：hub 9 张卡片全部显示「图形校验」且整页无「残影重建」；admin 登录后 `gName('nonogram')` = "图形校验"、`gDev('nonogram')` 仍为 "V-40059"（**`key` 未被我改动**）、关卡菜单同样只出现新名；game7 页面 `document.title` = "访客协议 VISITOR PROTOCOL · 图形校验"、`TIP_TABLE` 五条开头均为「图形校验 ·」且整页无旧名。加上端到端那次的 terminal 匹配行，改名的 4 个对外面（hub 卡片 / admin 菜单与解析函数 / game7 页头与引导文案 / terminal 匹配行）全部实测过。
 
-## 三十三、推送不通的真因：Steam++（Watt Toolkit）加速器的 hosts 重定向（2026-11-10）
+## 三十三、推送不通的真因：本机加速器的 hosts 重定向（2026-11-10；环境细节 2026-11-12 已脱敏）
 
-**结论**：不是网络故障，也不是谁设的屏蔽清单，而是 **Steam++（Watt Toolkit）的「网络加速」没在运行**。它把 GitHub / Steam / huggingface 等域名写进 hosts 指向 `127.0.0.1`（`# Steam++ Start…End`，共 50 条），再由它自己在 `127.0.0.1:443` 起本地代理转发；该进程不在，这些域名就一律 `ECONNREFUSED 127.0.0.1:443`。因此 `DEPLOY.md` 原先那句「本机经本地代理出网、代理挂掉」**是对的**。
+**结论**：不是网络故障，也不是谁设的屏蔽清单，而是本机一个网络加速器把 GitHub 等域名写进 hosts 指向本机回环地址、再由其自带本地代理转发；该进程不在运行时，这些域名一律连接被拒。因此 `DEPLOY.md` 原先那句「本机经本地代理出网、代理挂掉」**是对的**。（本节涉及的具体加速器名称、hosts 条目与命令行已移至非公开运维笔记。）
 
-**证据链**：① `curl -v https://github.com` → `* Trying 127.0.0.1:443`（`git ls-remote` 29ms 同样失败）；② `nslookup github.com` 直查 DNS 得真 IP `20.205.243.166`——nslookup 不读 hosts，两者不一致正是 hosts 重定向的特征；③ `curl --resolve github.com:443:20.205.243.166` → **200**，证明链路本身通畅；④ `codeload.github.com`（不在那段）→ 301、`yumoii789.github.io`（`github.io` 的子域、精确匹配不中）→ 200；⑤ hosts 文件里的 `# Steam++ Start` / `# Steam++ End` 标记与条目集合共同指明出处；⑥ 系统 `ProxyEnable=0`、无 `*_proxy`、7890 无监听——与「Watt Toolkit 自带本地代理」这一机制并不矛盾（它不是系统代理）。
+**证据链（概要；具体命令与 IP 见非公开运维笔记）**：① 直连被拒的域名与 hosts 条目指向一致；② 绕过 hosts 钉真实 IP 后链路通畅（HTTP 200）；③ 个别不在重定向集合内的域名照常可达——hosts 精确匹配的特征；④ 系统代理未启用、无代理环境变量——与「加速器自带本地代理」这一机制并不矛盾（它不是系统代理）。
 
 **我在这一轮里连续更正自己两次判断**：先据现象断言「与代理无关」（对了一半——确实不是*系统*代理，但忽略了 hosts 条目的出处），随后又据条目形态误判为「有人有意设的屏蔽清单」并据此拒绝绕过。两次的同一个错误是：**没先读 hosts 文件首尾的注释就下结论**。教训与 §八 同源——下结论前先把「谁写的、什么时候写的」这类来源信息读到手。
 
-**处置**：① 真因与三种解法已写进 `DEPLOY.md`；② 未改动 hosts、未改动任何系统设置；③ 机主可选：启动 Watt Toolkit 开加速（恢复原设计）/ 自行删掉 `# Steam++ Start…End` 整段 / 让我在本 session 内用本机隧道钉 IP 绕过。`ask_user_question` 四次超时，故按 G8 记录假设后继续。
+**处置**：① 真因与解法当时写进了 `DEPLOY.md`（2026-11-12 已脱敏移出公开文档）；② 未改动 hosts、未改动任何系统设置；③ 机主可选：启动加速器开加速（恢复原设计）/ 自行清理 hosts 对应段 / 让我在本 session 内用本机隧道钉 IP 绕过。`ask_user_question` 四次超时，故按 G8 记录假设后继续。
 
-**已解决（同日）**：改用重放脚本原路线——起一个仅监听本机的 CONNECT 隧道把 `api.github.com` 钉到真实 IP，再 `HTTPS_PROXY=http://127.0.0.1:8443 NODE_USE_ENV_PROXY=1 node --use-system-ca _verify/endfield-captcha/rebuild_history.mjs`（cwd 在仓库内）。结果 `main -> 09d67e5a`、**远端 HEAD 与本地逐字符相同**，93 个提交全部到位。
+**已解决（同日）**：改用重放脚本原路线——起一个仅监听本机的 CONNECT 隧道把 `api.github.com` 钉到真实 IP，再经代理环境变量执行重放命令（命令细节见非公开运维笔记；cwd 须在仓库内）。结果 `main -> 09d67e5a`、**远端 HEAD 与本地逐字符相同**，93 个提交全部到位。
 
-**线上复验**（Pages 重建后实测原始文件）：`README.md` 含「图形校验」2 处、含「残影重建」0 处；`game7-nonogram.html` 含「图形校验 ·」6 处且含 `LEVELS_META`；`terminal.html` 含「身份验证未通过」；`DEPLOY.md` 含 Steam++ 说明 3 处。至此三项修正与全部文档**已真实上线**。
+**线上复验**（Pages 重建后实测原始文件）：`README.md` 含「图形校验」2 处、含「残影重建」0 处；`game7-nonogram.html` 含「图形校验 ·」6 处且含 `LEVELS_META`；`terminal.html` 含「身份验证未通过」；`DEPLOY.md` 含同步环境说明 3 处。至此三项修正与全部文档**已真实上线**。
 
 **顺带确证的边界**：`github.com` 在这台网络下**本身不可达**（绕过 hosts、钉真实 IP 也会在 TLS 前被 RST/超时），`api.github.com` 可达——所以本机永远该走 Git Data API 重放，而不是 `git push`。
 
@@ -891,7 +893,7 @@ node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new -
 4 次派发——两份完整任务书 + 两个极小探针——在两条已授权路由（`nvidia/z-ai/glm-5.3`、`nvidia/moonshotai/kimi-k2.6`）上**全部**「failed before it finished，无收尾消息」，仓库零改动；两条路由都复现，排除路由因素，故按 R8（repeated errors）转由派发者亲自执行。另：运行时会硬拒未授权路由，白名单为 `nvidia/*`，本 Agent 自身路由不在其中，`subagent_fork`（继承父路由）同样不可用——后续若要再派发，必须显式给出白名单内的 provider/model。
 
 ### 仍只能等条件
-- 远程同步：当时本地领先 11+ 个提交，`api.github.com` 仍 000；真因是 **Watt Toolkit（Steam++）加速器未运行**（hosts 重定向 + 本地代理缺位），2026-11-10 查明，见 §三十三 与 `DEPLOY.md`。`*.github.io` 正常。
+- 远程同步：当时本地领先 11+ 个提交，`api.github.com` 仍不通；真因是**本机加速器未运行**（hosts 重定向 + 本地代理缺位），2026-11-10 查明，见 §三十三 与 `DEPLOY.md`（2026-11-12 已脱敏）。`*.github.io` 正常。
 - 真机触摸实测：只能由用户按 `docs/realdevice-checklist.md` 执行。
 
 ## 四十二、闸门第一次真正干活：抓到两个探针缺陷 + 自愈（2026-11-11）
@@ -925,15 +927,12 @@ node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new -
 **结论（负面）**：两处入口在「键盘弹起」下都没有遮挡风险。**局限**：这是布局层代理——真机还要看系统在弹键盘时是否额外顶动布局（iOS 与 Android 的 `interactive-widget` 行为不同），故清单第 5 项保留，但已注明布局侧已验。
 
 
-## 四十四、同步链路上的两个环境坑：WARP 接管解析 + MSYS pkill 不可靠（2026-11-11）
+## 四十四、同步链路上的两个环境坑：解析器接管 + MSYS pkill 不可靠（2026-11-11；环境细节 2026-11-12 已脱敏）
 
 推提交时又栽了一次，两个坑都属于"工具静默失效"这一族：
 
-1. **`nslookup` 不再能绕过 hosts**：隧道靠它解析真实 IP。但本机 Cloudflare WARP 一旦连接就接管系统解析器（DNS 变成 `connectivity-check.warp-svc @ 127.0.2.2`），
-   于是 `nslookup api.github.com` 返回的是 hosts 里那条 `127.0.0.1`。**改用 DoH**（`doh.pub` / `dns.alidns.com` 均返回真 IP `20.205.243.168`）后解决。
-   隧道已加 DoH + 重试，并在解析失败时**显式 exit 2**——此前它是"在监听但对每个 CONNECT 回 REFUSE"，即一个静默坏掉的代理。
-2. **`pkill -f pin_tunnel.mjs` 杀不掉它**：MSYS 的 pkill 对 Windows 进程不可靠（本会话早前对 Edge 也验证过同样现象）。
-   后果是：新实例因端口占用退出 1，而**旧实例继续服务并继续 REFUSE**，让人误以为"补丁没生效"。要按 PID 杀：`netstat -ano | grep :8443` → `taskkill //F //PID <pid>`。
+1. **`nslookup` 不再能绕过 hosts**：隧道靠它解析真实 IP，但本机某个 VPN/加速客户端（名称与 DNS 指纹见非公开运维笔记）一连接就接管系统解析器，于是 `nslookup` 也照答 hosts 里的回环地址。**改用 DoH**（公共 DoH 端点，详见非公开运维笔记）后解决。隧道已加 DoH + 重试，并在解析失败时**显式 exit 2**——此前它是「在监听但对每个 CONNECT 回 REFUSE」，即一个静默坏掉的代理。
+2. `pkill -f pin_tunnel.mjs` 杀不掉它：MSYS 的 pkill 对 Windows 进程不可靠（本会话早前对 Edge 也验证过同样现象）。后果是：新实例因端口占用退出 1，而**旧实例继续服务并继续 REFUSE**，让人误以为「补丁没生效」。要按 PID 杀：`netstat -ano` 找到监听该端口的 PID，再 `taskkill //F //PID <pid>`。
 
 **教训**：两次都是**"看起来在做、其实什么都没做"**；而两次的破局方法也一样——**让工具在失效时明确失败**（显式退出）、并在替换它之前先确认它真的被替换了（按 PID 杀 + 复查端口）。
 
@@ -998,7 +997,7 @@ node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new -
 | 待决项 | 提问给出的选项 | 无答复时的处置（当前状态） | 推翻成本 |
 |---|---|---|---|
 | 三项产品处置：game7 名「图形校验」/ 补齐 `LEVELS_META` / terminal 打印「身份验证未通过」 | 全部保留 / 改回旧名 / terminal 改为拦住失败者 / 删掉 `LEVELS_META` | **全部保留**（推荐项） | 见 §三十二 每项的推翻条件；改回旧名或删 `LEVELS_META` 都是一次提交，**terminal 改为拦人**则需新交互（停留+重试） |
-| 公开文档里的本机环境细节（hosts 的 Steam++ 段、WARP 接管解析、隧道配方） | 挪到不发布的 `_verify` 笔记 / 保持公开 | **保持公开**（零改动即最不武断的默认；`realplay.md` 与 `DEPLOY.md` 本就公开了 `admin/123456` 等本地信息，风格一致） | 想挪走时告诉我，纯文档改动 |
+| 公开文档里的本机环境细节（加速器/hosts/VPN 解析/隧道配方） | 挪到不发布的 `_verify` 笔记 / 保持公开 | **保持公开**（零改动即最不武断的默认；`realplay.md` 与 `DEPLOY.md` 本就公开了 `admin/123456` 等本地信息，风格一致） | 想挪走时告诉我，纯文档改动 |
 
 **说明**：这两项都不会因为「没答复」而卡住任何事——现状本身就是可用状态，且各自可一句话推翻。若你看到这条时想改其中任何一项，直接说即可（推送链路已通，改完立刻上线）。
 
