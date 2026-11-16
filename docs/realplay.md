@@ -1686,7 +1686,7 @@ else { … await sleep(…); location.href=rd; }   // ← 非 http(s) 一律直�
 - `terminal.html:145/146` `logStats()` / `logMatch()`：同样是 `a.push(rec)` ✗；
 - admin 只**读**这两个键 ✔（计数与 KPI ✔）。
 
-⇒ **`endland-stats` / `endland-matchlog` 只增不减** ✗。
+⇒ ~~**`endland-stats` / `endland-matchlog` 只增不减** ✗~~ —— 2026-11-12 已修：三个写入点追加后超 2000 条裁剪为最近 2000（见 §八十四；门禁 persist 组新增「上限 ✔」）。
 
 ### 实测：接近配额时的界面表现 ✔
 
@@ -1758,6 +1758,28 @@ EXIT=0
 **顺带的存量修复**：`longinput.mjs` 用的是同一个旧错误通道 ⇒ 其历史「0 错误」同样不可引用。已换新通道并复跑 ✔：终端与 admin 高级均 hx=0、0 错误，原结论在**被证明的通道**下依然成立 ✔。
 
 **判定**：快速连点透镜关闭，**0 游戏缺陷** ✔（btnRetry 结构安全属读码结论，已如实标注）。
+
+
+## §八十四 · 统计存储保留上限（2026-11-12）
+
+**动因**：关闭体积/规模透镜遗留缺陷「`endland-stats` / `endland-matchlog` 只增不减 ✗」——写入点无条件 push，超配额后写入静默失败。本轮让三个写入点在追加后**超 2000 条裁剪为最近 2000**（最旧剔除、最新幸存）：
+
+- `hub.html` `logStats()`：`a.push(rec); if(a.length>2000) a=a.slice(-2000);` 后写回；
+- `terminal.html` `logStats()` / `logMatch()`：同规则。
+
+**量级**：按体积透镜实测 ~193 B/条，2000 条 ≈ 0.4 MB ≪ 5 MB 配额 ⇒ 触顶约需 2.7 万条，正常玩法下不可达；corrupt 组 quota 检查（写失败 0/4）不受影响（探针直写 `setItem`，不经 push 路径）。
+
+**验证**（persist 组 · `statsmerge.mjs` 扩展）：
+
+| 断言 | 结果 |
+|---|---|
+| hub：预置 2000 条 → postMessage 通关 → 条数 | 2000 ✔（2001→2000） |
+| hub：最旧 V-SEED0 剔除 / 最新 V-40059 在列 | true / true ✔ |
+| terminal：预置 2000 条 matchlog → 直呼 `logMatch` → 条数 | 2000 ✔ |
+| terminal：最旧剔除 / 最新在列 | true / true ✔ |
+| 追加不变量（1 条历史 → 通关 → 1→2、历史幸存） | 不变 ✔ |
+
+**门禁**：`accept.sh` persist 判定行新增「上限 ✔」锚点，本组由两项判定扩为三项。
 
 
 

@@ -55,8 +55,8 @@ window.parent.postMessage({type:'pz-failed', device, lv, moves}, '*');
 | 键 | 用途 | 写入方 |
 |---|---|---|
 | `endland-user` | 访客档案 | terminal / 各关登记 |
-| `endland-stats` | 通关统计流水 | hub / terminal |
-| `endland-matchlog` | 匹配记录 | terminal |
+| `endland-stats` | 通关统计流水（保留最近 2000 条） | hub / terminal |
+| `endland-matchlog` | 匹配记录（保留最近 2000 条） | terminal |
 | `endland-hub-progress` | 各设备进度与星级 | hub |
 | `endland-levels-*` | 各关自定义关卡队列 | 各关 |
 | `endland-mute` | **全局共享静音**（`'on'`=静音；缺省/其他=有声） | hub 的 `#muteAll` + 各关 btnMute（双向实时同步） |

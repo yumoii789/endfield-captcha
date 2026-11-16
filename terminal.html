@@ -142,8 +142,8 @@ window.addEventListener('message',function(e){
   if(d.type==='pz-solved'||d.type==='pz-failed')settleResult(d);
 });
 function waitResult(){return new Promise(function(r){resultResolve=r;resultTimer=setTimeout(function(){settleResult({type:'pz-timeout'})},WAIT_MS)})}
-function logStats(rec){var a=readJSON('endland-stats',[]);a.push(rec);writeJSON('endland-stats',a)}
-function logMatch(rec){var a=readJSON('endland-matchlog',[]);a.push(rec);writeJSON('endland-matchlog',a)}
+function logStats(rec){var a=readJSON('endland-stats',[]);a.push(rec);if(a.length>2000)a=a.slice(-2000);writeJSON('endland-stats',a)}
+function logMatch(rec){var a=readJSON('endland-matchlog',[]);a.push(rec);if(a.length>2000)a=a.slice(-2000);writeJSON('endland-matchlog',a)}
 async function main(){
   var cfg=readCfg();
   cfg.visitByDate=cfg.visitByDate||{};cfg.visitByDate[today()]=(cfg.visitByDate[today()]||0)+1;writeJSON('endland-admin-cfg',cfg);
