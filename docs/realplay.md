@@ -1033,15 +1033,15 @@ node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new -
 | `game7-nonogram.html :: randOnes` | 早期生成器助手；它唯一调用的 `i0()` 也只被它调用 ⇒ **传递性死亡** |
 | `puzzle2.html :: pieceColor` | 取色访问器，无任何调用点 ⇒ 死代码 |
 | `puzzle2.html :: colorState` | 被其下方 `setHint()` 内联的同逻辑取代（`over?'hbad':(done?'hok':'')`）⇒ 被取代的旧助手 |
-| `game3-gems.html :: drawPath` | **值得决定的一个**，见下（已于 2026-11-12 删除） |
+| game3-gems.html :: drawPath | **值得决定的一个**，见下（已于 2026-11-12 删除） |
 
-**`drawPath` = 已设计但从未接线的「计划路线」**：它把当前格到目标格画成一条 SVG 线（`id=pathline`），而 CSS 里 `#pathline` **有完整样式**（青色虚线 + dash-move 流动动画）
-⇒ 作者确实设计过这个预览；但 `drawPath` 全仓**零调用**，`clearLayer()`（清的就是它所在的层）却在别处被正常调用。
+**drawPath = 已设计但从未接线的「计划路线」**：它把当前格到目标格画成一条 SVG 线（`id=pathline`），而 CSS 里 `#pathline` **有完整样式**（青色虚线 + dash-move 流动动画）
+⇒ 作者确实设计过这个预览；但 drawPath 全仓**零调用**，clearLayer()（清的就是它所在的层）却在别处被正常调用。
 文档**没有**承诺过路线预览，游戏本身可玩且已验证 ⇒ **不擅自实现**（那属于发明产品），**作为待决项交给机主**：接上它，或删掉它。
 
 **为什么当时不动这 5 处**：它们可证无害（无引用即无行为影响），删除属零行为收益的改动；价值在于**记录**——免得后人再花一轮去查同一件事。
 
-**处置（2026-11-12，§八十七）**：机主委托按推荐项执行。先核实 game3 的交互模型为**纯点击式**（`#grid` click → `boardClick`，全文件无 pointer 监听），`drawPath` 设想的悬停/拖动预览在移动端优先的点击式拼图里没有对应事件流，接线需引入整套新拖拽流（双事件流冲突风险 + 真机手感未验证），故选**删除整条死链**：`drawPath`（12 行）、`moveLayer`（6 行）及 init/resize 两处调用、`clearLayer`、`<svg id="layer">` DOM 与 `#layer`/`#pathline` 样式及配对的流动动画关键帧、`finishJump` 里因层恒空而永不生效的残影淡出分支——净 −33 行，行为零变化（门禁重跑见 §八十七）。
+**处置（2026-11-12，§八十七）**：机主委托按推荐项执行。先核实 game3 的交互模型为**纯点击式**（`#grid` click → `boardClick`，全文件无 pointer 监听），drawPath 设想的悬停/拖动预览在移动端优先的点击式拼图里没有对应事件流，接线需引入整套新拖拽流（双事件流冲突风险 + 真机手感未验证），故选**删除整条死链**：drawPath（12 行）、moveLayer（6 行）及 init/resize 两处调用、clearLayer、`<svg id="layer">` DOM 与 `#layer`/`#pathline` 样式及配对的流动动画关键帧、`finishJump` 里因层恒空而永不生效的残影淡出分支——净 −33 行，行为零变化（门禁重跑见 §八十七）。
 
 ## 五十二、存储键「两端是否接齐」扫描（负面结果，2026-11-11）
 
