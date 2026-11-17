@@ -305,7 +305,7 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 
 | 钩子 | 文档口径 | 实现位置 | 行为证据 | 结论 |
 |---|---|---|---|---|
-| `?stage=N` | 仅 game3：关卡号，优先于 `?lv` | game3-gems.html:772-779 | 导出 id 形如 `'gems-'+L.id+'-'+随机四位`（game3-gems.html:742）：`?stage=1`→`gems-1-*`、`?stage=3`→`gems-3-*`、`?stage=3&lv=1`→`gems-3-*`（中段是关卡号，故优先级成立） | ✔ |
+| `?stage=N` | 仅 game3：关卡号，优先于 `?lv` | game3-gems.html:741-747 | 导出 id 形如 `'gems-'+L.id+'-'+随机四位`（game3-gems.html:711）：`?stage=1`→`gems-1-*`、`?stage=3`→`gems-3-*`、`?stage=3&lv=1`→`gems-3-*`（中段是关卡号，故优先级成立） | ✔ |
 | `?fast=1` | 仅 game8：跳过动画/加速 | game8-targets.html:184/410/549/572 | `#mask` 显形耗时：常规 600/620ms，`?fast=1` **39/42ms** | ✔（修复后） |
 | `?pause=1` | 仅 admin：自测时停在登录门禁 | admin.html:2230-2239 | `admin.html?selftest=1&pause=1` → console 出现 `[ADMIN-TEST] pause=1：停留登录界面…`（2 条），登录界面仍在 | ✔ |
 | `?reset=1` | 仅 terminal：清空 `endland-user` | terminal.html:151-152 | 播种 `{name:'哨兵乙'}` 后带 reset 打开：打印「档案已清除，重新注册」、localStorage 不再含哨兵乙、随后按输入重建档案（含「探针」） | ✔ |
@@ -323,7 +323,7 @@ game9 的拖拽在真机不被判为滚动的关键是 `.board{touch-action:none
 
 `docs/conventions.md` §二 把失败消息定为 `{type:'pz-failed', device, lv, moves}`，并规定「仅当 window.parent !== window 时才发送」。此前只有 `pz-solved` 有端到端证据，失败分支从未实测。
 
-**静态核对（全仓 13 个发送点）**：`pz-solved` 九关都发；`pz-failed` 由四关发——game3 `onDead()`（game3-gems.html:634）、game6 提交耗尽（game6-code.html:777）、game7 错误阈值（game7-nonogram.html:714）、game8 误点 2 次（game8-targets.html:423）。**13 个发送点全部位于 `window.parent && window.parent!==window` 判断之内**，顶层直开不发，与文档一致。消费方两处：hub.html:169-172（写统计 + toast）、terminal.html:141（结算进「通关失败」分支）。 **（2026-11-10 复验：用独立口径数一遍——全仓 `postMessage(` 恰好 13 处，与本节的 13 个发送点一致。）**
+**静态核对（全仓 13 个发送点）**：`pz-solved` 九关都发；`pz-failed` 由四关发——game3 `onDead()`（game3-gems.html:601）、game6 提交耗尽（game6-code.html:777）、game7 错误阈值（game7-nonogram.html:714）、game8 误点 2 次（game8-targets.html:423）。**13 个发送点全部位于 `window.parent && window.parent!==window` 判断之内**，顶层直开不发，与文档一致。消费方两处：hub.html:169-172（写统计 + toast）、terminal.html:141（结算进「通关失败」分支）。 **（2026-11-10 复验：用独立口径数一遍——全仓 `postMessage(` 恰好 13 处，与本节的 13 个发送点一致。）**
 
 **端到端实测**（`failclose.mjs`：以 hub.html 为父页，注入同源探针 iframe，调用各关自己的失败出口）：
 
@@ -1033,13 +1033,15 @@ node _gt_srv.js（端口 8099，cwd 必须为仓库根）+ Edge --headless=new -
 | `game7-nonogram.html :: randOnes` | 早期生成器助手；它唯一调用的 `i0()` 也只被它调用 ⇒ **传递性死亡** |
 | `puzzle2.html :: pieceColor` | 取色访问器，无任何调用点 ⇒ 死代码 |
 | `puzzle2.html :: colorState` | 被其下方 `setHint()` 内联的同逻辑取代（`over?'hbad':(done?'hok':'')`）⇒ 被取代的旧助手 |
-| `game3-gems.html :: drawPath` | **值得决定的一个**，见下 |
+| `game3-gems.html :: drawPath` | **值得决定的一个**，见下（已于 2026-11-12 删除） |
 
-**`drawPath` = 已设计但从未接线的「计划路线」**：它把当前格到目标格画成一条 SVG 线（`id=pathline`），而 CSS 里 `#pathline` **有完整样式**（青色虚线 + `dashMove` 流动动画）
+**`drawPath` = 已设计但从未接线的「计划路线」**：它把当前格到目标格画成一条 SVG 线（`id=pathline`），而 CSS 里 `#pathline` **有完整样式**（青色虚线 + dash-move 流动动画）
 ⇒ 作者确实设计过这个预览；但 `drawPath` 全仓**零调用**，`clearLayer()`（清的就是它所在的层）却在别处被正常调用。
 文档**没有**承诺过路线预览，游戏本身可玩且已验证 ⇒ **不擅自实现**（那属于发明产品），**作为待决项交给机主**：接上它，或删掉它。
 
-**为什么不动这 5 处**：它们可证无害（无引用即无行为影响），删除属零行为收益的改动；价值在于**记录**——免得后人再花一轮去查同一件事。
+**为什么当时不动这 5 处**：它们可证无害（无引用即无行为影响），删除属零行为收益的改动；价值在于**记录**——免得后人再花一轮去查同一件事。
+
+**处置（2026-11-12，§八十七）**：机主委托按推荐项执行。先核实 game3 的交互模型为**纯点击式**（`#grid` click → `boardClick`，全文件无 pointer 监听），`drawPath` 设想的悬停/拖动预览在移动端优先的点击式拼图里没有对应事件流，接线需引入整套新拖拽流（双事件流冲突风险 + 真机手感未验证），故选**删除整条死链**：`drawPath`（12 行）、`moveLayer`（6 行）及 init/resize 两处调用、`clearLayer`、`<svg id="layer">` DOM 与 `#layer`/`#pathline` 样式及配对的流动动画关键帧、`finishJump` 里因层恒空而永不生效的残影淡出分支——净 −33 行，行为零变化（门禁重跑见 §八十七）。
 
 ## 五十二、存储键「两端是否接齐」扫描（负面结果，2026-11-11）
 
@@ -1173,7 +1175,7 @@ hub 的 `pz-solved` 路径此前已行为验证过（写解锁进度、卡片变
 | 文档声明 | 实测 |
 |---|---|
 | `conventions.md`「此前把 `?seed`/`?fast`/`?reset` 写成跨页统一契约，与实现不符（分别只有 **8 关 / 1 关 / 1 页**）」 | `?seed` 命中 **8** 个页面（game1/4/5/6/7/8/9 + puzzle2）✔；`?fast` **1**（仅 game8）✔；`?reset` **1**（仅 terminal：`terminal.html:153` 的 `qs.get('reset')`）✔ |
-| `difficulty-axis.md`「game3 的 `?lv=` 已统一为难度档位；`?stage=` 仍作关卡号；`?lv>=6` 保留旧语义」 | `game3-gems.html:772` 同时读 `stage`/`lv`，`:778` 对 `lv>=6` 走关卡号并注明向后兼容 ✔ |
+| `difficulty-axis.md`「game3 的 `?lv=` 已统一为难度档位；`?stage=` 仍作关卡号；`?lv>=6` 保留旧语义」 | `game3-gems.html:741` 同时读 `stage`/`lv`，`:747` 对 `lv>=6` 走关卡号并注明向后兼容 ✔ |
 
 **又两次我自己的度量滑手（都当场发现）** ✗：
 

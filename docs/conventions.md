@@ -35,9 +35,9 @@ window.parent.postMessage({type:'pz-failed', device, lv, moves}, '*');
 |---|---|
 | 钩子 | 含义 | 实际实现范围（2026-11-09 全仓库核对） |
 |---|---|---|
-| `?direct=1` | 跳过登记/验证，自动进入关卡 | 九关全部（hub 就按此拼 URL）。注意 game3 的语义是"延时后自动点人机验证框"（game3-gems.html:784），不是无条件放行 |
+| `?direct=1` | 跳过登记/验证，自动进入关卡 | 九关全部（hub 就按此拼 URL）。注意 game3 的语义是"延时后自动点人机验证框"（game3-gems.html:753），不是无条件放行 |
 | `?lv=1..5` | **难度档位**（九关统一语义） | 九关全部 |
-| `?stage=N` | 关卡号（优先于 `?lv`） | **仅 game3**（game3-gems.html:772）；hub 现在只传 `?lv=`，见 docs/difficulty-axis.md |
+| `?stage=N` | 关卡号（优先于 `?lv`） | **仅 game3**（game3-gems.html:741）；hub 现在只传 `?lv=`，见 docs/difficulty-axis.md |
 | `?selftest=1` | 运行页面自带自检，结果打到 console | 全部 12 页（含 hub/terminal/admin） |
 | `?seed=N` | 复现同一题面 | **八关**（game1/puzzle2/game4/game5/game6/game7/game8/game9）；**game3 未实现**（其选关用 `Math.random()`，无种子注入） |
 | `?export=1` | 导出关卡 JSON 到 console | 九关全部（直通 `?direct=1` 与普通进入都已接线；字段 game/id/lv/name/desc/play/params/enabled，核验见 docs/realplay.md 十四） |
